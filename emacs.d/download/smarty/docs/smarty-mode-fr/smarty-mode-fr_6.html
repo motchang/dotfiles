@@ -1,0 +1,1143 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html401/loose.dtd">
+<html>
+<!--Copyright C 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002,
+2003, 2004, 2005, 2006 Free Software Foundation, Inc.
+
+This manual is free documentation; you can redistribute it and/or
+modify it under the terms of the GNU General Public License as
+published by the Free Software Foundation; either version 2, or (at
+your option) any later version.
+
+This manual is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License, the
+file COPYING, along with Smarty Mode.  If not, see
+http://www.gnu.org/licenses/gpl or write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+02110-1301, USA.
+-->
+<!-- Created on le 1 Novembre 2007 by texi2html 1.76 -->
+<!--
+Written by: Lionel Cons <Lionel.Cons@cern.ch> (original author)
+            Karl Berry  <karl@freefriends.org>
+            Olaf Bachmann <obachman@mathematik.uni-kl.de>
+            and many others.
+Maintained by: Many creative people <dev@texi2html.cvshome.org>
+Send bugs and suggestions to <users@texi2html.cvshome.org>
+
+-->
+<head>
+<title>Manuel Smarty Mode: 6. Templates</title>
+
+<meta name="description" content="Manuel Smarty Mode: 6. Templates">
+<meta name="keywords" content="Manuel Smarty Mode: 6. Templates">
+<meta name="resource-type" content="document">
+<meta name="distribution" content="global">
+<meta name="Generator" content="texi2html 1.76">
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<style type="text/css">
+<!--
+a.summary-letter {text-decoration: none}
+pre.display {font-family: serif}
+pre.format {font-family: serif}
+pre.menu-comment {font-family: serif}
+pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: serif; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: serif; font-size: smaller}
+pre.smalllisp {font-size: smaller}
+span.sansserif {font-family:sans-serif; font-weight:normal;}
+ul.toc {list-style: none}
+-->
+</style>
+
+
+</head>
+
+<body lang="fr" bgcolor="#FFFFFF" text="#000000" link="#0000FF" vlink="#800080" alink="#FF0000">
+
+<a name="Templates"></a>
+<a name="SEC27"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="smarty-mode-fr_5.html#SEC26" title="Section pr&eacute;c&eacute;dente dans l'ordre de lecture"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC28" title="Section suivante dans l'ordre de lecture"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_5.html#SEC24" title="D&eacute;but de ce chapitre ou chapitre pr&eacute;c&eacute;dent"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr.html#Top" title="Section sup&eacute;rieure">Plus haut</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_7.html#SEC44" title="Chapitre suivant"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr.html#Top" title="Couverture (top) du document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_toc.html#SEC_Contents" title="Table des mati&egrave;res">Table des mati&egrave;res</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_8.html#SEC45" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_abt.html#SEC_About" title="&agrave; propos (page d'aide)"> ? </a>]</td>
+</tr></table>
+<h1 class="chapter"> 6. Templates </h1>
+
+<p>Dans le Smarty Mode, les fonctions Smarty (comme if, foreach) sont pr&eacute;d&eacute;finies
+dans des fonctions appel&eacute;es &quot;Templates&quot;.
+</p>
+<p>Chaque template peut &ecirc;tre invoqu&eacute; par le nom de la fonction ou en utilisant la touche <kbd>SPACE</kbd>
+apr&egrave;s le nom de la fonction Smarty dans le buffer (Note, utiliser <kbd>M-<kbd>SPACE</kbd></kbd> d&eacute;sactive
+le template).
+</p> 
+<p>Un template peut &ecirc;tre annul&eacute; en utilisant <kbd>C-g</kbd> ou en laissant vide le prompt (dans le minibuffer).
+</p>
+<table class="menu" border="0" cellspacing="0">
+<tr><td align="left" valign="top"><a href="#SEC28">6.1 Param&egrave;tres</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC29">6.2 Fonctions</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+</table>
+
+<hr size="6">
+<a name="Te01_002dCustomizations"></a>
+<a name="SEC28"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC27" title="Section pr&eacute;c&eacute;dente dans l'ordre de lecture"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC29" title="Section suivante dans l'ordre de lecture"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC27" title="D&eacute;but de ce chapitre ou chapitre pr&eacute;c&eacute;dent"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC27" title="Section sup&eacute;rieure">Plus haut</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_7.html#SEC44" title="Chapitre suivant"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr.html#Top" title="Couverture (top) du document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_toc.html#SEC_Contents" title="Table des mati&egrave;res">Table des mati&egrave;res</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_8.html#SEC45" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_abt.html#SEC_About" title="&agrave; propos (page d'aide)"> ? </a>]</td>
+</tr></table>
+<h2 class="section"> 6.1 Param&egrave;tres </h2>
+
+<dl compact="compact">
+<dd><a name="IDX27"></a>
+</dd>
+<dt> <samp>`smarty-electric-mode'</samp></dt>
+<dd><p><b>Type</b> : <i>bool</i><br>
+<b>Valeur par d&eacute;faut</b> : <samp>`t'</samp><br>
+<b>Description</b> : Si <samp>`t'</samp>; active la g&eacute;n&eacute;ration automatique des
+templates. Si <samp>`nil'</samp>; les g&eacute;n&eacute;rateur de templates peuvent toujours &ecirc;tre invoqu&eacute;s en utilisant
+les raccourcis clavier et le menu. L'activation de ce mode est indiqu&eacute;e par &quot;/e&quot; apr&egrave;s le nom
+du mode et peut &ecirc;tre modifi&eacute; en utilisant <samp>`smarty-electric-mode'</samp>.
+</p></dd>
+</dl>
+
+<p>Pour une description compl&egrave;te des param&egrave;tres des templates, voir <a href="smarty-mode-fr_3.html#SEC13">Template</a>
+</p>
+<hr size="6">
+<a name="Te01_002dFunctions"></a>
+<a name="SEC29"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC28" title="Section pr&eacute;c&eacute;dente dans l'ordre de lecture"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC30" title="Section suivante dans l'ordre de lecture"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC27" title="D&eacute;but de ce chapitre ou chapitre pr&eacute;c&eacute;dent"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC27" title="Section sup&eacute;rieure">Plus haut</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_7.html#SEC44" title="Chapitre suivant"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr.html#Top" title="Couverture (top) du document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_toc.html#SEC_Contents" title="Table des mati&egrave;res">Table des mati&egrave;res</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_8.html#SEC45" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_abt.html#SEC_About" title="&agrave; propos (page d'aide)"> ? </a>]</td>
+</tr></table>
+<h2 class="section"> 6.2 Fonctions </h2>
+
+<table class="menu" border="0" cellspacing="0">
+<tr><td align="left" valign="top"><a href="#SEC30">6.2.1 Fonctions natives</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC31">6.2.2 Fonctions utilisateur</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC32">6.2.3 Modificateurs de variable</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC33">6.2.4 Fonctions des plugins</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC39">6.2.5 Modificateurs de variable des plugins</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC43">6.2.6 Fonctions Non-Smarty</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+</table>
+
+
+<hr size="6">
+<a name="Te01_002dFu01_002dBuiltin"></a>
+<a name="SEC30"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC29" title="Section pr&eacute;c&eacute;dente dans l'ordre de lecture"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC31" title="Section suivante dans l'ordre de lecture"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC27" title="D&eacute;but de ce chapitre ou chapitre pr&eacute;c&eacute;dent"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC29" title="Section sup&eacute;rieure">Plus haut</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_7.html#SEC44" title="Chapitre suivant"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr.html#Top" title="Couverture (top) du document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_toc.html#SEC_Contents" title="Table des mati&egrave;res">Table des mati&egrave;res</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_8.html#SEC45" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_abt.html#SEC_About" title="&agrave; propos (page d'aide)"> ? </a>]</td>
+</tr></table>
+<h3 class="subsection"> 6.2.1 Fonctions natives </h3>
+
+<dl compact="compact">
+<dd><a name="IDX28"></a>
+</dd>
+<dt> <samp>`smarty-template-capture'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Build-in Functions</i> -&gt; <i>capture</i><br>
+<b>Raccourci clavier</b> : <kbd>C-c C-t C-b a</kbd><br>
+<b>Description</b> : Voir le manuel.
+</p>
+<a name="IDX29"></a>
+</dd>
+<dt> <samp>`smarty-template-config-load'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Build-in Functions</i> -&gt; <i>config_load</i><br>
+<b>Raccourci clavier</b> : <kbd>C-c C-t C-b c</kbd><br>
+<b>Description</b> : Voir le manuel.
+</p>
+<a name="IDX30"></a>
+</dd>
+<dt> <samp>`smarty-template-else'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Build-in Functions</i> -&gt; <i>else</i><br>
+<b>Raccourci clavier</b> : <kbd>C-c C-t C-b M-e</kbd><br>
+<b>Description</b> : Voir le manuel.
+</p>
+<a name="IDX31"></a>
+</dd>
+<dt> <samp>`smarty-template-elseif'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Build-in Functions</i> -&gt; <i>elseif</i><br>
+<b>Raccourci clavier</b> : <kbd>C-c C-t C-b C-e</kbd><br>
+<b>Description</b> : Voir le manuel.
+</p>
+<a name="IDX32"></a>
+</dd>
+<dt> <samp>`smarty-template-foreach'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Build-in Functions</i> -&gt; <i>foreach</i><br>
+<b>Raccourci clavier</b> : <kbd>C-c C-t C-b C-f</kbd><br>
+<b>Description</b> : Voir le manuel.
+</p>
+<a name="IDX33"></a>
+</dd>
+<dt> <samp>`smarty-template-foreachelse'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Build-in Functions</i> -&gt; <i>foreachelse</i><br>
+<b>Raccourci clavier</b> : <kbd>C-c C-t C-b M-f</kbd><br>
+<b>Description</b> : Voir le manuel.
+</p>
+<a name="IDX34"></a>
+</dd>
+<dt> <samp>`smarty-template-if'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Build-in Functions</i> -&gt; <i>if</i><br>
+<b>Raccourci clavier</b> : <kbd>C-c C-t C-b f</kbd><br>
+<b>Description</b> : Voir le manuel.
+</p>
+<a name="IDX35"></a>
+</dd>
+<dt> <samp>`smarty-template-include'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Build-in Functions</i> -&gt; <i>include</i><br>
+<b>Raccourci clavier</b> : <kbd>C-c C-t C-b C-i</kbd><br>
+<b>Description</b> : Voir le manuel.
+</p>
+<a name="IDX36"></a>
+</dd>
+<dt> <samp>`smarty-template-include-php'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Build-in Functions</i> -&gt; <i>include_php</i><br>
+<b>Raccourci clavier</b> : <kbd>C-c C-t C-b M-i</kbd><br>
+<b>Description</b> : Voir le manuel.
+</p>
+<a name="IDX37"></a>
+</dd>
+<dt> <samp>`smarty-template-insert'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Build-in Functions</i> -&gt; <i>insert</i><br>
+<b>Raccourci clavier</b> : <kbd>C-c C-t C-b i</kbd><br>
+<b>Description</b> : Voir le manuel.
+</p>
+<a name="IDX38"></a>
+</dd>
+<dt> <samp>`smarty-template-ldelim'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Build-in Functions</i> -&gt; <i>ldelim</i><br>
+<b>Raccourci clavier</b> : <kbd>C-c C-t C-b l</kbd><br>
+<b>Description</b> : Voir le manuel.
+</p>
+<a name="IDX39"></a>
+</dd>
+<dt> <samp>`smarty-template-literal'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Build-in Functions</i> -&gt; <i>literal</i><br>
+<b>Raccourci clavier</b> : <kbd>C-c C-t C-b C-l</kbd><br>
+<b>Description</b> : Voir le manuel.
+</p>
+<a name="IDX40"></a>
+</dd>
+<dt> <samp>`smarty-template-php'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Build-in Functions</i> -&gt; <i>php</i><br>
+<b>Raccourci clavier</b> : <kbd>C-c C-t C-b p</kbd><br>
+<b>Description</b> : Voir le manuel.
+</p>
+<a name="IDX41"></a>
+</dd>
+<dt> <samp>`smarty-template-rdelim'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Build-in Functions</i> -&gt; <i>rdelim</i><br>
+<b>Raccourci clavier</b> : <kbd>C-c C-t C-b r</kbd><br>
+<b>Description</b> : Voir le manuel.
+</p>
+<a name="IDX42"></a>
+</dd>
+<dt> <samp>`smarty-template-section'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Build-in Functions</i> -&gt; <i>section</i><br>
+<b>Raccourci clavier</b> : <kbd>C-c C-t C-b C-s</kbd><br>
+<b>Description</b> : Voir le manuel.
+</p>
+<a name="IDX43"></a>
+</dd>
+<dt> <samp>`smarty-template-sectionelse'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Build-in Functions</i> -&gt; <i>sectionelse</i><br>
+<b>Raccourci clavier</b> : <kbd>C-c C-t C-b M-s</kbd><br>
+<b>Description</b> : Voir le manuel.
+</p>
+<a name="IDX44"></a>
+</dd>
+<dt> <samp>`smarty-template-strip'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Build-in Functions</i> -&gt; <i>strip</i><br>
+<b>Raccourci clavier</b> : <kbd>C-c C-t C-b s</kbd><br>
+<b>Description</b> : Voir le manuel.
+</p></dd>
+</dl>
+
+<hr size="6">
+<a name="Te01_002dFu01_002dCustom"></a>
+<a name="SEC31"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC30" title="Section pr&eacute;c&eacute;dente dans l'ordre de lecture"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC32" title="Section suivante dans l'ordre de lecture"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC27" title="D&eacute;but de ce chapitre ou chapitre pr&eacute;c&eacute;dent"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC29" title="Section sup&eacute;rieure">Plus haut</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_7.html#SEC44" title="Chapitre suivant"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr.html#Top" title="Couverture (top) du document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_toc.html#SEC_Contents" title="Table des mati&egrave;res">Table des mati&egrave;res</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_8.html#SEC45" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_abt.html#SEC_About" title="&agrave; propos (page d'aide)"> ? </a>]</td>
+</tr></table>
+<h3 class="subsection"> 6.2.2 Fonctions utilisateur </h3>
+
+<dl compact="compact">
+<dd><a name="IDX45"></a>
+</dd>
+<dt> <samp>`smarty-template-assign'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Custom Functions</i> -&gt; <i>assign</i><br>
+<b>Raccourci clavier</b> : <kbd>C-c C-t C-c a</kbd><br>
+<b>Description</b> : Voir le manuel.
+</p>
+<a name="IDX46"></a>
+</dd>
+<dt> <samp>`smarty-template-counter'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Custom Functions</i> -&gt; <i>counter</i><br>
+<b>Raccourci clavier</b> : <kbd>C-c C-t C-c o</kbd><br>
+<b>Description</b> : Voir le manuel.
+</p>
+<a name="IDX47"></a>
+</dd>
+<dt> <samp>`smarty-template-cycle'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Custom Functions</i> -&gt; <i>cycle</i><br>
+<b>Raccourci clavier</b> : <kbd>C-c C-t C-c c</kbd><br>
+<b>Description</b> : Voir le manuel.
+</p>
+<a name="IDX48"></a>
+</dd>
+<dt> <samp>`smarty-template-debug'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Custom Functions</i> -&gt; <i>debug</i><br>
+<b>Raccourci clavier</b> : <kbd>C-c C-t C-c d</kbd><br>
+<b>Description</b> : Voir le manuel.
+</p>
+<a name="IDX49"></a>
+</dd>
+<dt> <samp>`smarty-template-eval'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Custom Functions</i> -&gt; <i>eval</i><br>
+<b>Raccourci clavier</b> : <kbd>C-c C-t C-c e</kbd><br>
+<b>Description</b> : Voir le manuel.
+</p>
+<a name="IDX50"></a>
+</dd>
+<dt> <samp>`smarty-template-fetch'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Custom Functions</i> -&gt; <i>fetch</i><br>
+<b>Raccourci clavier</b> : <kbd>C-c C-t C-c f</kbd><br>
+<b>Description</b> : Voir le manuel.
+</p>
+<a name="IDX51"></a>
+</dd>
+<dt> <samp>`smarty-template-html-checkboxes'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Custom Functions</i> -&gt; <i>html_checkboxes</i><br>
+<b>Raccourci clavier</b> : <kbd>C-c C-t C-c C-h c</kbd><br>
+<b>Description</b> : Voir le manuel.
+</p>
+<a name="IDX52"></a>
+</dd>
+<dt> <samp>`smarty-template-html-image'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Custom Functions</i> -&gt; <i>html_image</i><br>
+<b>Raccourci clavier</b> : <kbd>C-c C-t C-c C-h i</kbd><br>
+<b>Description</b> : Voir le manuel.
+</p>
+<a name="IDX53"></a>
+</dd>
+<dt> <samp>`smarty-template-html-options'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Custom Functions</i> -&gt; <i>html_options</i><br>
+<b>Raccourci clavier</b> : <kbd>C-c C-t C-c C-h o</kbd><br>
+<b>Description</b> : Voir le manuel.
+</p>
+<a name="IDX54"></a>
+</dd>
+<dt> <samp>`smarty-template-html-radios'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Custom Functions</i> -&gt; <i>html_radios</i><br>
+<b>Raccourci clavier</b> : <kbd>C-c C-t C-c C-h r</kbd><br>
+<b>Description</b> : Voir le manuel.
+</p>
+<a name="IDX55"></a>
+</dd>
+<dt> <samp>`smarty-template-html-select-date'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Custom Functions</i> -&gt; <i>html_select_date</i><br>
+<b>Raccourci clavier</b> : <kbd>C-c C-t C-c C-h d</kbd><br>
+<b>Description</b> : Voir le manuel.
+</p>
+<a name="IDX56"></a>
+</dd>
+<dt> <samp>`smarty-template-html-select-time'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Custom Functions</i> -&gt; <i>html_select_time</i><br>
+<b>Raccourci clavier</b> : <kbd>C-c C-t C-c C-h m</kbd><br>
+<b>Description</b> : Voir le manuel.
+</p>
+<a name="IDX57"></a>
+</dd>
+<dt> <samp>`smarty-template-html-table'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Custom Functions</i> -&gt; <i>html_table</i><br>
+<b>Raccourci clavier</b> : <kbd>C-c C-t C-c C-h t</kbd><br>
+<b>Description</b> : Voir le manuel.
+</p>
+<a name="IDX58"></a>
+</dd>
+<dt> <samp>`smarty-template-mailto'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Custom Functions</i> -&gt; <i>mailto</i><br>
+<b>Raccourci clavier</b> : <kbd>C-c C-t C-c i</kbd><br>
+<b>Description</b> : Voir le manuel.
+</p>
+<a name="IDX59"></a>
+</dd>
+<dt> <samp>`smarty-template-math'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Custom Functions</i> -&gt; <i>math</i><br>
+<b>Raccourci clavier</b> : <kbd>C-c C-t C-c h</kbd><br>
+<b>Description</b> : Voir le manuel.
+</p>
+<a name="IDX60"></a>
+</dd>
+<dt> <samp>`smarty-template-popup'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Custom Functions</i> -&gt; <i>popup</i><br>
+<b>Raccourci clavier</b> : <kbd>C-c C-t C-c C-p</kbd><br>
+<b>Description</b> : Voir le manuel.
+</p>
+<a name="IDX61"></a>
+</dd>
+<dt> <samp>`smarty-template-popup-init'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Custom Functions</i> -&gt; <i>popup_init</i><br>
+<b>Raccourci clavier</b> : <kbd>C-c C-t C-c M-p</kbd><br>
+<b>Description</b> : Voir le manuel.
+</p>
+<a name="IDX62"></a>
+</dd>
+<dt> <samp>`smarty-template-textformat'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Custom Functions</i> -&gt; <i>textformat</i><br>
+<b>Raccourci clavier</b> : <kbd>C-c C-t C-c t</kbd><br>
+<b>Description</b> : Voir le manuel.
+</p></dd>
+</dl>
+
+<hr size="6">
+<a name="Te01_002dFu01_002dVariable"></a>
+<a name="SEC32"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC31" title="Section pr&eacute;c&eacute;dente dans l'ordre de lecture"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC33" title="Section suivante dans l'ordre de lecture"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC27" title="D&eacute;but de ce chapitre ou chapitre pr&eacute;c&eacute;dent"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC29" title="Section sup&eacute;rieure">Plus haut</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_7.html#SEC44" title="Chapitre suivant"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr.html#Top" title="Couverture (top) du document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_toc.html#SEC_Contents" title="Table des mati&egrave;res">Table des mati&egrave;res</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_8.html#SEC45" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_abt.html#SEC_About" title="&agrave; propos (page d'aide)"> ? </a>]</td>
+</tr></table>
+<h3 class="subsection"> 6.2.3 Modificateurs de variable </h3>
+
+<dl compact="compact">
+<dd><a name="IDX63"></a>
+</dd>
+<dt> <samp>`smarty-template-capitalize'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Variable Modifiers</i> -&gt; <i>capitalize</i><br>
+<b>Raccourci clavier</b> : <kbd>C-c C-t C-v p</kbd><br>
+<b>Description</b> : Voir le manuel.
+</p>
+<a name="IDX64"></a>
+</dd>
+<dt> <samp>`smarty-template-cat'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Variable Modifiers</i> -&gt; <i>cat</i><br>
+<b>Raccourci clavier</b> : <kbd>C-c C-t C-v c</kbd><br>
+<b>Description</b> : Voir le manuel.
+</p>
+<a name="IDX65"></a>
+</dd>
+<dt> <samp>`smarty-template-count-characters'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Variable Modifiers</i> -&gt; <i>count_characters</i><br>
+<b>Raccourci clavier</b> : <kbd>C-c C-t C-v C-c c</kbd><br>
+<b>Description</b> : Voir le manuel.
+</p>
+<a name="IDX66"></a>
+</dd>
+<dt> <samp>`smarty-template-count-paragraphs'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Variable Modifiers</i> -&gt; <i>count_paragraphs</i><br>
+<b>Raccourci clavier</b> : <kbd>C-c C-t C-v C-c p</kbd><br>
+<b>Description</b> : Voir le manuel.
+</p>
+<a name="IDX67"></a>
+</dd>
+<dt> <samp>`smarty-template-count-sentences'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Variable Modifiers</i> -&gt; <i>count_sentences</i><br>
+<b>Raccourci clavier</b> : <kbd>C-c C-t C-v C-c s</kbd><br>
+<b>Description</b> : Voir le manuel.
+</p>
+<a name="IDX68"></a>
+</dd>
+<dt> <samp>`smarty-template-count-words'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Variable Modifiers</i> -&gt; <i>count_words</i><br>
+<b>Raccourci clavier</b> : <kbd>C-c C-t C-v C-c w</kbd><br>
+<b>Description</b> : Voir le manuel.
+</p>
+<a name="IDX69"></a>
+</dd>
+<dt> <samp>`smarty-template-date-format'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Variable Modifiers</i> -&gt; <i>date_format</i><br>
+<b>Raccourci clavier</b> : <kbd>C-c C-t C-v f</kbd><br>
+<b>Description</b> : Voir le manuel.
+</p>
+<a name="IDX70"></a>
+</dd>
+<dt> <samp>`smarty-template-default'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Variable Modifiers</i> -&gt; <i>default</i><br>
+<b>Raccourci clavier</b> : <kbd>C-c C-t C-v d</kbd><br>
+<b>Description</b> : Voir le manuel.
+</p>
+<a name="IDX71"></a>
+</dd>
+<dt> <samp>`smarty-template-escape'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Variable Modifiers</i> -&gt; <i>escape</i><br>
+<b>Raccourci clavier</b> : <kbd>C-c C-t C-v e</kbd><br>
+<b>Description</b> : Voir le manuel.
+</p>
+<a name="IDX72"></a>
+</dd>
+<dt> <samp>`smarty-template-indent'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Variable Modifiers</i> -&gt; <i>indent</i><br>
+<b>Raccourci clavier</b> : <kbd>C-c C-t C-v i</kbd><br>
+<b>Description</b> : Voir le manuel.
+</p>
+<a name="IDX73"></a>
+</dd>
+<dt> <samp>`smarty-template-lower'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Variable Modifiers</i> -&gt; <i>lower</i><br>
+<b>Raccourci clavier</b> : <kbd>C-c C-t C-v l</kbd><br>
+<b>Description</b> : Voir le manuel.
+</p>
+<a name="IDX74"></a>
+</dd>
+<dt> <samp>`smarty-template-nl2br'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Variable Modifiers</i> -&gt; <i>nl2br</i><br>
+<b>Raccourci clavier</b> : <kbd>C-c C-t C-v n</kbd><br>
+<b>Description</b> : Voir le manuel.
+</p>
+<a name="IDX75"></a>
+</dd>
+<dt> <samp>`smarty-template-regex-replace'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Variable Modifiers</i> -&gt; <i>regex_replace</i><br>
+<b>Raccourci clavier</b> : <kbd>C-c C-t C-v x</kbd><br>
+<b>Description</b> : Voir le manuel.
+</p>
+<a name="IDX76"></a>
+</dd>
+<dt> <samp>`smarty-template-replace'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Variable Modifiers</i> -&gt; <i>replace</i><br>
+<b>Raccourci clavier</b> : <kbd>C-c C-t C-v C-p</kbd><br>
+<b>Description</b> : Voir le manuel.
+</p>
+<a name="IDX77"></a>
+</dd>
+<dt> <samp>`smarty-template-spacify'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Variable Modifiers</i> -&gt; <i>spacify</i><br>
+<b>Raccourci clavier</b> : <kbd>C-c C-t C-v y</kbd><br>
+<b>Description</b> : Voir le manuel.
+</p>
+<a name="IDX78"></a>
+</dd>
+<dt> <samp>`smarty-template-string-format'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Variable Modifiers</i> -&gt; <i>string_format</i><br>
+<b>Raccourci clavier</b> : <kbd>C-c C-t C-v s</kbd><br>
+<b>Description</b> : Voir le manuel.
+</p>
+<a name="IDX79"></a>
+</dd>
+<dt> <samp>`smarty-template-vstrip'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Variable Modifiers</i> -&gt; <i>strip</i><br>
+<b>Raccourci clavier</b> : <kbd>C-c C-t C-v C-s</kbd><br>
+<b>Description</b> : Voir le manuel.
+</p>
+<a name="IDX80"></a>
+</dd>
+<dt> <samp>`smarty-template-strip-tags'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Variable Modifiers</i> -&gt; <i>strip_tags</i><br>
+<b>Raccourci clavier</b> : <kbd>C-c C-t C-v M-s</kbd><br>
+<b>Description</b> : Voir le manuel.
+</p>
+<a name="IDX81"></a>
+</dd>
+<dt> <samp>`smarty-template-truncate'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Variable Modifiers</i> -&gt; <i>truncate</i><br>
+<b>Raccourci clavier</b> : <kbd>C-c C-t C-v t</kbd><br>
+<b>Description</b> : Voir le manuel.
+</p>
+<a name="IDX82"></a>
+</dd>
+<dt> <samp>`smarty-template-upper'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Variable Modifiers</i> -&gt; <i>upper</i><br>
+<b>Raccourci clavier</b> : <kbd>C-c C-t C-v u</kbd><br>
+<b>Description</b> : Voir le manuel.
+</p>
+<a name="IDX83"></a>
+</dd>
+<dt> <samp>`smarty-template-wordwrap'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Variable Modifiers</i> -&gt; <i>wordwrap</i><br>
+<b>Raccourci clavier</b> : <kbd>C-c C-t C-v w</kbd><br>
+<b>Description</b> : Voir le manuel.
+</p></dd>
+</dl>
+
+<hr size="6">
+<a name="Te01_002dFu01_002dPlugin_002dFunctions"></a>
+<a name="SEC33"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC32" title="Section pr&eacute;c&eacute;dente dans l'ordre de lecture"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC34" title="Section suivante dans l'ordre de lecture"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC27" title="D&eacute;but de ce chapitre ou chapitre pr&eacute;c&eacute;dent"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC29" title="Section sup&eacute;rieure">Plus haut</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_7.html#SEC44" title="Chapitre suivant"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr.html#Top" title="Couverture (top) du document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_toc.html#SEC_Contents" title="Table des mati&egrave;res">Table des mati&egrave;res</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_8.html#SEC45" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_abt.html#SEC_About" title="&agrave; propos (page d'aide)"> ? </a>]</td>
+</tr></table>
+<h3 class="subsection"> 6.2.4 Fonctions des plugins </h3>
+
+<table class="menu" border="0" cellspacing="0">
+<tr><td align="left" valign="top"><a href="#SEC34">6.2.4.1 BlockRepeatPlugin</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC35">6.2.4.2 ClipCache</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC36">6.2.4.3 Smarty Formtool</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC37">6.2.4.4 Smarty Paginate</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC38">6.2.4.5 Smarty Validate</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+</table>
+
+<hr size="6">
+<a name="Te01_002dFu01_002dPl01_002dBlockRepeatPlugin"></a>
+<a name="SEC34"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC33" title="Section pr&eacute;c&eacute;dente dans l'ordre de lecture"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC35" title="Section suivante dans l'ordre de lecture"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC27" title="D&eacute;but de ce chapitre ou chapitre pr&eacute;c&eacute;dent"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC33" title="Section sup&eacute;rieure">Plus haut</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_7.html#SEC44" title="Chapitre suivant"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr.html#Top" title="Couverture (top) du document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_toc.html#SEC_Contents" title="Table des mati&egrave;res">Table des mati&egrave;res</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_8.html#SEC45" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_abt.html#SEC_About" title="&agrave; propos (page d'aide)"> ? </a>]</td>
+</tr></table>
+<h4 class="subsubsection"> 6.2.4.1 BlockRepeatPlugin </h4>
+
+<dl compact="compact">
+<dd><a name="IDX84"></a>
+</dd>
+<dt> <samp>`smarty-template-repeat'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Plugins (Functions)</i> -&gt; <i>BlockRepeatPlugin</i> -&gt; <i>repeat</i><br>
+<b>Raccourci clavier</b> : <kbd>aucun</kbd><br>
+<b>Description</b> : Voir le manuel du plugin.
+</p>
+<a name="IDX85"></a>
+</dd>
+<dt> <samp>`smarty-template-str-repeat'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Plugins (Functions)</i> -&gt; <i>BlockRepeatPlugin</i> -&gt; <i>str_repeat</i><br>
+<b>Raccourci clavier</b> : <kbd>aucun</kbd><br>
+<b>Description</b> : Voir le manuel du plugin.
+</p></dd>
+</dl>
+
+<hr size="6">
+<a name="Te01_002dFu01_002dPl01_002dClipCache"></a>
+<a name="SEC35"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC34" title="Section pr&eacute;c&eacute;dente dans l'ordre de lecture"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC36" title="Section suivante dans l'ordre de lecture"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC27" title="D&eacute;but de ce chapitre ou chapitre pr&eacute;c&eacute;dent"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC33" title="Section sup&eacute;rieure">Plus haut</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_7.html#SEC44" title="Chapitre suivant"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr.html#Top" title="Couverture (top) du document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_toc.html#SEC_Contents" title="Table des mati&egrave;res">Table des mati&egrave;res</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_8.html#SEC45" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_abt.html#SEC_About" title="&agrave; propos (page d'aide)"> ? </a>]</td>
+</tr></table>
+<h4 class="subsubsection"> 6.2.4.2 ClipCache </h4>
+
+<dl compact="compact">
+<dd><a name="IDX86"></a>
+</dd>
+<dt> <samp>`smarty-template-clipcache'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Plugins (Functions)</i> -&gt; <i>ClipCache</i> -&gt; <i>clipcache</i><br>
+<b>Raccourci clavier</b> : <kbd>aucun</kbd><br>
+<b>Description</b> : Voir le manuel du plugin.
+</p>
+<a name="IDX87"></a>
+</dd>
+<dt> <samp>`smarty-template-include-clipcache'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Plugins (Functions)</i> -&gt; <i>ClipCache</i> -&gt; <i>include_clipcache</i><br>
+<b>Raccourci clavier</b> : <kbd>aucun</kbd><br>
+<b>Description</b> : Voir le manuel du plugin.
+</p></dd>
+</dl>
+
+<hr size="6">
+<a name="Te01_002dFu01_002dPl01_002dSmarty_002dFormtool"></a>
+<a name="SEC36"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC35" title="Section pr&eacute;c&eacute;dente dans l'ordre de lecture"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC37" title="Section suivante dans l'ordre de lecture"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC27" title="D&eacute;but de ce chapitre ou chapitre pr&eacute;c&eacute;dent"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC33" title="Section sup&eacute;rieure">Plus haut</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_7.html#SEC44" title="Chapitre suivant"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr.html#Top" title="Couverture (top) du document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_toc.html#SEC_Contents" title="Table des mati&egrave;res">Table des mati&egrave;res</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_8.html#SEC45" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_abt.html#SEC_About" title="&agrave; propos (page d'aide)"> ? </a>]</td>
+</tr></table>
+<h4 class="subsubsection"> 6.2.4.3 Smarty Formtool </h4>
+
+<dl compact="compact">
+<dd><a name="IDX88"></a>
+</dd>
+<dt> <samp>`smarty-template-formtool-checkall'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Plugins (Functions)</i> -&gt; <i>SmartyFormtool</i> -&gt; <i>formtool_checkall</i><br>
+<b>Raccourci clavier</b> : <kbd>aucun</kbd><br>
+<b>Description</b> : Voir le manuel du plugin.
+</p>
+<a name="IDX89"></a>
+</dd>
+<dt> <samp>`smarty-template-formtool-copy'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Plugins (Functions)</i> -&gt; <i>SmartyFormtool</i> -&gt; <i>formtool_copy</i><br>
+<b>Raccourci clavier</b> : <kbd>aucun</kbd><br>
+<b>Description</b> : Voir le manuel du plugin.
+</p>
+<a name="IDX90"></a>
+</dd>
+<dt> <samp>`smarty-template-formtool-count-chars'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Plugins (Functions)</i> -&gt; <i>SmartyFormtool</i> -&gt; <i>formtool_count_chars</i><br>
+<b>Raccourci clavier</b> : <kbd>aucun</kbd><br>
+<b>Description</b> : Voir le manuel du plugin.
+</p>
+<a name="IDX91"></a>
+</dd>
+<dt> <samp>`smarty-template-formtool-init'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Plugins (Functions)</i> -&gt; <i>SmartyFormtool</i> -&gt; <i>formtool_init</i><br>
+<b>Raccourci clavier</b> : <kbd>aucun</kbd><br>
+<b>Description</b> : Voir le manuel du plugin.
+</p>
+<a name="IDX92"></a>
+</dd>
+<dt> <samp>`smarty-template-formtool-move'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Plugins (Functions)</i> -&gt; <i>SmartyFormtool</i> -&gt; <i>formtool_move</i><br>
+<b>Raccourci clavier</b> : <kbd>aucun</kbd><br>
+<b>Description</b> : Voir le manuel du plugin.
+</p>
+<a name="IDX93"></a>
+</dd>
+<dt> <samp>`smarty-template-formtool-moveall'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Plugins (Functions)</i> -&gt; <i>SmartyFormtool</i> -&gt; <i>formtool_moveall</i><br>
+<b>Raccourci clavier</b> : <kbd>aucun</kbd><br>
+<b>Description</b> : Voir le manuel du plugin.
+</p>
+<a name="IDX94"></a>
+</dd>
+<dt> <samp>`smarty-template-formtool-movedown'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Plugins (Functions)</i> -&gt; <i>SmartyFormtool</i> -&gt; <i>formtool_movedown</i><br>
+<b>Raccourci clavier</b> : <kbd>aucun</kbd><br>
+<b>Description</b> : Voir le manuel du plugin.
+</p>
+<a name="IDX95"></a>
+</dd>
+<dt> <samp>`smarty-template-formtool-moveup'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Plugins (Functions)</i> -&gt; <i>SmartyFormtool</i> -&gt; <i>formtool_moveup</i><br>
+<b>Raccourci clavier</b> : <kbd>aucun</kbd><br>
+<b>Description</b> : Voir le manuel du plugin.
+</p>
+<a name="IDX96"></a>
+</dd>
+<dt> <samp>`smarty-template-formtool-remove'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Plugins (Functions)</i> -&gt; <i>SmartyFormtool</i> -&gt; <i>formtool_remove</i><br>
+<b>Raccourci clavier</b> : <kbd>aucun</kbd><br>
+<b>Description</b> : Voir le manuel du plugin.
+</p>
+<a name="IDX97"></a>
+</dd>
+<dt> <samp>`smarty-template-formtool-rename'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Plugins (Functions)</i> -&gt; <i>SmartyFormtool</i> -&gt; <i>formtool_rename</i><br>
+<b>Raccourci clavier</b> : <kbd>aucun</kbd><br>
+<b>Description</b> : Voir le manuel du plugin.
+</p>
+<a name="IDX98"></a>
+</dd>
+<dt> <samp>`smarty-template-formtool-save'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Plugins (Functions)</i> -&gt; <i>SmartyFormtool</i> -&gt; <i>formtool_save</i><br>
+<b>Raccourci clavier</b> : <kbd>aucun</kbd><br>
+<b>Description</b> : Voir le manuel du plugin.
+</p>
+<a name="IDX99"></a>
+</dd>
+<dt> <samp>`smarty-template-formtool-selectall'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Plugins (Functions)</i> -&gt; <i>SmartyFormtool</i> -&gt; <i>formtool_selectall</i><br>
+<b>Raccourci clavier</b> : <kbd>aucun</kbd><br>
+<b>Description</b> : Voir le manuel du plugin.
+</p></dd>
+</dl>
+
+<hr size="6">
+<a name="Te01_002dFu01_002dPl01_002dSmarty_002dPaginate"></a>
+<a name="SEC37"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC36" title="Section pr&eacute;c&eacute;dente dans l'ordre de lecture"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC38" title="Section suivante dans l'ordre de lecture"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC27" title="D&eacute;but de ce chapitre ou chapitre pr&eacute;c&eacute;dent"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC33" title="Section sup&eacute;rieure">Plus haut</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_7.html#SEC44" title="Chapitre suivant"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr.html#Top" title="Couverture (top) du document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_toc.html#SEC_Contents" title="Table des mati&egrave;res">Table des mati&egrave;res</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_8.html#SEC45" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_abt.html#SEC_About" title="&agrave; propos (page d'aide)"> ? </a>]</td>
+</tr></table>
+<h4 class="subsubsection"> 6.2.4.4 Smarty Paginate </h4>
+
+<dl compact="compact">
+<dd><a name="IDX100"></a>
+</dd>
+<dt> <samp>`smarty-template-paginate-first'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Plugins (Functions)</i> -&gt; <i>SmartyPaginate</i> -&gt; <i>paginate_first</i><br>
+<b>Raccourci clavier</b> : <kbd>aucun</kbd><br>
+<b>Description</b> : Voir le manuel du plugin.
+</p>
+<a name="IDX101"></a>
+</dd>
+<dt> <samp>`smarty-template-paginate-last'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Plugins (Functions)</i> -&gt; <i>SmartyPaginate</i> -&gt; <i>paginate_last</i><br>
+<b>Raccourci clavier</b> : <kbd>aucun</kbd><br>
+<b>Description</b> : Voir le manuel du plugin.
+</p>
+<a name="IDX102"></a>
+</dd>
+<dt> <samp>`smarty-template-paginate-middle'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Plugins (Functions)</i> -&gt; <i>SmartyPaginate</i> -&gt; <i>paginate_middle</i><br>
+<b>Raccourci clavier</b> : <kbd>aucun</kbd><br>
+<b>Description</b> : Voir le manuel du plugin.
+</p>
+<a name="IDX103"></a>
+</dd>
+<dt> <samp>`smarty-template-paginate-next'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Plugins (Functions)</i> -&gt; <i>SmartyPaginate</i> -&gt; <i>paginate_next</i><br>
+<b>Raccourci clavier</b> : <kbd>aucun</kbd><br>
+<b>Description</b> : Voir le manuel du plugin.
+</p>
+<a name="IDX104"></a>
+</dd>
+<dt> <samp>`smarty-template-paginate-prev'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Plugins (Functions)</i> -&gt; <i>SmartyPaginate</i> -&gt; <i>paginate_prev</i><br>
+<b>Raccourci clavier</b> : <kbd>aucun</kbd><br>
+<b>Description</b> : Voir le manuel du plugin.
+</p>
+</dd>
+</dl>
+
+<hr size="6">
+<a name="Te01_002dFu01_002dPl01_002dSmarty_002dValidate"></a>
+<a name="SEC38"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC37" title="Section pr&eacute;c&eacute;dente dans l'ordre de lecture"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC39" title="Section suivante dans l'ordre de lecture"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC27" title="D&eacute;but de ce chapitre ou chapitre pr&eacute;c&eacute;dent"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC33" title="Section sup&eacute;rieure">Plus haut</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_7.html#SEC44" title="Chapitre suivant"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr.html#Top" title="Couverture (top) du document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_toc.html#SEC_Contents" title="Table des mati&egrave;res">Table des mati&egrave;res</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_8.html#SEC45" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_abt.html#SEC_About" title="&agrave; propos (page d'aide)"> ? </a>]</td>
+</tr></table>
+<h4 class="subsubsection"> 6.2.4.5 Smarty Validate </h4>
+
+<dl compact="compact">
+<dd><a name="IDX105"></a>
+</dd>
+<dt> <samp>`smarty-template-validate'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Plugins (Functions)</i> -&gt; <i>SmartyValidate</i> -&gt; <i>validate</i><br>
+<b>Raccourci clavier</b> : <kbd>aucun</kbd><br>
+<b>Description</b> : Voir le manuel du plugin.
+</p></dd>
+</dl>
+
+<hr size="6">
+<a name="Te01_002dFu01_002dPlugin_002dModifiers"></a>
+<a name="SEC39"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC38" title="Section pr&eacute;c&eacute;dente dans l'ordre de lecture"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC40" title="Section suivante dans l'ordre de lecture"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC27" title="D&eacute;but de ce chapitre ou chapitre pr&eacute;c&eacute;dent"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC29" title="Section sup&eacute;rieure">Plus haut</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_7.html#SEC44" title="Chapitre suivant"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr.html#Top" title="Couverture (top) du document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_toc.html#SEC_Contents" title="Table des mati&egrave;res">Table des mati&egrave;res</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_8.html#SEC45" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_abt.html#SEC_About" title="&agrave; propos (page d'aide)"> ? </a>]</td>
+</tr></table>
+<h3 class="subsection"> 6.2.5 Modificateurs de variable des plugins </h3>
+
+<table class="menu" border="0" cellspacing="0">
+<tr><td align="left" valign="top"><a href="#SEC40">6.2.5.1 AlternativeDateModifierPlugin</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC41">6.2.5.2 B2Smilies</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+<tr><td align="left" valign="top"><a href="#SEC42">6.2.5.3 bbcode2html</a></td><td>&nbsp;&nbsp;</td><td align="left" valign="top">
+</td></tr>
+</table>
+
+<hr size="6">
+<a name="Te01_002dFu01_002dPl02_002dAlternativeDateModifierPlugin"></a>
+<a name="SEC40"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC39" title="Section pr&eacute;c&eacute;dente dans l'ordre de lecture"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC41" title="Section suivante dans l'ordre de lecture"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC27" title="D&eacute;but de ce chapitre ou chapitre pr&eacute;c&eacute;dent"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC39" title="Section sup&eacute;rieure">Plus haut</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_7.html#SEC44" title="Chapitre suivant"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr.html#Top" title="Couverture (top) du document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_toc.html#SEC_Contents" title="Table des mati&egrave;res">Table des mati&egrave;res</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_8.html#SEC45" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_abt.html#SEC_About" title="&agrave; propos (page d'aide)"> ? </a>]</td>
+</tr></table>
+<h4 class="subsubsection"> 6.2.5.1 AlternativeDateModifierPlugin </h4>
+
+<dl compact="compact">
+<dd><a name="IDX106"></a>
+</dd>
+<dt> <samp>`smarty-template-date-formatto'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Plugins (Variable Modifiers)</i> -&gt; <i>AlternativeDateModifierPlugin</i> -&gt; <i>date_format2</i><br>
+<b>Raccourci clavier</b> : <kbd>aucun</kbd><br>
+<b>Description</b> : Voir le manuel du plugin.
+</p></dd>
+</dl>
+
+<hr size="6">
+<a name="Te01_002dFu01_002dPl02_002dB2Smilies"></a>
+<a name="SEC41"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC40" title="Section pr&eacute;c&eacute;dente dans l'ordre de lecture"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC42" title="Section suivante dans l'ordre de lecture"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC27" title="D&eacute;but de ce chapitre ou chapitre pr&eacute;c&eacute;dent"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC39" title="Section sup&eacute;rieure">Plus haut</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_7.html#SEC44" title="Chapitre suivant"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr.html#Top" title="Couverture (top) du document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_toc.html#SEC_Contents" title="Table des mati&egrave;res">Table des mati&egrave;res</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_8.html#SEC45" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_abt.html#SEC_About" title="&agrave; propos (page d'aide)"> ? </a>]</td>
+</tr></table>
+<h4 class="subsubsection"> 6.2.5.2 B2Smilies </h4>
+
+<dl compact="compact">
+<dd><a name="IDX107"></a>
+</dd>
+<dt> <samp>`smarty-template-btosmilies'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Plugins (Variable Modifiers)</i> -&gt; <i>B2Smilies</i> -&gt; <i>B2Smilies</i><br>
+<b>Raccourci clavier</b> : <kbd>aucun</kbd><br>
+<b>Description</b> : Voir le manuel du plugin.
+</p></dd>
+</dl>
+
+<hr size="6">
+<a name="Te01_002dFu01_002dPl02_002dbbcode2html"></a>
+<a name="SEC42"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC41" title="Section pr&eacute;c&eacute;dente dans l'ordre de lecture"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC43" title="Section suivante dans l'ordre de lecture"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC27" title="D&eacute;but de ce chapitre ou chapitre pr&eacute;c&eacute;dent"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC39" title="Section sup&eacute;rieure">Plus haut</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_7.html#SEC44" title="Chapitre suivant"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr.html#Top" title="Couverture (top) du document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_toc.html#SEC_Contents" title="Table des mati&egrave;res">Table des mati&egrave;res</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_8.html#SEC45" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_abt.html#SEC_About" title="&agrave; propos (page d'aide)"> ? </a>]</td>
+</tr></table>
+<h4 class="subsubsection"> 6.2.5.3 bbcode2html </h4>
+
+<dl compact="compact">
+<dd><a name="IDX108"></a>
+</dd>
+<dt> <samp>`smarty-template-bbcodetohtml'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Plugins (Variable Modifers)</i> -&gt; <i>BBCodePlugin</i> -&gt; <i>bbcode2html</i><br>
+<b>Raccourci clavier</b> : <kbd>aucun</kbd><br>
+<b>Description</b> : Voir le manuel du plugin.
+</p></dd>
+</dl>
+
+<hr size="6">
+<a name="Te01_002dFu01_002dNon_002dSmarty"></a>
+<a name="SEC43"></a>
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC42" title="Section pr&eacute;c&eacute;dente dans l'ordre de lecture"> &lt; </a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_7.html#SEC44" title="Section suivante dans l'ordre de lecture"> &gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="#SEC27" title="D&eacute;but de ce chapitre ou chapitre pr&eacute;c&eacute;dent"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="#SEC29" title="Section sup&eacute;rieure">Plus haut</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_7.html#SEC44" title="Chapitre suivant"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr.html#Top" title="Couverture (top) du document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_toc.html#SEC_Contents" title="Table des mati&egrave;res">Table des mati&egrave;res</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_8.html#SEC45" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_abt.html#SEC_About" title="&agrave; propos (page d'aide)"> ? </a>]</td>
+</tr></table>
+<h3 class="subsection"> 6.2.6 Fonctions Non-Smarty </h3>
+
+
+
+<dl compact="compact">
+<dd><a name="IDX109"></a>
+</dd>
+<dt> <samp>`smarty-template-header'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Insert Header</i><br>
+<b>Raccourci clavier</b> : <kbd>C-c C-t C-h</kbd><br>
+<b>Description</b> : Cette fonction est utilis&eacute;e pour ins&eacute;rer une en-t&ecirc;te dans le buffer.
+</p>
+<a name="IDX110"></a>
+</dd>
+<dt> <samp>`smarty-template-footer'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Insert Footer</i><br>
+<b>Raccourci clavier</b> : <kbd>C-c C-t C-f</kbd><br>
+<b>Description</b> : Cette fonction est utilis&eacute;e pour ins&eacute;rer un pied de page dans le buffer.
+</p>
+<a name="IDX111"></a>
+</dd>
+<dt> <samp>`smarty-template-insert-date'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Insert Date</i><br>
+<b>Raccourci clavier</b> : <kbd>C-c C-t C-d i</kbd><br>
+<b>Description</b> : Cette fonction est utilis&eacute;e pour ins&eacute;rer la date dans le buffer.
+</p>
+<a name="IDX112"></a>
+</dd>
+<dt> <samp>`smarty-template-modify'</samp></dt>
+<dd><p><b>Menu</b> : <i>Smarty</i> -&gt; <i>Templates</i> -&gt; <i>Modify Date</i><br>
+<b>Raccourci clavier</b> : <kbd>C-c C-t C-d m</kbd><br>
+<b>Description</b> : Cette fonction est utilis&eacute;e pour modifier la date de derni&egrave;re modification dans le buffer.
+</p></dd>
+</dl>
+
+<hr size="6">
+<table cellpadding="1" cellspacing="1" border="0">
+<tr><td valign="middle" align="left">[<a href="#SEC27" title="D&eacute;but de ce chapitre ou chapitre pr&eacute;c&eacute;dent"> &lt;&lt; </a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_7.html#SEC44" title="Chapitre suivant"> &gt;&gt; </a>]</td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left"> &nbsp; </td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr.html#Top" title="Couverture (top) du document">Top</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_toc.html#SEC_Contents" title="Table des mati&egrave;res">Table des mati&egrave;res</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_8.html#SEC45" title="Index">Index</a>]</td>
+<td valign="middle" align="left">[<a href="smarty-mode-fr_abt.html#SEC_About" title="&agrave; propos (page d'aide)"> ? </a>]</td>
+</tr></table>
+<p>
+ <font size="-1">
+  Ce document a &eacute;t&eacute; g&eacute;n&eacute;r&eacute; par <em>Vincent DEBOUT</em> <em>le 1 Novembre 2007</em> en utilisant <a href="http://texi2html.cvshome.org/"><em>texi2html 1.76</em></a>.
+ </font>
+ <br>
+
+</p>
+</body>
+</html>
