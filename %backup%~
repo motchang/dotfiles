@@ -1,7 +1,0 @@
-SetEnv DBGP_IDEKEY default
-SetEnv APPLICATION_ENV staging
-php_value xdebug.remote_port 9002
-php_value xdebug.idekey default
-php_flag xdebug.default_enable on
-php_flag xdebug.remote_autostart on
-php_flag xdebug.remote_enable on
