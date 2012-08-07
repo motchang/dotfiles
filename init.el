@@ -1,20 +1,3 @@
-;; より下に記述した物が PATH の先頭に追加されます
-(dolist (dir (list
-              "/sbin"
-              "/usr/sbin"
-              "/bin"
-              "/usr/bin"
-              "/opt/local/bin"
-              "/sw/bin"
-              "/usr/local/bin"
-              (expand-file-name "~/bin")
-              (expand-file-name "~/.emacs.d/bin")
-              ))
-  ;; PATH と exec-path に同じ物を追加します
-  (when (and (file-exists-p dir) (not (member dir exec-path)))
-    (setenv "PATH" (concat dir ":" (getenv "PATH")))
-    (setq exec-path (append (list dir) exec-path))))
-
 ;load-path を追加する関数を定義
 (defun add-to-load-path (&rest paths)
  (let (path)
@@ -177,24 +160,24 @@
 ;; (set-face-underline-p FACE t) 下線を表示
 ;; (set-face-underline-p FACE nil) 下線を消す
 
+(defface my-hl-line-face
+  ;; 背景がdarkならば背景を黒に
+  '((((class color) (background dark))
+     (:background "NavyBlue" t))
+    ;; 背景がlightならば背景色を緑に
+    (((class color) (background light))
+     (:background "LightGoldenrodYellow" t))
+    (t (:bold t)))
+  "hl-line's my face")
 ;; (defface my-hl-line-face
 ;;   ;; 背景がdarkならば背景を黒に
 ;;   '((((class color) (background dark))
-;;      (:background "NavyBlue" t))
+;;      (:background "NavyBlue" :underline t))
 ;;     ;; 背景がlightならば背景色を緑に
 ;;     (((class color) (background light))
 ;;      (:background "LightGoldenrodYellow" t))
 ;;     (t (:bold t)))
 ;;   "hl-line's my face")
-(defface my-hl-line-face
-  ;; 背景がdarkならば背景を黒に
-  '((((class color) (background dark))
-     (:background "NavyBlue" :underline t))
-    ;; 背景がlightならば背景色を緑に
-    (((class color) (background light))
-     (:background "NavyBlue" t))
-    (t (:bold t)))
-  "hl-line's my face")
 (setq hl-line-face 'my-hl-line-face)
 
 ;; 現在行をハイライト表示
@@ -766,7 +749,7 @@
 	     ))
 (autoload 'geben "geben" "PHP Debugger on Emacs" t)
 (autoload 'geben-set-breakpoint-line "geben" "Set a breakpoint at the current line." t)
-(setq geben-dbgp-default-port 9002)
+(setq geben-dbgp-default-port 9005)
 
 
 ;; -----------------------------------------------------------------------------
@@ -845,3 +828,13 @@
 
 ;; C-h で BS
 (global-set-key "\C-h" 'delete-backward-char)
+
+;; 折り返し表示をトグル
+(defun toggle-truncate-lines ()
+  "折り返し表示をトグル"
+  (interactive)
+  (if truncate-lines
+      (setq truncate-lines nil)
+    (setq truncate-lines t))
+  (recenter))
+(global-set-key "\C-c\C-l" 'toggle-truncate-lines)
