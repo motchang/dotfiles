@@ -20,6 +20,7 @@ alias mv='mv -i'
 alias ssh='ssh -o ServerAliveCountMax=5 -o ServerAliveInterval=60'
 
 alias screen='LANG=ja_JP.UTF-8 screen'
+LC_CTYPE=ja_JP.utf8
 
 export PS1='\u@\e[0;36m\h\e[0m \t \d job(s):\[\033[0;32m\]\j\[\033[0m\] wd:\w \nbash-\v \$ '
 export PATH=$PATH":/usr/share/php/ZendFramework/bin/"
