@@ -166,7 +166,7 @@
      (:background "NavyBlue" t))
     ;; 背景がlightならば背景色を緑に
     (((class color) (background light))
-     (:background "LightGoldenrodYellow" t))
+     (:background "NavyBlue" t))
     (t (:bold t)))
   "hl-line's my face")
 ;; (defface my-hl-line-face
@@ -816,6 +816,7 @@
 	       '("\\.tpl$"	.	smarty-mode)
 	       '("\\.el$"	.	lisp-mode)
 	       '("\\.yaml$"	.	yaml-mode)
+	       '("\\.js$"	.	javascript-mode)
 	       auto-mode-alist)))
 
 (require 'browse-kill-ring)

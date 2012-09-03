@@ -29,12 +29,15 @@ export PATH=$PATH":/usr/share/php/ZendFramework/bin/"
 export SVN_EDITOR='vi'
 export GEM_HOME=${HOME}/rubygem_repository
 
-# if [ "$TERM" = 'xterm' -o "$TERM" = 'linux' ]; then
-#   screen -rx || screen -D -RR
-# fi
-
 export HISTSIZE=100000000
 export HISTFILE=~/.bash_history
 export HISTFILESIZE=100000000
 
+PROMPT_COMMAND='echo -n -e "\033]0;${HOSTNAME%%.*}:${PWD/$HOME/~}\007"'
+
 umask 000
+
+# if [ "$TERM" = 'xterm' -o "$TERM" = 'linux' ]; then
+#   screen -rx || screen -D -RR
+# fi
+
