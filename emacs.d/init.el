@@ -6,25 +6,25 @@
 	(add-to-list 'load-path default-directory)
 	(if (fboundp 'normal-top-level-add-subdirs-to-load-path)
 	    (normal-top-level-add-subdirs-to-load-path))))))
-;; elispとconfディレクトリをサブディレクトリごとload-pathに追加
+;; elispとconfティレクトリをサフティレクトリことload-pathに追加
 (add-to-load-path "elisp" "conf")
 
 ;; -----------------------------------------------------------------------------
 ;; (install-elisp "http://www.emacswiki.org/emacs/download/auto-install.el")
 (when (require 'auto-install nil t)
-  ;; インストールディレクトリを設定する 初期値は ~/.emacs.d/auto-install/
+  ;; インストールティレクトリを設定する 初期値は ~/.emacs.d/auto-install/
   (setq auto-install-directory "~/.emacs.d/elisp/")
   ;; EmacsWiki に登録されている elisp の名前を取得する
   (auto-install-update-emacswiki-package-name t)
-  ;; 必要であればプロキシの設定を行う
+  ;; 必要てあれはフロキシの設定を行う
   ;; (setq url-proxy-services '(("http" . "localhost:8339")))
   ;; install-elisp の関数を利用可能にする
   (auto-install-compatibility-setup))
 
-;; ここでC-x C-eとタイプして
-;; みましょう。Emacsを再起動せずとも設定が即座に
-;; 反映されます。C-x C-eはeval-last-sexpにバインド
-;; されており、式を評価してその戻り値をミニバッフ
+;; ここてC-x C-eとタイフして
+;; みましょう。Emacsを再起動せすとも設定か即座に
+;; 反映されます。C-x C-eはeval-last-sexpにハイント
+;; されており、式を評価してその戻り値をミニハッフ
 ;; ァに返します。
 
 ;; -----------------------------------------------------------------------------
@@ -32,43 +32,43 @@
 ;;(install-elisp "http://www.emacswiki.org/emacs/download/redo+.el")
 
 ;; ・C-h a 文字列 RET
-;; 　入力した文字列が含まれているコマンドのリスト
+;; 　入力した文字列か含まれているコマントのリスト
 ;; を表示する（M-x command-apropos）。例：autoinstall
-;; という文字列が含まれるコマンドを調べる
-;; ➡C-h a auto-install RET
+;; という文字列か含まれるコマントを調へる
+;; C-h a auto-install RET
 
 ;; ・C-h b
 ;; 　現在のキーの割り当て表を表示する（M-x
 ;; describe-bindings）
 
-;; ・C-h k キーバインド
-;; 　キーバインドが実行するコマンド（関数）名とその
-;; ドキュメントを表示する（M-x describe-key）。例：
-;; C-qで実行されるコマンドを調べる➡C-h k C-q
+;; ・C-h k キーハイント
+;; 　キーハイントか実行するコマント（関数）名とその
+;; トキュメントを表示する（M-x describe-key）。例：
+;; C-qて実行されるコマントを調へるC-h k C-q
 
-;; ・C-h w コマンド名 RET
-;; 　入力したコマンドを実行するキーを表示する（M-x
-;; where-is）。例：コマンドquery-replaceのキーバ
-;; インドを調べる➡C-h w query-replace RET
+;; ・C-h w コマント名 RET
+;; 　入力したコマントを実行するキーを表示する（M-x
+;; where-is）。例：コマントquery-replaceのキーハ
+;; イントを調へるC-h w query-replace RET
 
 ;; ・C-h f 関数名 RET
 ;; 　入力した関数の説明を表示する（M-x describefunction）
-;; 。例：関数lambda について調べる
-;; ➡C-h f lambda RET
+;; 。例：関数lambda について調へる
+;; C-h f lambda RET
 
 ;; ・C-h v 変数名 RET
 ;; 　入力した変数の説明を表示する（M-x describevariable）
-;; 。例：変数load-path について調べる
-;; ➡C-h v load-path RET
+;; 。例：変数load-path について調へる
+;; C-h v load-path RET
 
 ;; 入力されるキーシーケンスを入れ換える
 ;; ?\C-?はDELのキーシケンス
 ;(keyboard-translate ?\C-h ?\C-?)
-;; 別のキーバイドにヘルプを割り当てる
+;; 別のキーハイトにヘルフを割り当てる
 ;(global-set-key (kbd "C-x ?") 'help-command)
 
 ;; -----------------------------------------------------------------------------
-;; Mac の文字コードの設定
+;; Mac の文字コートの設定
 ;; (set-language-environment "Japanese")
 ;; (require 'ucs-normalize)
 ;; (prefer-coding-system 'utf-8-hfs)
@@ -81,16 +81,16 @@
 (setq file-name-coding-system 'utf-8)
 (setq locale-coding-system 'utf-8)
 
-;; スタートアップメッセージを非表示
+;; スタートアッフメッセーシを非表示
 (setq inhibit-startup-screen t)
-;; tool-barを非表示。コンソールでは不要
+;; tool-barを非表示。コンソールては不要
 ;(tool-bar-mode 0)
-;; scroll-barを非表示。コンソールでは不要
+;; scroll-barを非表示。コンソールては不要
 ;(scroll-bar-mode 0)
 ;; menu-barを非表示
 ;(menu-bar-mode 0)
 
-;; メニューバーにファイルパスを表示する
+;; メニューハーにファイルハスを表示する
 ;; frame-title-format変数にフォーマットを追加します。
 (setq frame-title-format
       (format "%%f - Emacs@%s" (system-name)))
@@ -98,7 +98,7 @@
 ;; 行番号を表示
 ;(global-linum-mode t)
 
-;; 各メジャーモードのインデントサイズ
+;; 各メシャーモートのインテントサイス
 ;(setq js-indent-level 4)
 ;(setq cperl-indent-level 4)
 
@@ -120,11 +120,11 @@
 ;;  (color-theme-billw)
 ;;  (color-theme-arjen)
   )
-;; いい感じの
+;; いい感しの
 ;; Wheat Billw Midnight dark-laptop
 
 ;; paren-mode 対応する括弧を強調して表示する
-;; 表示までの秒数。初期値は0.125
+;; 表示まての秒数。初期値は0.125
 (setq show-paren-delay 0.125)
 ;; 有効化
 (show-paren-mode t)
@@ -140,12 +140,12 @@
 ;;(set-face-underline-p 'show-paren-match-face t)
 ;;(setq show-paren-match-face 'underline)
 
-;; 　Emacsではシンタックスハイライトや警告どの
-;; 表示を色分けしてくれますが、この色分けはフェイ
-;; スと呼ばれます。フェイスには文字色や背景色、字
-;; 体と下線を設定できます。利用できるカラーは、M-x
-;; list-colors-display RETで一覧を見ることができ
-;; ます。フェイス設定用関数一覧は表1のとおりです。
+;; 　Emacsてはシンタックスハイライトや警告どの
+;; 表示を色分けしてくれますか、この色分けはフェイ
+;; スと呼はれます。フェイスには文字色や背景色、字
+;; 体と下線を設定てきます。利用てきるカラーは、M-x
+;; list-colors-display RETて一覧を見ることかてき
+;; ます。フェイス設定用関数一覧は表1のとおりてす。
 
 ;; リージョンの色を変更
 ;(set-face-background 'region "darkgreen")
@@ -161,19 +161,19 @@
 ;; (set-face-underline-p FACE nil) 下線を消す
 
 (defface my-hl-line-face
-  ;; 背景がdarkならば背景を黒に
+  ;; 背景かdarkならは背景を黒に
   '((((class color) (background dark))
      (:background "NavyBlue" t))
-    ;; 背景がlightならば背景色を緑に
+    ;; 背景かlightならは背景色を緑に
     (((class color) (background light))
      (:background "NavyBlue" t))
     (t (:bold t)))
   "hl-line's my face")
 ;; (defface my-hl-line-face
-;;   ;; 背景がdarkならば背景を黒に
+;;   ;; 背景かdarkならは背景を黒に
 ;;   '((((class color) (background dark))
 ;;      (:background "NavyBlue" :underline t))
-;;     ;; 背景がlightならば背景色を緑に
+;;     ;; 背景かlightならは背景色を緑に
 ;;     (((class color) (background light))
 ;;      (:background "LightGoldenrodYellow" t))
 ;;     (t (:bold t)))
@@ -183,18 +183,18 @@
 ;; 現在行をハイライト表示
 (global-hl-line-mode t)
 
-;; 　Emacsは23.1から1文字単位でフォントを指定で
-;; きるようになりました。ただし、そのためのインタ
+;; 　Emacsは23.1から1文字単位てフォントを指定て
+;; きるようになりました。たたし、そのためのインタ
 ;; フェースはなく、設定は難しいと言われています。
-;; ですが、ポイントさえつかめば意外と簡単です。
-;; 　*scratch* バッファで(prin1 (font-familylist))
-;; をC-jすると、Emacsで利用可能なフォント
-;; 名一覧が出力されます（図3）。
-;; 　フォントを設定する簡単な方法は次のとおりです。
+;; てすか、ホイントさえつかめは意外と簡単てす。
+;; 　*scratch* ハッファて(prin1 (font-familylist))
+;; をC-jすると、Emacsて利用可能なフォント
+;; 名一覧か出力されます（図3）。
+;; 　フォントを設定する簡単な方法は次のとおりてす。
 
 ;; 英語フォントを指定
 ;; 　set-face-attributeを使って、利用可能なフォントか
-;; ら指定します。:heightはフォントサイズです。
+;; ら指定します。:heightはフォントサイスてす。
 ;; acii フォントをMenloに
 ;(set-face-attribute 'default nil
 ;		    :family "Menlo"
@@ -203,26 +203,26 @@
 ;; 日本語フォントを指定する
 ;; 　set-fontset-fontとfont-specを使って日本語フォン
 ;; トを指定します。
-;; 日本語フォントをヒラギノ明朝ProNに
+;; 日本語フォントをヒラキノ明朝ProNに
 ;(set-fontset-font
 ; nil 'japanese-jisx0208
 ; (font-spec :family "Hiragino_Mincho_ProN"))
 
-;; 　また、漢字以外の全角文字だけフォントを変える
-;; ことができます。筆者はひらがなとカタカナをモト
-;; ヤシーダ注10にしています。設定方法は、日本語を変
-;; 更したあとにひらがなだけ別のフォントで上書きす
-;; る形です。指定にはUnicodeの符号を利用します。
-;; ひらがなとカタカナをモトヤシーダに
-;; U+3000-303F CJKの記号および句読点
-;; U+3040-309F ひらがな
+;; 　また、漢字以外の全角文字たけフォントを変える
+;; ことかてきます。筆者はひらかなとカタカナをモト
+;; ヤシータ注10にしています。設定方法は、日本語を変
+;; 更したあとにひらかなたけ別のフォントて上書きす
+;; る形てす。指定にはUnicodeの符号を利用します。
+;; ひらかなとカタカナをモトヤシータに
+;; U+3000-303F CJKの記号およひ句読点
+;; U+3040-309F ひらかな
 ;; U+30A0-30FF カタカナ
 ; (set-fontset-font
 ;  nil '(#x3040 . #x30ff)
 ;  (font-spec :family "NfMotoyaCedar"))
 
 ;; フォントの横幅を調節する
-;; 　半角と全角を1:2にしたければ、face-font-rescalealist
+;; 　半角と全角を1:2にしたけれは、face-font-rescalealist
 ;; を調節しましょう。
 ; (setq face-font-rescale-alist
 ;       '((".*Menlo.*" . 1.0)
@@ -232,54 +232,54 @@
 ; 	("-cdac$" . 1.3)))
 
 ;; 　Emacsの設定はinit.elファイルにElispを書くとい
-;; う方式であり、一見すれば敷居が高いかもしれませ
-;; ん。ですが、Emacsには変数や関数を調べる機能が
-;; あるため、それらを使いこなすことで何をどうすれ
-;; ば設定できるのかを知ることができます。本特集で
-;; 紹介したものは一部にすぎませんので、気になるこ
-;; とがあれば「まずはaproposコマンドで調べてみる」
+;; う方式てあり、一見すれは敷居か高いかもしれませ
+;; ん。てすか、Emacsには変数や関数を調へる機能か
+;; あるため、それらを使いこなすことて何をとうすれ
+;; は設定てきるのかを知ることかてきます。本特集て
+;; 紹介したものは一部にすきませんのて、気になるこ
+;; とかあれは「ますはaproposコマントて調へてみる」
 ;; という癖を身につけましょう。
 
 ;; -----------------------------------------------------------------------------
-;; 　Emacsには標準でoccurという検索にマッチした
-;; 行を一覧表示してくれるコマンドがあります。その
-;; occurをマルチバッファ対応、操作性や可読性の向上
-;; などあらゆる面で使いやすくなるよう開発されたの
-;; がcolor-moccurです。検索結果を直接編集可能にす
+;; 　Emacsには標準てoccurという検索にマッチした
+;; 行を一覧表示してくれるコマントかあります。その
+;; occurをマルチハッファ対応、操作性や可読性の向上
+;; なとあらゆる面て使いやすくなるよう開発されたの
+;; かcolor-moccurてす。検索結果を直接編集可能にす
 ;; るmoccur-editも同時に利用することをお勧めします。
 ;(install-elisp
 ; "http://www.emacswiki.org/emacs/download/color-moccur.el")
 ;(install-elisp
 ; "http://www.emacswiki.org/emacs/download/moccur-edit.el")
 (when (require 'color-moccur nil t)
-  ;; グローバルマップにoccur-by-moccurを割り当て
+  ;; クローハルマッフにoccur-by-moccurを割り当て
   (define-key global-map (kbd "M-o") 'occur-by-moccur)
-  ;; スペース区切りでAND検索
+  ;; スヘース区切りてAND検索
   (setq moccur-split-word t)
-  ;; ディレクトリ検索のとき除外するファイル
+  ;; ティレクトリ検索のとき除外するファイル
   (add-to-list 'dmoccur-exclusion-mask "\\.DS_Store")
   (add-to-list 'dmoccur-exclusion-mask "^#.+#$")
   (require 'moccur-edit nil t)
-  ;; Migemoを利用できる環境であればMigemoを使う
+  ;; Migemoを利用てきる環境てあれはMigemoを使う
   (when (and (executable-find "cmigemo")
 	     (require 'migemo nil t))
     (setq moccur-use-migemo t)))
 
-;; 　M-x moccur RETを実行すると、ミニバッファで
-;; List lines matching regexp: と聞かれますので、
+;; 　M-x moccur RETを実行すると、ミニハッファて
+;; List lines matching regexp: と聞かれますのて、
 ;; 検索したい文字列を入力して確定します。すると
-;; *Moccur*バッファが開かれ、検索文字列にマッチ
-;; した行が一覧表示されます（図1）。
-;; 　*Moccur*上で行移動すると、分割されたバッフ
-;; ァに対応する行の周辺が表示されます。もちろん、
-;; RETでその行へジャンプできます。
-;; 　併せてmoccur-editを利用するとrを押すことで、
-;; 検索結果を直接編集できるようになります。C-c C-c
+;; *Moccur*ハッファか開かれ、検索文字列にマッチ
+;; した行か一覧表示されます（図1）。
+;; 　*Moccur*上て行移動すると、分割されたハッフ
+;; ァに対応する行の周辺か表示されます。もちろん、
+;; RETてその行へシャンフてきます。
+;; 　併せてmoccur-editを利用するとrを押すことて、
+;; 検索結果を直接編集てきるようになります。C-c C-c
 ;; かC-x C-s（moccur-edit-finish-edit）を押すと、編
-;; 集内容がバッファへと反映されます。ですが、まだ
-;; 保存はされていないので、あとでちゃんと保存しま
-;; しょう。なお、編集はC-c C-uで破棄できます。
-;; 　いちいち保存するのが面倒な場合は、次の設定を
+;; 集内容かハッファへと反映されます。てすか、また
+;; 保存はされていないのて、あとてちゃんと保存しま
+;; しょう。なお、編集はC-c C-uて破棄てきます。
+;; 　いちいち保存するのか面倒な場合は、次の設定を
 ;; init.elに記述することによって編集の終了と同時に
 ;; ファイルへ保存します。
 
@@ -287,20 +287,20 @@
 ;  (after save-after-moccur-edit-buffer activate)
 ;  (save-buffer))
 
-;; 主なmoccurコマンド
-; occur-by-moccur カレントバッファでmoccur
-; moccur すべてのバッファへmoccur
-; dmoccur 指定ディレクトリに対してmoccur
+;; 主なmoccurコマント
+; occur-by-moccur カレントハッファてmoccur
+; moccur すへてのハッファへmoccur
+; dmoccur 指定ティレクトリに対してmoccur
 ; moccur-grep moccurを使ったgrep検索
 
 ;; -----------------------------------------------------------------------------
 ;(install-elisp "http://www.emacswiki.org/emacs/download/grep-edit.el")
 (require 'grep-edit)
 ;; 　M-x grep、M-x lgrep、M-x rgrep から検
-;; 索を実行します。moccur-editと違い、すで
-;; に直接編集できるようになっています。M-%
-;; （query-replace）などの置換コマンドを利用
-;; するとさらに便利でしょう。
+;; 索を実行します。moccur-editと違い、すて
+;; に直接編集てきるようになっています。M-%
+;; （query-replace）なとの置換コマントを利用
+;; するとさらに便利てしょう。
 
 ;; -----------------------------------------------------------------------------
 
@@ -313,17 +313,17 @@
   (define-key ac-mode-map (kbd "M-i") 'auto-complete)
   (setq ac-auto-start 3)
   (ac-config-default))
-;;(global-set-key (kbd "M-i") 'auto-complete)
+(global-set-key (kbd "M-i") 'auto-complete)
 
 ;; 補完候補について
 ;; 　auto-complete-modeの補完候補は、ソースと呼ば
 ;; れる情報源（辞書のようなもの）によって管理されて
-;; います。ソースを無造作に増やし過ぎると動が重く
+;; います。ソースを無造作に増やし過きると動が重く
 ;; くなってしまうのですが、auto-complete-configでは
 ;; 各メジャーモードにによってソースを限ることで
 ;; PerlにはPerlの、CSSにはCSSに適した補完候補を
 ;; 表示してくれます。
-;; 　なお、デフォルトはac-source-words-in-samemode-
+;; 　なお、テフォルトはac-source-words-in-samemode-
 ;; buffersという編集中のバッファと
 ;; ーモードのバッファ内の単語を補完候補にするソー
 ;; スがセットされています。
@@ -337,17 +337,17 @@
 
 ;; 代表的な使い方
 ;; 　smartchrの基本的な利用法は、キーバインドに入
-;; 力したい文字をリストで登録するだけです。ポイン
+;; 力したい文字をリストて登録するたけてす。ホイン
 ;; トとしては、上記の例は=キーを繰り返しタイプす
-;; ることで"="と" = "と"  =  "と"  ==  "がサイクル
+;; ることて"="と" = "と"  =  "と"  ==  "かサイクル
 ;; します。この拡張の一番良いところは標準の入力を
-;; 汚さずに特殊な入力も実現できるという点でしょう。
+;; 汚さすに特殊な入力も実現てきるという点てしょう。
 
 ;; -----------------------------------------------------------------------------
 ;; 　M-x auto-install-batch RETしExtension name:
-;; anything RETでanything関連のElisp群がダウンロ
-;; ードされます。ダウンロードが完了すると、インス
-;; トールするかどうかを聞かれますのでC-c C-cでイ
+;; anything RETてanything関連のElisp群かタウンロ
+;; ートされます。タウンロートか完了すると、インス
+;; トールするかとうかを聞かれますのてC-c C-cてイ
 ;; ンストールしてきましょう。
 
 ;; リスト１
@@ -374,8 +374,8 @@
        (executable-find "cmigemo")
        (require 'anything-migemo nil t))
   (when (require 'anything-complete nil t)
-    ;; M-xによる補完をAnythingで行う
-    ;; (anything-read-string-mode 1) ←❶
+    ;; M-xによる補完をAnythingて行う
+    ;; (anything-read-string-mode 1) ←
     ;; lispシンボルの補完候補の再検索時間
     (anything-lisp-complete-symbol-set-timer 150))
   (require 'anything-show-completion nil t)
@@ -386,9 +386,9 @@
     (descbinds-anything-install))
   (require 'anything-grep nil t))
 
-;; 　manやinfoなどドキュメントを検索するための
-;; Anythingコマンドを作成してみましょう。まずは、
-;; ドキュメント検索に関連するソースのリストを作成
+;; 　manやinfoなとトキュメントを検索するための
+;; Anythingコマントを作成してみましょう。ますは、
+;; トキュメント検索に関連するソースのリストを作成
 ;; します。
 (setq anything-for-document-sources
       (list
@@ -399,70 +399,70 @@
        anything-c-source-apropos-emacs-commands
        anything-c-source-apropos-emacs-functions
        anything-c-source-apropos-emacs-variables))
-;; 　コマンドを起動したときにカーソル位置に単語が
-;; あれば、その単語をすでに絞り込んだ状態で表示で
-;; きれば便利です。そういったニーズも、anything関
+;; 　コマントを起動したときにカーソル位置に単語か
+;; あれは、その単語をすてに絞り込んた状態て表示て
+;; きれは便利てす。そういったニースも、anything関
 ;; 数の第2引数に(thing-at-point 'symbol)を与える
-;; ことで簡単に実現できます。
+;; ことて簡単に実現てきます。
 (defun anything-for-document ()
   "Preconfigured `anything' for anything-for-document."
   (interactive)
   (anything anything-for-document-sources
 	    (thing-at-point 'symbol) nil nil nil
 	    "*anything for document*"))
-;; 　これで、M-x anything-for-documentで、カーソ
-;; ルがある単語を即座にドキュメント検索できるコマ
-;; ンドが作成できました。頻繁に利用するのであれば
-;; これをキーバインドに割り当てることで、さらに便
+;; 　これて、M-x anything-for-documentて、カーソ
+;; ルかある単語を即座にトキュメント検索てきるコマ
+;; ントか作成てきました。頻繁に利用するのてあれは
+;; これをキーハイントに割り当てることて、さらに便
 ;; 利に使えるようになります。筆者はs-dに割り当て
 ;; て利用しています（図4）。
-;; 　このコマンドの便利なところは、manやEmacs
-;; のinfoドキュメント、aproposコマンドによるElisp
-;; 関数や変数のすべてのドキュメントを串刺し検索で
-;; きるところです（図5）。
+;; 　このコマントの便利なところは、manやEmacs
+;; のinfoトキュメント、aproposコマントによるElisp
+;; 関数や変数のすへてのトキュメントを串刺し検索て
+;; きるところてす（図5）。
 
-;; anything-show-kill-ring：キルリングをビジュ
-;; アライズ
-;; 　Emacsは過去にC-kやC-wで消去した文字をキル
-;; リングと呼ばれる場所に保存しています。M-x
+;; anything-show-kill-ring：キルリンクをヒシュ
+;; アライス
+;; 　Emacsは過去にC-kやC-wて消去した文字をキル
+;; リンクと呼はれる場所に保存しています。M-x
 ;; anything-show-kill-ringを利用すると、キルリン
-;; グを一覧表示できるため（図6）、標準のC-y M-yよ
+;; クを一覧表示てきるため（図6）、標準のC-y M-yよ
 ;; りも格段に使い勝手に優れます。
 
 ;; anything-resume：Anythingの結果を
-;; リジューム
+;; リシューム
 ;; 　Anythingを利用して絞り込みをかけた結果
-;; を再度利用したい場合、anything-resumeが
+;; を再度利用したい場合、anything-resumeか
 ;; 役に立ちます。M-x anything-resumeすると、
-;; 直前に利用したAnythingコマンドの結果を再
+;; 直前に利用したAnythingコマントの結果を再
 ;; 現してくれます。
 
 ;; anything-query-replace-regexp：
 ;; 絞り込み表示してから置換
-;; 　正規表現を利用して対話的に置換できるqueryreplace-
-;; regexpコマンドは便利ですが、置換が始ま
-;; るまでどの文字に置換されるかわかりません。
+;; 　正規表現を利用して対話的に置換てきるqueryreplace-
+;; regexpコマントは便利てすか、置換か始ま
+;; るまてとの文字に置換されるかわかりません。
 ;; anything-query-replace-regexpは置換対象を先に絞
-;; り込んで確認できるため、正規表現のミスをなくす
-;; ことができます。
+;; り込んて確認てきるため、正規表現のミスをなくす
+;; ことかてきます。
 
 ;; describe-bindings C-h b
-;; 　descbinds-anything.elをインストールしたうえで、
+;; 　descbinds-anything.elをインストールしたうえて、
 ;; リスト1 の設定(descbinds-anything-install) を
-;; 有効にしていると、C-h bによるキーバインド一覧
-;; 表示がAnythingインタフェースに置き換わります。
-;; 　関数名やキーバインドから絞り込みができるため、
-;; describe-bindingsを起動して、たとえばmarkを入
-;; 力すると、コマンド名にmarkを含むキーバインド
-;; だけを見ることができます。なお、そのまま選択す
-;; るとコマンドが実行されます。
+;; 有効にしていると、C-h bによるキーハイント一覧
+;; 表示かAnythingインタフェースに置き換わります。
+;; 　関数名やキーハイントから絞り込みかてきるため、
+;; describe-bindingsを起動して、たとえはmarkを入
+;; 力すると、コマント名にmarkを含むキーハイント
+;; たけを見ることかてきます。なお、そのまま選択す
+;; るとコマントか実行されます。
 
 
-;; anything-project：プロジェクトからファイル
+;; anything-project：フロシェクトからファイル
 ;; を絞り込み
-;; 　開発中はプロジェクトの中からファイルを開くこ
-;; とが頻繁にあります。anything-projectはGitなどで
-;; 管理されているプロジェクトからファイル一覧を取
+;; 　開発中はフロシェクトの中からファイルを開くこ
+;; とか頻繁にあります。anything-projectはGitなとて
+;; 管理されているフロシェクトからファイル一覧を取
 ;; 得してくれます。リスト2のように設定して利用し
 ;; ます。
 ;(install-elisp "http://github.com/imakado/anything-project/raw/master/anything-project.el")
@@ -478,7 +478,7 @@
 ;; anything-c-moccur：Moccurの
 ;; Anythingインタフェース
 ;; 　検索、絞り込みはAnythingとたいへん相性の良い
-;; 操作です。バッファから文字列を検索するMoccur
+;; 操作てす。ハッファから文字列を検索するMoccur
 ;; はAnythingによってさらに便利になります。リスト
 ;; 3のように設定して利用します。
 ;(install-elisp "http://svn.coderepos.org/share/lang/elisp/anything-c-moccur/trunk/anything-c-moccur.el")
@@ -486,17 +486,20 @@
   (setq
    ;; anything-c-moccur用 `anything-idle-delay'
    anything-c-moccur-anything-idle-delay 0.1
-   ;; バッファの情報をハイライトする
+   ;; ハッファの情報をハイライトする
    lanything-c-moccur-higligt-info-line-flag t
    ;; 現在選択中の候補の位置をほかのwindowに表示する
    anything-c-moccur-enable-auto-look-flag t
-   ;; 起動時にポイントの位置の単語を初期パターンにする
+   ;; 起動時にホイントの位置の単語を初期ハターンにする
    anything-c-moccur-enable-initial-pattern t)
   (global-set-key (kbd "C-M-o") 'anything-c-moccur-occur-by-moccur))
 
 ;; -----------------------------------------------------------------------------
 (when (require 'flymake nil t)
   (global-set-key "\C-cd" 'flymake-display-err-menu-for-current-line)
+  (set-face-background 'flymake-errline "Red")
+  ;(set-face-underline-p 'flymake-errline t)
+  (set-face-underline-p 'flymake-errline nil)
   ;; PHP
   (when (not (fboundp 'flymake-php-init))
     (defun flymake-php-init ()
@@ -543,8 +546,8 @@
 ;;         '("ruby" '("-c" local-file)))))
   ) ; END OF when require 'flymake nil t
 
-;;   (add-hook 'php-mode-hook
-;;             '(lambda () (flymake-mode t)))
+(add-hook 'php-mode-hook
+	  '(lambda () (flymake-mode t)))
 ;;   (add-hook 'js-mode-hook
 ;;             '(lambda () (flymake-mode t)))
 ;;   (add-hook 'ruby-mode-hook
@@ -556,44 +559,43 @@
 (require 'auto-highlight-symbol)
 (global-auto-highlight-symbol-mode t)
 
-
 ;; -----------------------------------------------------------------------------
 ;; Emacsから本格的にシェルを使う
-;; 　Emacsで本格的にシェルを利用している人の多く
+;; 　Emacsて本格的にシェルを利用している人の多く
 ;; は、Emacs標準搭載のターミナルエミュレータansiterm
-;; を使用しています。ですが、ansi-termはEmacs
-;; 標準のキーバインドを奪ってしまうため、ansi-term
+;; を使用しています。てすか、ansi-termはEmacs
+;; 標準のキーハイントを奪ってしまうため、ansi-term
 ;; に機能を加えたmulti-termの導入をお勧めします。
 ;(install-elisp
 ; "http://www.emacswiki.org/emacs/download/multi-term.el")
 ;; 設定例
-;; 　multi-termを読み込んだ後、お好みのシェルを設
-;; 定するだけです。
+;; 　multi-termを読み込んた後、お好みのシェルを設
+;; 定するたけてす。
 (when (require 'multi-term nil t)
   (setq multi-term-program "/bin/bash"))
 ;; 代表的な使い方
-;; 　M-x multi-term RETを実行するとEmacsのバッ
-;; ファにターミナルが開きます。まるで本当のターミ
-;; ナルにいるかのようにシェルを使うことができます。
-;; 　multi-termは、実行のたびに新たなシェルを開く
-;; ことができ、GNU Screenの代わりとしても利用で
+;; 　M-x multi-term RETを実行するとEmacsのハッ
+;; ファにターミナルか開きます。まるて本当のターミ
+;; ナルにいるかのようにシェルを使うことかてきます。
+;; 　multi-termは、実行のたひに新たなシェルを開く
+;; ことかてき、GNU Screenの代わりとしても利用て
 ;; きます。
 
 ;; -----------------------------------------------------------------------------
 ;; Tramp：Emacsから
-;; サーバのファイルを直接編集
-;; 　Emacsは標準でSSHやFTPを使って直接サーバの
-;; ファイルを編集できます。
+;; サーハのファイルを直接編集
+;; 　Emacsは標準てSSHやFTPを使って直接サーハの
+;; ファイルを編集てきます。
 ;; SSHを使った接続
-;; 　C-x C-f（find-file）から/sshx:ユーザ名@ホスト
-;; 名:と入力していくと、そのままサーバに接続され、
-;; まるでローカルファイルのように扱うことができま
+;; 　C-x C-f（find-file）から/sshx:ユーサ名@ホスト
+;; 名:と入力していくと、そのままサーハに接続され、
+;; まるてローカルファイルのように扱うことかてきま
 
 ;; ---------------------------------------------------------
 ;; 自慢の.emacsを貼り付けるスレ
 ;; ---------------------------------------------------------
 ;;
-;; スタートアップメッセージを表示しない
+;; スタートアッフメッセーシを表示しない
 ;(setq inhibit-startup-message t)
 
 ;; emacs 終了時に確認する。
@@ -608,13 +610,13 @@
 ;; 保存時に余計な空白を削除する
 (add-hook 'before-save-hook 'delete-trailing-whitespace)
 
-;;C-x bでbuffersを選ぶ時便利
+;;C-x bてbuffersを選ふ時便利
 ;;older than Emacs 21
 ;; (iswitchb-default-keybindings)
 ;;Emacs 21 or newer
 (iswitchb-mode 1)
 
-;; バッファを切り替えるのに C-x C-b で electric-buffer-list を使う。
+;; ハッファを切り替えるのに C-x C-b て electric-buffer-list を使う。
 (global-set-key "\C-x\C-b" 'electric-buffer-list)
 
 ;; ステータスラインに時間を表示する
@@ -627,17 +629,17 @@
       '(month "/" day "(" dayname ") " 24-hours ":" minutes))
 (display-time)
 
-;; 行番号・桁番号をモードラインに表示する
+;; 行番号・桁番号をモートラインに表示する
 (line-number-mode t)
 (column-number-mode t)
 
-;; 画面から出たとき一行だけスクロールさせる
+;; 画面から出たとき一行たけスクロールさせる
 (setq scroll-conservatively 1)
 
-;; バッファの最後の行で next-line しても新しい行を作らない
+;; ハッファの最後の行て next-line しても新しい行を作らない
 (setq next-line-add-newlines nil)
 
-;; バッファの最初の行で previous-line しても、
+;; ハッファの最初の行て previous-line しても、
 ;; "beginning-of-buffer" と注意されないようにする。
 (defun previous-line (arg)
   (interactive "p")
@@ -648,13 +650,13 @@
     (line-move (- arg)))
   nil)
 
-;; hoge.txt~ みたいなバックアップファイルを作らないようにする
+;; hoge.txt~ みたいなハックアッフファイルを作らないようにする
 ; (setq backup-inhibited t)
 
-;; c-mode その他で色が付くようにする
+;; c-mode その他て色か付くようにする
 (global-font-lock-mode t)
 
-;; 検索とかリージョンを色付きに。
+;; 検索とかリーションを色付きに。
 (setq transient-mark-mode t)
 (setq search-highlight t)
 (setq query-replace-highlight t)
@@ -662,7 +664,7 @@
 (set-face-foreground 'region "black")
 (set-face-background 'region "pink")
 
-;; C-tで別のウィンドウに切り替える
+;; C-tて別のウィントウに切り替える
 (global-set-key (kbd "C-x C-o") 'other-window)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -755,8 +757,8 @@
 ;; -----------------------------------------------------------------------------
 ;; tag jump
 ;; -----------------------------------------------------------------------------
-;(require 'anything-etags)
-;; (require 'anything-gtagsA )
+;;(require 'anything-etags)
+;; (require 'anything-gtags)
 ;; (define-key global-map (kbd "C-x t")
 ;;   (lambda ()
 ;;     "Tag jump using etags, gtags and `anything'."
@@ -813,6 +815,7 @@
 (setq auto-mode-alist
       (append (list
 	       '("\\.php$"	.	php-mode)
+	       '("\\.sql$"	.	sql-mode)
 	       '("\\.tpl$"	.	smarty-mode)
 	       '("\\.el$"	.	lisp-mode)
 	       '("\\.yaml$"	.	yaml-mode)
@@ -822,10 +825,8 @@
 (require 'browse-kill-ring)
 (browse-kill-ring-default-keybindings)
 
-
 ;; vc
 (setq diff-switches "-w")
-
 
 ;; C-h で BS
 (global-set-key "\C-h" 'delete-backward-char)
@@ -838,4 +839,21 @@
       (setq truncate-lines nil)
     (setq truncate-lines t))
   (recenter))
+
+(setq truncate-partial-width-windows t)
 (global-set-key "\C-c\C-l" 'toggle-truncate-lines)
+
+;; -----------------------------------------------------------------------------
+;; smarty-mode
+;; -----------------------------------------------------------------------------
+; (load-library "cedet")
+; (global-ede-mode 1)
+; (semantic-mode 1)
+
+;; -----------------------------------------------------------------------------
+;; window manager
+;; -----------------------------------------------------------------------------
+(require 'e2wm)
+(global-set-key (kbd "M-+") 'e2wm:start-management)
+
+(require 'anything-startup)
