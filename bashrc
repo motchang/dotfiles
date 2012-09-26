@@ -24,10 +24,17 @@ LC_CTYPE=ja_JP.utf8
 
 export PS1='\u@\e[0;36m\h\e[0m \t \d job(s):\[\033[0;32m\]\j\[\033[0m\] wd:\w \nbash-\v \$ '
 export PATH=$PATH":/usr/share/php/ZendFramework/bin/"
+if [ -d ${HOME}/src/Behat/bin/ ]; then
+  export PATH=$PATH":${HOME}/src/Behat/bin/"
+fi
 
 #export SVN_EDITOR='~/bin/emacs --no-init-file -nw'
 export SVN_EDITOR='vi'
+
 export GEM_HOME=${HOME}/rubygem_repository
+if [ -d ${HOME}/rubygem_repository/bin/ ]; then
+	export PATH=${HOME}/rubygem_repository/bin/:${PATH}
+fi
 
 export HISTSIZE=100000000
 export HISTFILE=~/.bash_history
@@ -37,7 +44,9 @@ PROMPT_COMMAND='echo -n -e "\033]0;${HOSTNAME%%.*}:${PWD/$HOME/~}\007"'
 
 umask 000
 
+export PATH="$HOME/.rbenv/bin:$PATH"
+eval "$(rbenv init -)"
+
 # if [ "$TERM" = 'xterm' -o "$TERM" = 'linux' ]; then
 #   screen -rx || screen -D -RR
 # fi
-
