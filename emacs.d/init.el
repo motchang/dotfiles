@@ -495,6 +495,8 @@
   (global-set-key (kbd "C-M-o") 'anything-c-moccur-occur-by-moccur))
 
 ;; -----------------------------------------------------------------------------
+;; flymake-mode
+;; -----------------------------------------------------------------------------
 (when (require 'flymake nil t)
   (global-set-key "\C-cd" 'flymake-display-err-menu-for-current-line)
   (set-face-background 'flymake-errline "Red")
@@ -743,16 +745,61 @@
 		   c-hanging-comment-ender-p nil
 		   indent-tabs-mode nil)
 	     ))
+
 (add-hook 'php-mode-user-hook
+
+
+
+
+
+
 	  '(lambda ()
 	     (setq php-manual-path "~/share/doc/php/xhtml/")
 	     (setq php-search-url "http://www.php.net/ja/")
 	     (setq php-manual-url "http://www.php.net/manual/ja/")
 	     ))
+
 (autoload 'geben "geben" "PHP Debugger on Emacs" t)
 (autoload 'geben-set-breakpoint-line "geben" "Set a breakpoint at the current line." t)
 (setq geben-dbgp-default-port 9005)
 
+(add-hook 'javascript-mode-hook
+         (lambda ()
+             (when (require 'auto-complete nil t)
+	       (make-variable-buffer-local 'ac-sources)
+	       (auto-complete-mode t))
+	     (setq tab-width 4)
+	     (setq indent-tabs-mode nil)
+	     (c-toggle-hungry-state t)
+	     (c-set-offset 'case-label' 2)
+	     (c-set-offset 'arglist-intro' 2)
+	     (c-set-offset 'arglist-close' 0)
+	     (setq tab-width 2
+		   c-basic-offset 2
+		   c-hanging-comment-ender-p nil
+		   indent-tabs-mode nil)
+	     ))
+
+;; -----------------------------------------------------------------------------
+;; javascript mode
+;; -----------------------------------------------------------------------------
+(require 'js2-mode)
+(add-hook 'js2-mode-hook
+	  (lambda ()
+	    (when (require 'auto-complete nil t)
+	      (make-variable-buffer-local 'ac-sources)
+	      (auto-complete-mode t))
+	    (setq tab-width 2)
+	    (setq indent-tabs-mode nil)
+	    (c-toggle-hungry-state t)
+	    (c-set-offset 'case-label' 2)
+	    (c-set-offset 'arglist-intro' 2)
+	    (c-set-offset 'arglist-close' 0)
+	    (setq tab-width 2
+		  c-basic-offset 2
+		  c-hanging-comment-ender-p nil
+		  indent-tabs-mode nil)
+	    ))
 
 ;; -----------------------------------------------------------------------------
 ;; tag jump
@@ -810,6 +857,51 @@
 (setq smarty-right-delimiter "})")
 
 ;; -----------------------------------------------------------------------------
+;; coffee mode
+;; -----------------------------------------------------------------------------
+(require 'coffee-mode)
+(setq whitespace-action '(auto-cleanup)) ;; automatically clean up bad whitespace
+(setq whitespace-style '(trailing space-before-tab indentation empty space-after-tab)) ;; only show bad whitespace
+
+(defun coffee-custom ()
+  "coffee-mode-hook"
+
+  ;; CoffeeScript uses two spaces.
+  ;(make-local-variable 'tab-width)
+  ;(set 'tab-width 2)
+
+  ;; code style
+  (setq tab-width 2)
+  (setq indent-tabs-mode nil)
+  (c-toggle-hungry-state t)
+  (c-set-offset 'case-label' 2)
+  (c-set-offset 'arglist-intro' 2)
+  (c-set-offset 'arglist-close' 0)
+  (setq tab-width 2
+	c-basic-offset 2
+	c-hanging-comment-ender-p nil
+	indent-tabs-mode nil)
+
+
+  ;; If you don't want your compiled files to be wrapped
+  (setq coffee-args-compile '("-c" "--bare"))
+
+  ;; Emacs key binding
+  (define-key coffee-mode-map [(meta r)] 'coffee-compile-buffer)
+
+  ;; Riding edge.
+  ;;(setq coffee-command "~/dev/coffee")
+
+  ;; Compile '.coffee' files on every save
+  (and (file-exists-p (buffer-file-name))
+       (file-exists-p (coffee-compiled-file-name))
+       (coffee-cos-mode t))
+
+  )
+
+(add-hook 'coffee-mode-hook 'coffee-custom)
+
+;; -----------------------------------------------------------------------------
 ;; 関連付けとか
 ;; -----------------------------------------------------------------------------
 (setq auto-mode-alist
@@ -819,7 +911,9 @@
 	       '("\\.tpl$"	.	smarty-mode)
 	       '("\\.el$"	.	lisp-mode)
 	       '("\\.yaml$"	.	yaml-mode)
-	       '("\\.js$"	.	javascript-mode)
+	       '("\\.js$"	.	js2-mode)
+	       '("\\.coffee$"	.	coffee-mode)
+	       '("Cakefile"	.	coffee-mode)
 	       auto-mode-alist)))
 
 (require 'browse-kill-ring)
@@ -844,7 +938,7 @@
 (global-set-key "\C-c\C-l" 'toggle-truncate-lines)
 
 ;; -----------------------------------------------------------------------------
-;; smarty-mode
+;; CEDET
 ;; -----------------------------------------------------------------------------
 ; (load-library "cedet")
 ; (global-ede-mode 1)
