@@ -48,6 +48,10 @@ umask 000
 export PATH="$HOME/.rbenv/bin:$PATH"
 eval "$(rbenv init -)"
 
+if [ -d ${HOME}/bin ]; then
+	export PATH=${HOME}/bin:${PATH}
+fi
+
 # git コマンドがイカれるので変数を握りつぶす
 unset SSH_ASKPASS
 
