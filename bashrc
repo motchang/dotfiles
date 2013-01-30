@@ -16,7 +16,7 @@ fi
 if [ `uname` = "Darwin" ]
 then
     #mac用のコード
-    nop='nop'
+    alias ls='ls -G'
 fi
 
 if [ `uname` = "Linux" ]

@@ -1,7 +1,5 @@
 # .bash_profile
 
-export LANG=ja_JP.utf8
-
 # Get the aliases and functions
 if [ -f ~/.bashrc ]; then
 	. ~/.bashrc
@@ -11,7 +9,19 @@ fi
 # User specific environment and startup programs
 # ------------------------------------------------------------------------------
 export GEM_HOME=${HOME}/rubygem_repository
-export LC_CTYPE=ja_JP.utf8
+if [ `uname` = "Darwin" ]
+then
+    #mac用のコード
+    nop='nop'
+fi
+
+if [ `uname` = "Linux" ]
+then
+    #Linux用のコード
+    export LANG=ja_JP.utf8
+    export LC_CTYPE=ja_JP.utf8
+fi
+
 #export SVN_EDITOR='~/bin/emacs --no-init-file -nw'
 export SVN_EDITOR='vi'
 # PATH
@@ -48,7 +58,7 @@ if [ "$TERM" = 'xterm' -o "$TERM" = 'linux' ]; then
 	export TERM=xterm-256color
 #	$HOME/bin/emacs --daemon
 	screen -rx || screen -D -RR
-NOP='NOP'
+	NOP='NOP'
 fi
 
 # ------------------------------------------------------------------------------
