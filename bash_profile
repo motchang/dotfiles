@@ -20,6 +20,23 @@ then
     #Linux用のコード
     export LANG=ja_JP.utf8
     export LC_CTYPE=ja_JP.utf8
+
+    # ssh agent forwarding
+    if [ -f /usr/bin/ssh-agent ]
+    then
+	eval `/usr/bin/ssh-agent`
+
+	if [ -f ~/.ssh/id_rsa ]
+	then
+	    ssh-add ~/.ssh/id_rsa
+	fi
+
+	if [ -f ~/Dropbox/ssh/id_rsa ]
+	then
+	    ssh-add ~/Dropbox/ssh/id_rsa
+	fi
+    fi
+
 fi
 
 #export SVN_EDITOR='~/bin/emacs --no-init-file -nw'
@@ -59,24 +76,6 @@ if [ "$TERM" = 'xterm' -o "$TERM" = 'linux' ]; then
 #	$HOME/bin/emacs --daemon
 	screen -rx || screen -D -RR
 	NOP='NOP'
-fi
-
-# ------------------------------------------------------------------------------
-# ssh agent forwarding
-# ------------------------------------------------------------------------------
-if [ -f /usr/bin/ssh-agent ]
-then
-    eval `/usr/bin/ssh-agent`
-
-    if [ -f ~/.ssh/id_rsa ]
-    then
-	ssh-add ~/.ssh/id_rsa
-    fi
-
-    if [ -f ~/Dropbox/ssh/id_rsa ]
-    then
-	ssh-add ~/Dropbox/ssh/id_rsa
-    fi
 fi
 
 # ------------------------------------------------------------------------------
