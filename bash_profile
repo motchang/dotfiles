@@ -12,7 +12,21 @@ export GEM_HOME=${HOME}/rubygem_repository
 if [ `uname` = "Darwin" ]
 then
     #mac用のコード
-    nop='nop'
+    # ssh agent forwarding
+    if [ -f /usr/bin/ssh-agent ]
+    then
+        eval `/usr/bin/ssh-agent`
+
+        if [ -f ~/.ssh/id_rsa ]
+        then
+            ssh-add ~/.ssh/id_rsa
+        fi
+
+        if [ -f ~/Dropbox/ssh/id_rsa ]
+        then
+            ssh-add ~/Dropbox/ssh/id_rsa
+        fi
+    fi
 fi
 
 if [ `uname` = "Linux" ]
@@ -20,23 +34,6 @@ then
     #Linux用のコード
     export LANG=ja_JP.utf8
     export LC_CTYPE=ja_JP.utf8
-
-    # ssh agent forwarding
-    if [ -f /usr/bin/ssh-agent ]
-    then
-	eval `/usr/bin/ssh-agent`
-
-	if [ -f ~/.ssh/id_rsa ]
-	then
-	    ssh-add ~/.ssh/id_rsa
-	fi
-
-	if [ -f ~/Dropbox/ssh/id_rsa ]
-	then
-	    ssh-add ~/Dropbox/ssh/id_rsa
-	fi
-    fi
-
 fi
 
 #export SVN_EDITOR='~/bin/emacs --no-init-file -nw'
