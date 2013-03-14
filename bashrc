@@ -31,7 +31,7 @@ alias mv='mv -i'
 #alias emacs='/usr/local/bin/emacs'
 #alias emacs='emacsclient -c -nw'
 alias ssh='ssh -o ServerAliveCountMax=5 -o ServerAliveInterval=60'
-alias screen='LANG=ja_JP.UTF-8 screen'
+# alias screen='LANG=ja_JP.UTF-8 screen'
 
 # if [ "$TERM" = 'xterm' -o "$TERM" = 'linux' ]; then
 #   screen -rx || screen -D -RR

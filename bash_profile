@@ -1,5 +1,3 @@
-# .bash_profile
-
 # Get the aliases and functions
 if [ -f ~/.bashrc ]; then
 	. ~/.bashrc
@@ -60,7 +58,7 @@ then
 fi
 
 if [ -d ${HOME}/rubygem_repository/bin/ ]; then
-	export PATH=${HOME}/rubygem_repository/bin/:${PATH}
+    export PATH=${HOME}/rubygem_repository/bin/:${PATH}
 fi
 
 export PATH
@@ -69,9 +67,9 @@ export PATH
 # GNU SCREEN
 # ------------------------------------------------------------------------------
 if [ "$TERM" = 'xterm' -o "$TERM" = 'linux' ]; then
-	export TERM=xterm-256color
+#	export TERM=xterm-256color
 #	$HOME/bin/emacs --daemon
-	screen -rx || screen -D -RR
+#	screen -rx || screen -D -RR
 	NOP='NOP'
 fi
 
