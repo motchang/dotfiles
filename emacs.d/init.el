@@ -27,6 +27,14 @@
 ;; されており、式を評価してその戻り値をミニハッフ
 ;; ァに返します。
 
+(create-fontset-from-ascii-font "Menlo-11:weight=normal:slant=normal" nil "menlokakugo")
+(set-fontset-font "fontset-menlokakugo"
+                  'unicode
+                  (font-spec :family "Hiragino Kaku Gothic ProN" :size 11)
+                  nil
+                  'append)
+(add-to-list 'default-frame-alist '(font . "fontset-menlokakugo"))
+
 ;; -----------------------------------------------------------------------------
 ;; installed
 ;;(install-elisp "http://www.emacswiki.org/emacs/download/redo+.el")
