@@ -40,33 +40,33 @@
 ;;(install-elisp "http://www.emacswiki.org/emacs/download/redo+.el")
 
 ;; ・C-h a 文字列 RET
-;; 　入力した文字列か含まれているコマントのリスト
+;; 入力した文字列か含まれているコマントのリスト
 ;; を表示する（M-x command-apropos）。例：autoinstall
 ;; という文字列か含まれるコマントを調へる
 ;; C-h a auto-install RET
 
 ;; ・C-h b
-;; 　現在のキーの割り当て表を表示する（M-x
+;; 現在のキーの割り当て表を表示する（M-x
 ;; describe-bindings）
 
 ;; ・C-h k キーハイント
-;; 　キーハイントか実行するコマント（関数）名とその
+;; キーハイントか実行するコマント（関数）名とその
 ;; トキュメントを表示する（M-x describe-key）。例：
 ;; C-qて実行されるコマントを調へるC-h k C-q
 
 ;; ・C-h w コマント名 RET
-;; 　入力したコマントを実行するキーを表示する（M-x
+;; 入力したコマントを実行するキーを表示する（M-x
 ;; where-is）。例：コマントquery-replaceのキーハ
 ;; イントを調へるC-h w query-replace RET
 
 ;; ・C-h f 関数名 RET
-;; 　入力した関数の説明を表示する（M-x describefunction）
-;; 。例：関数lambda について調へる
+;; 入力した関数の説明を表示する（M-x describefunction）
+;; 例：関数lambda について調へる
 ;; C-h f lambda RET
 
 ;; ・C-h v 変数名 RET
-;; 　入力した変数の説明を表示する（M-x describevariable）
-;; 。例：変数load-path について調へる
+;; 入力した変数の説明を表示する（M-x describevariable）
+;; 例：変数load-path について調へる
 ;; C-h v load-path RET
 
 ;; 入力されるキーシーケンスを入れ換える
@@ -319,7 +319,7 @@
   (add-to-list 'ac-dictionary-directories
 	       "~/.emacs.d/elisp/ac-dict")
   (define-key ac-mode-map (kbd "M-i") 'auto-complete)
-  (setq ac-auto-start 3)
+  (setq ac-auto-start 5)
   (ac-config-default))
 (global-set-key (kbd "M-i") 'auto-complete)
 
@@ -358,10 +358,14 @@
 ;; トールするかとうかを聞かれますのてC-c C-cてイ
 ;; ンストールしてきましょう。
 
+(require 'anything-startup)
+
 ;; リスト１
 ;;; anything
 ;; (auto-install-batch "anything")
 (when (require 'anything nil t)
+  (define-key global-map (kbd "\C-x b") 'anything)
+  (define-key global-map (kbd "\C-x \C-b") 'anything)
   (setq
    ;; 候補を表示するまでの時間。デフォルトは0.5
    anything-idle-delay 0.3
@@ -627,7 +631,7 @@
 (iswitchb-mode 1)
 
 ;; ハッファを切り替えるのに C-x C-b て electric-buffer-list を使う。
-(global-set-key "\C-x\C-b" 'electric-buffer-list)
+; (global-set-key "\C-x\C-b" 'electric-buffer-list)
 
 ;; ステータスラインに時間を表示する
 (display-time)
@@ -682,50 +686,90 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (require 'gtags)
 (autoload 'gtags-mode "" t)
+(setq gtags-mode-hook
+      '(lambda ()
+         (define-key gtags-mode-map "\C-cs" 'gtags-find-symbol)
+         (define-key gtags-mode-map "\C-cr" 'gtags-find-rtag)
+         (define-key gtags-mode-map "\C-ct" 'gtags-find-tag)
+         (define-key gtags-mode-map "\C-cf" 'gtags-parse-file)))
+
 (global-set-key (kbd "M-p") 'gtags-pop-stack)
 
 (add-hook 'php-mode-hook
 	  (lambda ()
 	    (gtags-mode t)
-	    ;; (gtags-make-complete-list) ; Deprecated.
 	    ))
 
-;; (require 'anything-gtags)
 
-(defmacro my-let-env (environments &rest body)
-  `(let ((process-environment process-environment))
-     ,@(mapcar (lambda (env) `(setenv ,@env)) environments)
-     (progn ,@body)))
+; gtags auto update
+(defun update-gtags (&optional prefix)
+  (interactive "P")
+  (let ((rootdir (gtags-get-rootpath))
+        (args (if prefix "-v" "-iv")))
+    (when rootdir
+      (let* ((default-directory rootdir)
+             (buffer (get-buffer-create "*update GTAGS*")))
+        (save-excursion
+          (set-buffer buffer)
+          (erase-buffer)
+          (let ((result (process-file "gtags" nil buffer nil args)))
+            (if (= 0 result)
+                (message "GTAGS successfully updated.")
+              (message "update GTAGS error with exit status %d" result))))))))
+(add-hook 'after-save-hook 'update-gtags)
 
-(defun anything-c-source-gtags-select-with-root (name gtagsroot)
-  (lexical-let ((gtagsroot (expand-file-name gtagsroot)))
-    `((name . ,name)
-      (init
-       . ,(lambda ()
-	    (my-let-env
-	     (("GTAGSROOT" gtagsroot))
-	     (call-process-shell-command
-	      "global -c" nil (anything-candidate-buffer 'global)))))
-      (candidates-in-buffer)
-      (action
-       ("Goto the location"
-	. ,(lambda (candidate)
-	     (my-let-env
-	      (("GTAGSROOT" gtagsroot))
-	      (gtags-push-context)
-	      (gtags-goto-tag candidate ""))))
-	 ("Goto the location (other-window)"
-	  . ,(lambda (candidate)
-	       (my-let-env
-		(("GTAGSROOT" gtagsroot))
-		(gtags-push-context)
-		(gtags-goto-tag candidate "" t))))
-	 ("Move to the referenced point"
-	  . ,(lambda (candidate)
-	       (my-let-env
-		(("GTAGSROOT" gtagsroot))
-		(gtags-push-context)
-		(gtags-goto-tag candidate "r"))))))))
+;; tag jump
+(require 'anything-gtags)
+;; Test1.ccを開いているときに、M-r (gtags-find-rtag) などで同じディレクトリにある
+;; Test2.ccに飛びたいのに、src/src/Test2.ccという空のファイルが開く。どうもパス
+;; 表示がgtagsを実行したディレクトリからになっているみたい。
+;; "gtags-path-style"のデフォルト値"root"から、"relative"もしくは"absolute"にす
+;; ればよい。relativeの方が見やすいと思う。
+(setq gtags-path-style 'relative)
+
+;; (define-key global-map (kbd "C-x t")
+;;   (lambda ()
+;;     "Tag jump using etags, gtags and `anything'."
+;;     (interactive)
+;;     (let* ((initial-pattern (regexp-quote (or (thing-at-point 'symbol) ""))))
+;;       (anything (list anything-c-source-gtags-select
+;;  		      anything-c-source-etags-select))
+;;       "Find Tag: " nil)))
+
+;; (defmacro my-let-env (environments &rest body)
+;;   `(let ((process-environment process-environment))
+;;      ,@(mapcar (lambda (env) `(setenv ,@env)) environments)
+;;      (progn ,@body)))
+
+;; (defun anything-c-source-gtags-select-with-root (name gtagsroot)
+;;   (lexical-let ((gtagsroot (expand-file-name gtagsroot)))
+;;     `((name . ,name)
+;;       (init
+;;        . ,(lambda ()
+;; 	    (my-let-env
+;; 	     (("GTAGSROOT" gtagsroot))
+;; 	     (call-process-shell-command
+;; 	      "global -c" nil (anything-candidate-buffer 'global)))))
+;;       (candidates-in-buffer)
+;;       (action
+;;        ("Goto the location"
+;; 	. ,(lambda (candidate)
+;; 	     (my-let-env
+;; 	      (("GTAGSROOT" gtagsroot))
+;; 	      (gtags-push-context)
+;; 	      (gtags-goto-tag candidate ""))))
+;; 	 ("Goto the location (other-window)"
+;; 	  . ,(lambda (candidate)
+;; 	       (my-let-env
+;; 		(("GTAGSROOT" gtagsroot))
+;; 		(gtags-push-context)
+;; 		(gtags-goto-tag candidate "" t))))
+;; 	 ("Move to the referenced point"
+;; 	  . ,(lambda (candidate)
+;; 	       (my-let-env
+;; 		(("GTAGSROOT" gtagsroot))
+;; 		(gtags-push-context)
+;; 		(gtags-goto-tag candidate "r"))))))))
 
 ;; -----------------------------------------------------------------------------
 ;; php-mode
@@ -755,12 +799,6 @@
 	     ))
 
 (add-hook 'php-mode-user-hook
-
-
-
-
-
-
 	  '(lambda ()
 	     (setq php-manual-path "~/share/doc/php/xhtml/")
 	     (setq php-search-url "http://www.php.net/ja/")
@@ -810,20 +848,6 @@
 	    ))
 
 ;; -----------------------------------------------------------------------------
-;; tag jump
-;; -----------------------------------------------------------------------------
-;;(require 'anything-etags)
-;; (require 'anything-gtags)
-;; (define-key global-map (kbd "C-x t")
-;;   (lambda ()
-;;     "Tag jump using etags, gtags and `anything'."
-;;     (interactive)
-;;     (let* ((initial-pattern (regexp-quote (or (thing-at-point 'symbol) ""))))
-;;       (anything (list anything-c-source-gtags-select
-;; 		      anything-c-source-etags-select))
-;;       "Find Tag: " nil)))
-
-;; -----------------------------------------------------------------------------
 ;; run-script.el
 ;; -----------------------------------------------------------------------------
 ;;(autoload 'run-script "run-script")
@@ -843,13 +867,13 @@
 ;; -----------------------------------------------------------------------------
 ;; psvn.el
 ;; -----------------------------------------------------------------------------
-(require 'psvn)
-(setq svn-status-verbose nil)
-(setq svn-status-hide-unmodified t)
+;(require 'psvn)
+;(setq svn-status-verbose nil)
+;(setq svn-status-hide-unmodified t)
 ;; ログにファイル名を出さない
-(setq svn-status-default-log-arguments nil)
+;(setq svn-status-default-log-arguments nil)
 ;; プレフィクスをC-x sにする
-(global-set-key (kbd "C-x s") svn-global-keymap)
+;(global-set-key (kbd "C-x s") svn-global-keymap)
 
 ;; -----------------------------------------------------------------------------
 ;; yaml-mode
@@ -943,7 +967,7 @@
   (recenter))
 
 (setq truncate-partial-width-windows t)
-(global-set-key "\C-c\C-l" 'toggle-truncate-lines)
+(global-set-key "\C-c \C-l" 'toggle-truncate-lines)
 
 ;; -----------------------------------------------------------------------------
 ;; CEDET
@@ -955,7 +979,14 @@
 ;; -----------------------------------------------------------------------------
 ;; window manager
 ;; -----------------------------------------------------------------------------
-(require 'e2wm)
-(global-set-key (kbd "M-+") 'e2wm:start-management)
+;(require 'e2wm)
+;(global-set-key (kbd "M-+") 'e2wm:start-management)
 
-(require 'anything-startup)
+;; -----------------------------------------------------------------------------
+;; popup.el
+;; -----------------------------------------------------------------------------
+(require 'popwin)
+(setq display-buffer-function 'popwin:display-buffer)
+;; anything
+(setq anything-samewindow nil)
+(push '("*anything*" :height 30) popwin:special-display-config)
