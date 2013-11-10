@@ -1,0 +1,7 @@
+emacs.d/auto-save-list/
+emacs.d/ac-comphist.dat
+emacs.d/eshell/*
+emacs.d/geben/*
+emacs.d/download/*
+emacs.d/tramp
+*~

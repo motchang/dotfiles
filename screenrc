@@ -1,0 +1,38 @@
+# screenrc
+defscrollback 10000
+
+defutf8 on
+defkanji utf-8
+encoding utf-8 utf-8
+defencoding utf-8
+defbce on
+# term xterm-256color
+term xterm
+#shell $SHELL
+
+escape ^Tt
+bind -c REGION 2 split
+bind -c REGION 1 only
+bind -c REGION 0 remove
+bind -c REGION o focus
+# bind -c REGION ^ resize
+bind x command -c REGION
+
+termcap kterm hs@
+terminfo kterm hs@
+termcapinfo xterm* 'Co#256:pa#32767:AB=\E[48;5;%dm:AF=\E[38;5;%dm:'
+
+vbell off
+bell_msg "Bell in window %^G"
+bind w windowlist -b
+#hardstatus alwayslastline "%{= wk} %-w%{=bu dr}%n %t%{-}%+w %= %{=b wb}%y/%m/%d %{=b wb}%c"
+hardstatus alwayslastline "%{= Gk} %-Lw%40L>%{b kg} %n %t %{-}%+Lw%-040=%{b km} %l %{.b} %Y/%m/%d %C:%s %A "
+shell -$SHELL
+#shell ${HOME}/bin/zsh 
+autodetach on
+
+# logfile "$HOME/.screen/screen-%Y%m%d-%n.log"
+# log on
+# deflog on
+idle 3600
+
