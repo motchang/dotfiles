@@ -1,5 +1,7 @@
 emacs.d/auto-save-list/
 emacs.d/ac-comphist.dat
-
-*.elc
+emacs.d/eshell/*
+emacs.d/geben/*
+emacs.d/download/*
+emacs.d/tramp
 *~
