@@ -1,13 +1,25 @@
+;; -*- mode: emacs-lisp; coding: utf-8; indent-tabs-mode: nil -*-
+
+(defvar oldemacs-p (<= emacs-major-version 22)) ; 22 以下
+(defvar emacs23-p (<= emacs-major-version 23))  ; 23 以下
+(defvar emacs24-p (>= emacs-major-version 24))  ; 24 以上
+(defvar darwin-p (eq system-type 'darwin))      ; Mac OS X 用
+(defvar nt-p (eq system-type 'windows-nt))      ; Windows 用
+
 ;load-path を追加する関数を定義
 (defun add-to-load-path (&rest paths)
  (let (path)
     (dolist (path paths paths)
       (let ((default-directory (expand-file-name (concat user-emacs-directory path))))
 	(add-to-list 'load-path default-directory)
-	(if (fboundp 'normal-top-level-add-subdirs-to-load-path)
+	(if (fboundp '-level-add-subdirs-to-load-path)
 	    (normal-top-level-add-subdirs-to-load-path))))))
 ;; elispとconfティレクトリをサフティレクトリことload-pathに追加
 (add-to-load-path "elisp" "conf")
+
+;; 起動時に .el をまとめてリコンパイル
+;; http://stackoverflow.com/questions/1217180/how-do-i-byte-compile-everything-in-my-emacs-d-directory
+(byte-recompile-directory (expand-file-name "~/.emacs.d") 0)
 
 ;; -----------------------------------------------------------------------------
 ;; (install-elisp "http://www.emacswiki.org/emacs/download/auto-install.el")
@@ -27,14 +39,14 @@
 ;; されており、式を評価してその戻り値をミニハッフ
 ;; ァに返します。
 
-(create-fontset-from-ascii-font "Menlo-11:weight=normal:slant=normal" nil "menlokakugo")
-(set-fontset-font "fontset-menlokakugo"
-                  'unicode
-                  (font-spec :family "Hiragino Kaku Gothic ProN" :size 11)
-                  nil
-                  'append)
-(add-to-list 'default-frame-alist '(font . "fontset-menlokakugo"))
-
+; (create-fontset-from-ascii-font "Menlo-11:weight=normal:slant=normal" nil "menlokakugo")
+; (set-fontset-font "fontset-menlokakugo"
+;                   'unicode
+;                   (font-spec :family "Hiragino Kaku Gothic ProN" :size 11)
+;                   nil
+;                   'append)
+; (add-to-list 'default-frame-alist '(font . "fontset-menlokakugo"))
+;
 ;; -----------------------------------------------------------------------------
 ;; installed
 ;;(install-elisp "http://www.emacswiki.org/emacs/download/redo+.el")
@@ -90,13 +102,13 @@
 (setq locale-coding-system 'utf-8)
 
 ;; スタートアッフメッセーシを非表示
-(setq inhibit-startup-screen t)
+; (setq inhibit-st; artup-screen t)
 ;; tool-barを非表示。コンソールては不要
-;(tool-bar-mode 0)
+(tool-bar-mode 0)
 ;; scroll-barを非表示。コンソールては不要
-;(scroll-bar-mode 0)
+(scroll-bar-mode 0)
 ;; menu-barを非表示
-;(menu-bar-mode 0)
+(menu-bar-mode 0)
 
 ;; メニューハーにファイルハスを表示する
 ;; frame-title-format変数にフォーマットを追加します。
@@ -110,26 +122,27 @@
 ;(setq js-indent-level 4)
 ;(setq cperl-indent-level 4)
 
-;; (when (require 'color-theme nil t)
-;;   ;; テーマを読み込むための設定
-;;   (color-theme-initialize))
+(if emacs24-p
+    ;; (load-theme 'adwaita t)
+    (load-theme 'tango-dark t)
+  (when (require 'color-theme nil t)
+    ;; テーマを読み込むための設定
+    (color-theme-initialize)
+    ;; カラーテーマの選択
+    ;; M-x color-theme-select
+    ;; カラーテーマの例
+    ;; http://gnuemacscolorthemetest.googlecode.com/svn/html/index-c.html
 
-;; カラーテーマの選択
-; M-x color-theme-select
-;; カラーテーマの例
-; http://gnuemacscolorthemetest.googlecode.com/svn/html/index-c.html
-(when (require 'color-theme nil t)
-  ;; テーマを読み込むための設定
-  (color-theme-initialize)
-  ;; テーマを変更する
-  (color-theme-dark-laptop)
-  ;;(color-theme-wheat)
-;;  (color-theme-arjen)
-;;  (color-theme-billw)
-;;  (color-theme-arjen)
+    ;; テーマを変更する
+    (color-theme-dark-laptop)
+    ;;(color-theme-wheat)
+    ;;  (color-theme-arjen)
+    ;;  (color-theme-billw)
+    ;;  (color-theme-arjen)
+    ;; いい感しの
+    ;; Wheat Billw Midnight dark-laptop
+    )
   )
-;; いい感しの
-;; Wheat Billw Midnight dark-laptop
 
 ;; paren-mode 対応する括弧を強調して表示する
 ;; 表示まての秒数。初期値は0.125
@@ -314,7 +327,6 @@
 
 ;; successfully installed!
 ;; Add the following code to your .emacs:
-(require 'auto-complete-config)
 (when (require 'auto-complete-config nil t)
   (add-to-list 'ac-dictionary-directories
 	       "~/.emacs.d/elisp/ac-dict")
@@ -360,7 +372,6 @@
 
 (require 'anything-startup)
 
-;; リスト１
 ;;; anything
 ;; (auto-install-batch "anything")
 (when (require 'anything nil t)
@@ -531,6 +542,7 @@
           (cons
            '("\(\(?:Parse error\|Fatal error\|Warning\): .*\) in \(.*\) on line \([0-9]+\)" 2 3 nil 1)
            flymake-err-line-patterns)))
+
 ;;   ;; JavaScript
 ;;   (when (not (fboundp 'flymake-javascript-init))
 ;;     (defun flymake-javascript-init ()
@@ -937,16 +949,14 @@
 ;; 関連付けとか
 ;; -----------------------------------------------------------------------------
 (setq auto-mode-alist
-      (append (list
-	       '("\\.php$"	.	php-mode)
-	       '("\\.sql$"	.	sql-mode)
-	       '("\\.tpl$"	.	smarty-mode)
-	       '("\\.el$"	.	lisp-mode)
-	       '("\\.yaml$"	.	yaml-mode)
-	       '("\\.js$"	.	js2-mode)
-	       '("\\.coffee$"	.	coffee-mode)
-	       '("Cakefile"	.	coffee-mode)
-	       auto-mode-alist)))
+      (append '(("\\.php$"	.	php-mode)
+		("\\.sql$"	.	sql-mode)
+		("\\.tpl$"	.	smarty-mode)
+		("\\.el$"	.	lisp-mode)
+		("\\.yaml$"	.	yaml-mode)
+		("\\.js$"	.	js2-mode)
+		("\\.coffee$"	.	coffee-mode))
+	      auto-mode-alist))
 
 (require 'browse-kill-ring)
 (browse-kill-ring-default-keybindings)
@@ -987,6 +997,7 @@
 ;; -----------------------------------------------------------------------------
 (require 'popwin)
 (setq display-buffer-function 'popwin:display-buffer)
+
 ;; anything
 (setq anything-samewindow nil)
 (push '("*anything*" :height 30) popwin:special-display-config)
