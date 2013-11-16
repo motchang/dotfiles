@@ -46,3 +46,9 @@ export HISTFILESIZE=100000
 export HISTCONTROL="ignoredups"
 # .bash_history追記モードは不要なのでOFFに
 shopt -u histappend
+if [ ! -z "$SSH_AUTH_SOCK" -a "$SSH_AUTH_SOCK" != "$HOME/.ssh/agent_sock" ] ; then
+    unlink "$HOME/.ssh/agent_sock" 2>/dev/null
+    ln -s "$SSH_AUTH_SOCK" "$HOME/.ssh/agent_sock"
+    export SSH_AUTH_SOCK="$HOME/.ssh/agent_sock"
+fi
+
