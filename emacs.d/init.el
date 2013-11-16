@@ -111,26 +111,26 @@
 ;(setq js-indent-level 4)
 ;(setq cperl-indent-level 4)
 
-(if emacs24-p
-    (load-theme 'tango-dark t)
-  (when (require 'color-theme nil t)
-    ;; カラーテーマの選択
-    ;; M-x color-theme-select
-    ;; カラーテーマの例
-    ;; http://gnuemacscolorthemetest.googlecode.com/svn/html/index-c.html
-    ;; テーマを読み込むための設定
-    (color-theme-initialize)
-    ;; テーマを変更する
-    (color-theme-dark-laptop)
-    ;;(color-theme-wheat)
-    ;;(color-theme-arjen)
-    ;;(color-theme-billw)
-    ;;(color-theme-arjen)
-    ;; いい感しの
-    ;; Wheat Billw Midnight dark-laptop
-    )
-  )
+(cond ((eq emacs24-p t)
+       (add-to-list 'custom-theme-load-path "~/.emacs.d/themes")
+       (load-theme 'pastels-on-dark t))
 
+      ((when (require 'color-theme nil t)
+         ;; カラーテーマの選択
+         ;; M-x color-theme-select
+         ;; カラーテーマの例
+         ;; http://gnuemacscolorthemetest.googlecode.com/svn/html/index-c.html
+         ;; テーマを読み込むための設定
+         (color-theme-initialize)
+         ;; テーマを変更する
+         (color-theme-dark-laptop)
+         ;;(color-theme-wheat)
+         ;;(color-theme-arjen)
+         ;;(color-theme-billw)
+         ;;(color-theme-arjen)
+         ;; いい感しの
+         ;; Wheat Billw Midnight dark-laptop
+        )))
 
 ;; paren-mode 対応する括弧を強調して表示する
 ;; 表示まての秒数。初期値は0.125
@@ -172,7 +172,7 @@
 (defface my-hl-line-face
    ;; 背景かdarkならは背景を黒に
    '((((class color) (background dark))
-      (:background "NavyBlue" :underline t))
+      (:background "NavyBlue" :underline nil))
      ;; 背景かlightならは背景色を緑に
      (((class color) (background light))
       (:background "LightGoldenrodYellow" t))
@@ -1038,3 +1038,15 @@
 
 ;; ispell
 (setq ispell-program-name "aspell")
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(custom-safe-themes (quote ("211bb9b24001d066a646809727efb9c9a2665c270c753aa125bace5e899cb523" default))))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
