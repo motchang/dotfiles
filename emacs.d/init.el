@@ -1,3 +1,11 @@
+;; -*- mode: emacs-lisp; coding: utf-8; indent-tabs-mode: nil -*-
+
+(defvar oldemacs-p (<= emacs-major-version 22)) ; 22 以下
+(defvar emacs23-p (<= emacs-major-version 23))  ; 23 以下
+(defvar emacs24-p (>= emacs-major-version 24))  ; 24 以上
+(defvar darwin-p (eq system-type 'darwin))      ; Mac OS X 用
+(defvar nt-p (eq system-type 'windows-nt))      ; Windows 用
+
 ;load-path を追加する関数を定義
 (defun add-to-load-path (&rest paths)
  (let (path)
@@ -102,26 +110,26 @@
 ;(setq js-indent-level 4)
 ;(setq cperl-indent-level 4)
 
-;; (when (require 'color-theme nil t)
-;;   ;; テーマを読み込むための設定
-;;   (color-theme-initialize))
-
-;; カラーテーマの選択
-; M-x color-theme-select
-;; カラーテーマの例
-; http://gnuemacscolorthemetest.googlecode.com/svn/html/index-c.html
-(when (require 'color-theme nil t)
-  ;; テーマを読み込むための設定
-  (color-theme-initialize)
-  ;; テーマを変更する
-  (color-theme-dark-laptop)
-  ;;(color-theme-wheat)
-;;  (color-theme-arjen)
-;;  (color-theme-billw)
-;;  (color-theme-arjen)
+(if emacs24-p
+    (load-theme 'tango-dark t)
+  (when (require 'color-theme nil t)
+    ;; カラーテーマの選択
+    ;; M-x color-theme-select
+    ;; カラーテーマの例
+    ;; http://gnuemacscolorthemetest.googlecode.com/svn/html/index-c.html
+    ;; テーマを読み込むための設定
+    (color-theme-initialize)
+    ;; テーマを変更する
+    (color-theme-dark-laptop)
+    ;;(color-theme-wheat)
+    ;;(color-theme-arjen)
+    ;;(color-theme-billw)
+    ;;(color-theme-arjen)
+    ;; いい感しの
+    ;; Wheat Billw Midnight dark-laptop
+    )
   )
-;; いい感しの
-;; Wheat Billw Midnight dark-laptop
+
 
 ;; paren-mode 対応する括弧を強調して表示する
 ;; 表示まての秒数。初期値は0.125
