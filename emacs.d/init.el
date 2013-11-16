@@ -46,8 +46,7 @@
 ;; C-h a auto-install RET
 
 ;; ・C-h b
-;; 現在のキーの割り当て表を表示する（M-x
-;; describe-bindings）
+;; 現在のキーの割り当て表を表示する（M-x describe-bindings）
 
 ;; ・C-h k キーハイント
 ;; キーハイントか実行するコマント（関数）名とその
@@ -90,18 +89,19 @@
 (setq locale-coding-system 'utf-8)
 
 ;; スタートアッフメッセーシを非表示
-(setq inhibit-startup-screen t)
-;; tool-barを非表示。コンソールては不要
-;(tool-bar-mode 0)
-;; scroll-barを非表示。コンソールては不要
-;(scroll-bar-mode 0)
-;; menu-barを非表示
-;(menu-bar-mode 0)
-
-;; メニューハーにファイルハスを表示する
-;; frame-title-format変数にフォーマットを追加します。
-(setq frame-title-format
-      (format "%%f - Emacs@%s" (system-name)))
+;;(setq inhibit-startup-screen t)
+(let ((ws window-system))
+  ;; tool-barを非表示
+  (tool-bar-mode 0)
+  ;; scroll-barを非表示
+  (scroll-bar-mode 0)
+  ;; menu-barを非表示
+  (menu-bar-mode 0)
+  ;; メニューハーにファイルハスを表示する
+  ;; frame-title-format変数にフォーマットを追加します。
+  (setq frame-title-format
+        (format "%%f - Emacs@%s" (system-name)))
+)
 
 ;; 行番号を表示
 ;(global-linum-mode t)
@@ -156,7 +156,7 @@
 ;; ます。フェイス設定用関数一覧は表1のとおりてす。
 
 ;; リージョンの色を変更
-;(set-face-background 'region "darkgreen")
+(set-face-background 'region "darkgreen")
 
 ;; (set-face-foreground FACE COLOR) 文字色を変更
 ;; (set-face-background FACE COLOR) 背景色を変更
@@ -169,27 +169,68 @@
 ;; (set-face-underline-p FACE nil) 下線を消す
 
 (defface my-hl-line-face
-  ;; 背景かdarkならは背景を黒に
-  '((((class color) (background dark))
-     (:background "NavyBlue" t))
-    ;; 背景かlightならは背景色を緑に
-    (((class color) (background light))
-     (:background "NavyBlue" t))
-    (t (:bold t)))
-  "hl-line's my face")
-;; (defface my-hl-line-face
-;;   ;; 背景かdarkならは背景を黒に
-;;   '((((class color) (background dark))
-;;      (:background "NavyBlue" :underline t))
-;;     ;; 背景かlightならは背景色を緑に
-;;     (((class color) (background light))
-;;      (:background "LightGoldenrodYellow" t))
-;;     (t (:bold t)))
-;;   "hl-line's my face")
+   ;; 背景かdarkならは背景を黒に
+   '((((class color) (background dark))
+      (:background "NavyBlue" :underline t))
+     ;; 背景かlightならは背景色を緑に
+     (((class color) (background light))
+      (:background "LightGoldenrodYellow" t))
+     (t (:bold t))
+     ;; (t (:underline t))
+     )
+   "hl-line's my face")
+
 (setq hl-line-face 'my-hl-line-face)
 
 ;; 現在行をハイライト表示
 (global-hl-line-mode t)
+
+;; http://d.hatena.ne.jp/sandai/20120304/p2
+;; (let ((ws window-system))
+;;   (cond ((eq ws 'w32)
+;;          (set-face-attribute 'default nil
+;;                              :family "Meiryo"  ;; 英数
+;;                              :height 100)
+;;          (set-fontset-font nil 'japanese-jisx0208 (font-spec :family "Meiryo")))  ;; 日本語
+;;         ((eq ws 'ns)
+;;          (set-face-attribute 'default nil
+;;                              :family "Ricty"  ;; 英数
+;;                              :height 140)
+;;          (set-fontset-font nil 'japanese-jisx0208 (font-spec :family "Ricty")))))  ;; 日本語
+
+(let ((ws window-system))
+;;; http://d.hatena.ne.jp/setoryohei/20110117/1295336454
+;;; フォントセットを作る
+  (let* ((fontset-name "myfonts") ; フォントセットの名前
+         (size 12) ; ASCIIフォントのサイズ [9/10/12/14/15/17/19/20/...]
+         (asciifont "Menlo") ; ASCIIフォント
+         (jpfont "Hiragino Maru Gothic ProN") ; 日本語フォント
+         (font (format "%s-%d:weight=normal:slant=normal" asciifont size))
+         (fontspec (font-spec :family asciifont))
+         (jp-fontspec (font-spec :family jpfont))
+         (fsn (create-fontset-from-ascii-font font nil fontset-name)))
+    (set-fontset-font fsn 'japanese-jisx0213.2004-1 jp-fontspec)
+    (set-fontset-font fsn 'japanese-jisx0213-2 jp-fontspec)
+    (set-fontset-font fsn 'katakana-jisx0201 jp-fontspec) ; 半角カナ
+    (set-fontset-font fsn '(#x0080 . #x024F) fontspec) ; 分音符付きラテン
+    (set-fontset-font fsn '(#x0370 . #x03FF) fontspec) ; ギリシャ文字
+    )
+
+;; デフォルトのフレームパラメータでフォントセットを指定
+  (add-to-list 'default-frame-alist '(font . "fontset-myfonts"))
+
+;;; フォントサイズの比を設定
+  (dolist (elt '(("^-apple-hiragino.*" . 1.2)
+                 (".*osaka-bold.*" . 1.2)
+                 (".*osaka-medium.*" . 1.2)
+                 (".*courier-bold-.*-mac-roman" . 1.0)
+                 (".*monaco cy-bold-.*-mac-cyrillic" . 0.9)
+                 (".*monaco-bold-.*-mac-roman" . 0.9)))
+    (add-to-list 'face-font-rescale-alist elt))
+
+;;; デフォルトフェイスにフォントセットを設定
+;;; (これは起動時に default-frame-alist に従ったフレームが作成されない現象への対処)
+  (set-face-font 'default "fontset-myfonts"))
 
 ;; 　Emacsは23.1から1文字単位てフォントを指定て
 ;; きるようになりました。たたし、そのためのインタ
@@ -204,17 +245,17 @@
 ;; 　set-face-attributeを使って、利用可能なフォントか
 ;; ら指定します。:heightはフォントサイスてす。
 ;; acii フォントをMenloに
-;(set-face-attribute 'default nil
-;		    :family "Menlo"
-;		    :height 120)
+;; (set-face-attribute 'default nil
+;; 		    :family "Menlo"
+;; 		    :height 120)
 
 ;; 日本語フォントを指定する
 ;; 　set-fontset-fontとfont-specを使って日本語フォン
 ;; トを指定します。
 ;; 日本語フォントをヒラキノ明朝ProNに
-;(set-fontset-font
-; nil 'japanese-jisx0208
-; (font-spec :family "Hiragino_Mincho_ProN"))
+;; (set-fontset-font
+;;  nil 'japanese-jisx0208
+;;  (font-spec :family "Hiragino_Mincho_ProN"))
 
 ;; 　また、漢字以外の全角文字たけフォントを変える
 ;; ことかてきます。筆者はひらかなとカタカナをモト
@@ -225,19 +266,19 @@
 ;; U+3000-303F CJKの記号およひ句読点
 ;; U+3040-309F ひらかな
 ;; U+30A0-30FF カタカナ
-; (set-fontset-font
-;  nil '(#x3040 . #x30ff)
-;  (font-spec :family "NfMotoyaCedar"))
+;; (set-fontset-font
+;;  nil '(#x3040 . #x30ff)
+;;  (font-spec :family "NfMotoyaCedar"))
 
 ;; フォントの横幅を調節する
 ;; 　半角と全角を1:2にしたけれは、face-font-rescalealist
 ;; を調節しましょう。
-; (setq face-font-rescale-alist
-;       '((".*Menlo.*" . 1.0)
-; 	(".*Hiragino_Mincho_ProN.*" . 1.2)
-; 	(".*nfmotoyacedar-bold.*" . 1.2)
-; 	(".*nfmotoyacedar-medium.*" . 1.2)
-; 	("-cdac$" . 1.3)))
+;; (setq face-font-rescale-alist
+;;       '((".*Menlo.*" . 1.0)
+;; 	(".*Hiragino_Mincho_ProN.*" . 1.2)
+;; 	(".*nfmotoyacedar-bold.*" . 1.2)
+;; 	(".*nfmotoyacedar-medium.*" . 1.2)
+;; 	("-cdac$" . 1.3)))
 
 ;; 　Emacsの設定はinit.elファイルにElispを書くとい
 ;; う方式てあり、一見すれは敷居か高いかもしれませ
