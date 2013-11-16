@@ -4,4 +4,5 @@ emacs.d/eshell/*
 emacs.d/geben/*
 emacs.d/download/*
 emacs.d/tramp
+*.elc
 *~
