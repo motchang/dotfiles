@@ -1,5 +1,21 @@
 ;; -*- mode: emacs-lisp; coding: utf-8; indent-tabs-mode: nil -*-
 
+;; スタートアップメッセージを非表示
+;;(setq inhibit-startup-screen t)
+(setq inhibit-startup-screen nil)
+(when (window-system)
+  ;; tool-barを非表示
+  (tool-bar-mode 0)
+  ;; scroll-barを非表示
+  (scroll-bar-mode 0)
+  ;; menu-barを非表示
+  (menu-bar-mode 0)
+  ;; メニューハーにファイルハスを表示する
+  ;; frame-title-format変数にフォーマットを追加します。
+  (setq frame-title-format
+        (format "%%f - Emacs@%s" (system-name)))
+)
+
 (defvar oldemacs-p (<= emacs-major-version 22)) ; 22 以下
 (defvar emacs23-p (<= emacs-major-version 23))  ; 23 以下
 (defvar emacs24-p (>= emacs-major-version 24))  ; 24 以上
@@ -87,21 +103,6 @@
 (prefer-coding-system 'utf-8)
 (setq file-name-coding-system 'utf-8)
 (setq locale-coding-system 'utf-8)
-
-;; スタートアッフメッセーシを非表示
-;;(setq inhibit-startup-screen t)
-(when (window-system)
-  ;; tool-barを非表示
-  (tool-bar-mode 0)
-  ;; scroll-barを非表示
-  (scroll-bar-mode 0)
-  ;; menu-barを非表示
-  (menu-bar-mode 0)
-  ;; メニューハーにファイルハスを表示する
-  ;; frame-title-format変数にフォーマットを追加します。
-  (setq frame-title-format
-        (format "%%f - Emacs@%s" (system-name)))
-)
 
 ;; 行番号を表示
 ;(global-linum-mode t)
@@ -198,40 +199,41 @@
 ;;                              :height 140)
 ;;          (set-fontset-font nil 'japanese-jisx0208 (font-spec :family "Ricty")))))  ;; 日本語
 
-;;; http://d.hatena.ne.jp/setoryohei/20110117/1295336454
+
+
 (when (window-system)
- (
+;;; http://d.hatena.ne.jp/setoryohei/20110117/1295336454
 ;;; フォントセットを作る
-   (let* ((fontset-name "myfonts") ; フォントセットの名前
-          (size 12) ; ASCIIフォントのサイズ [9/10/12/14/15/17/19/20/...]
+  (let* ((fontset-name "myfonts") ; フォントセットの名前
+         (size 12) ; ASCIIフォントのサイズ [9/10/12/14/15/17/19/20/...]
           (asciifont "Menlo") ; ASCIIフォント
           (jpfont "Hiragino Maru Gothic ProN") ; 日本語フォント
           (font (format "%s-%d:weight=normal:slant=normal" asciifont size))
           (fontspec (font-spec :family asciifont))
           (jp-fontspec (font-spec :family jpfont))
           (fsn (create-fontset-from-ascii-font font nil fontset-name)))
-     (set-fontset-font fsn 'japanese-jisx0213.2004-1 jp-fontspec)
-     (set-fontset-font fsn 'japanese-jisx0213-2 jp-fontspec)
-     (set-fontset-font fsn 'katakana-jisx0201 jp-fontspec) ; 半角カナ
-     (set-fontset-font fsn '(#x0080 . #x024F) fontspec) ; 分音符付きラテン
-     (set-fontset-font fsn '(#x0370 . #x03FF) fontspec) ; ギリシャ文字
-     )
-
-;;; デフォルトのフレームパラメータでフォントセットを指定
-   (add-to-list 'default-frame-alist '(font . "fontset-myfonts"))
+    (set-fontset-font fsn 'japanese-jisx0213.2004-1 jp-fontspec)
+    (set-fontset-font fsn 'japanese-jisx0213-2 jp-fontspec)
+    (set-fontset-font fsn 'katakana-jisx0201 jp-fontspec) ; 半角カナ
+    (set-fontset-font fsn '(#x0080 . #x024F) fontspec) ; 分音符付きラテン
+    (set-fontset-font fsn '(#x0370 . #x03FF) fontspec) ; ギリシャ文字
+    )
 
 ;;; フォントサイズの比を設定
-   (dolist (elt '(("^-apple-hiragino.*" . 1.2)
-                  (".*osaka-bold.*" . 1.2)
-                  (".*osaka-medium.*" . 1.2)
-                  (".*courier-bold-.*-mac-roman" . 1.0)
-                  (".*monaco cy-bold-.*-mac-cyrillic" . 0.9)
-                  (".*monaco-bold-.*-mac-roman" . 0.9)))
-     (add-to-list 'face-font-rescale-alist elt))
+  (dolist (elt '(("^-apple-hiragino.*" . 1.2)
+                 (".*osaka-bold.*" . 1.2)
+                 (".*osaka-medium.*" . 1.2)
+                 (".*courier-bold-.*-mac-roman" . 1.0)
+                 (".*monaco cy-bold-.*-mac-cyrillic" . 0.9)
+                 (".*monaco-bold-.*-mac-roman" . 0.9)))
+    (add-to-list 'face-font-rescale-alist elt))
+
+;;; デフォルトのフレームパラメータでフォントセットを指定
+  (add-to-list 'default-frame-alist '(font . "fontset-myfonts"))
 
 ;;; デフォルトフェイスにフォントセットを設定
 ;;; (これは起動時に default-frame-alist に従ったフレームが作成されない現象への対処)
-   (set-face-font 'default "fontset-myfonts")))
+  (set-face-font 'default "fontset-myfonts"))
 
 ;; 　Emacsは23.1から1文字単位てフォントを指定て
 ;; きるようになりました。たたし、そのためのインタ
