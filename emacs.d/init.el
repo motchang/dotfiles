@@ -977,20 +977,6 @@
 
 (add-hook 'coffee-mode-hook 'coffee-custom)
 
-;; -----------------------------------------------------------------------------
-;; 関連付けとか
-;; -----------------------------------------------------------------------------
-(setq auto-mode-alist
-      (append (list
-	       '("\\.php$"	.	php-mode)
-	       '("\\.sql$"	.	sql-mode)
-	       '("\\.tpl$"	.	smarty-mode)
-	       '("\\.el$"	.	lisp-mode)
-	       '("\\.yaml$"	.	yaml-mode)
-	       '("\\.js$"	.	js2-mode)
-	       '("\\.coffee$"	.	coffee-mode)
-	       auto-mode-alist)))
-
 (require 'browse-kill-ring)
 (browse-kill-ring-default-keybindings)
 
@@ -1050,3 +1036,25 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  )
+
+;; -----------------------------------------------------------------------------
+;; markdown-mode
+;; -----------------------------------------------------------------------------
+(autoload 'markdown-mode "markdown-mode" "Major mode for editing Markdown files" t)
+
+;; -----------------------------------------------------------------------------
+;; 関連付けとか
+;; -----------------------------------------------------------------------------
+(setq auto-mode-alist
+      (append (list
+	       '("\\.php$"	.	php-mode)
+	       '("\\.sql$"	.	sql-mode)
+	       '("\\.tpl$"	.	smarty-mode)
+	       '("\\.el$"	.	lisp-mode)
+	       '("\\.yaml$"	.	yaml-mode)
+	       '("\\.js$"	.	js2-mode)
+	       '("\\.coffee$"	.	coffee-mode)
+               '("\\.md$"       .       markdown-mode)
+               '("\\.markdown$" .       markdown-mode)
+               '("\\.text$"     .       markdown-mode)
+	       auto-mode-alist)))
