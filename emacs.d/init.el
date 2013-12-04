@@ -3,6 +3,8 @@
 ;; スタートアップメッセージを非表示
 ;;(setq inhibit-startup-screen t)
 (setq inhibit-startup-screen nil)
+
+;; GUIの時にメニューバーとかを制御する
 (when (window-system)
   ;; tool-barを非表示
   (tool-bar-mode 0)
