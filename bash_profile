@@ -1,4 +1,6 @@
+ #!/bin/sh
 # Get the aliases and functions
+
 if [ -f ~/.bashrc ]; then
 	. ~/.bashrc
 fi
@@ -6,7 +8,6 @@ fi
 # ------------------------------------------------------------------------------
 # User specific environment and startup programs
 # ------------------------------------------------------------------------------
-export GEM_HOME=${HOME}/rubygem_repository
 if [ `uname` = "Darwin" ]
 then
     #mac用のコード
@@ -57,9 +58,6 @@ then
     PATH=${PATH}:${HOME}/bin/android-sdks/platform-tools
 fi
 
-if [ -d ${HOME}/rubygem_repository/bin/ ]; then
-    export PATH=${HOME}/rubygem_repository/bin/:${PATH}
-fi
 
 export PATH
 
@@ -76,19 +74,15 @@ fi
 # ------------------------------------------------------------------------------
 # ruby
 # ------------------------------------------------------------------------------
-if [ -d ${HOME}/rubygem_repository ]
-then
-    export GEM_HOME=${HOME}/rubygem_repository
-fi
-
 if [ -d ${HOME}/.rbenv/bin ]
 then
     export PATH=${HOME}/.rbenv/bin:${PATH}
     eval "$(rbenv init -)"
 fi
 
-# これがあたしの全力全開ッ
-# umask 000
+# if [ -d ${HOME}/rubygem_repository/bin/ ]; then
+#     export PATH=${HOME}/rubygem_repository/bin/:${PATH}
+# fi
 
 # git コマンドがイカれるので変数を握りつぶす
 unset SSH_ASKPASS
