@@ -1,4 +1,4 @@
- #!/bin/sh
+#!/bin/sh
 # Get the aliases and functions
 
 if [ -f ~/.bashrc ]; then
@@ -25,6 +25,12 @@ then
         then
             ssh-add ~/Dropbox/ssh/id_rsa
         fi
+
+	if [ -f ~/.ssh/id_rsa-skiyaki ]
+	then
+            ssh-add ~/.ssh/id_rsa-skiyaki
+	fi
+	
     fi
 fi
 
@@ -58,6 +64,10 @@ then
     PATH=${PATH}:${HOME}/bin/android-sdks/platform-tools
 fi
 
+if [ -d /usr/local/mysql/bin ]
+then
+    PATH=${PATH}:/usr/local/mysql/bin
+fi
 
 export PATH
 
