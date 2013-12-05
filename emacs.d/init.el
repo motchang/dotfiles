@@ -577,39 +577,48 @@
           (cons
            '("\(\(?:Parse error\|Fatal error\|Warning\): .*\) in \(.*\) on line \([0-9]+\)" 2 3 nil 1)
            flymake-err-line-patterns)))
-  ;; JavaScript
-  (when (not (fboundp 'flymake-javascript-init))
-    (defun flymake-javascript-init ()
-      (let* ((temp-file (flymake-init-create-temp-buffer-copy
-                         'flymake-create-temp-inplace))
-             (local-file (file-relative-name
-                          temp-file
-                          (file-name-directory buffer-file-name))))
-        (list "/usr/local/bin/jsl" (list "-process" local-file))))
-    (setq flymake-allowed-file-name-masks
-          (append
-           flymake-allowed-file-name-masks
-           '(("\.json$" flymake-javascript-init)
-             ("\.js$" flymake-javascript-init))))
-    (setq flymake-err-line-patterns
-          (cons
-           '("\(.+\)(\([0-9]+\)): \(?:lint \)?\(\(?:Warning\|SyntaxError\):.+\)" 1 2 nil 3)
-           flymake-err-line-patterns)))
-  ;; Ruby
-  (when (not (fboundp 'flymake-ruby-init))
-    (defun flymake-ruby-init ()
-      (let* ((temp-file (flymake-init-create-temp-buffer-copy
-                         'flymake-create-temp-inplace))
-             (local-file (file-relative-name
-                          temp-file
-                          (file-name-directory buffer-file-name))))
-        '("ruby" '("-c" local-file)))))
   (add-hook 'php-mode-hook
-            '(lambda () (flymake-mode t)))
-  (add-hook 'js-mode-hook
-            (lambda () (flymake-mode t)))
-  (add-hook 'ruby-mode-hook
-            (lambda () (flymake-mode t))))
+            '(lambda () (flymake-mode t))))
+;; http://d.hatena.ne.jp/gan2/20080702/1214972962
+;; flymake for ruby
+(when (require 'flymake nil t)
+  ;; Invoke ruby with '-c' to get syntax checking
+  (set-face-background 'flymake-errline "deeppink")
+  (set-face-foreground 'flymake-errline "black")
+  (set-face-background 'flymake-warnline "dark slate blue")
+  (defun flymake-ruby-init ()
+    (let* ((temp-file   (flymake-init-create-temp-buffer-copy
+                         'flymake-create-temp-inplace))
+           (local-file  (file-relative-name
+                         temp-file
+                         (file-name-directory buffer-file-name))))
+      (list "ruby" (list "-c" local-file))))
+  (push '(".+\\.rb$" flymake-ruby-init) flymake-allowed-file-name-masks)
+  (push '("Rakefile$" flymake-ruby-init) flymake-allowed-file-name-masks)
+  (push '("^\\(.*\\):\\([0-9]+\\): \\(.*\\)$" 1 2 nil 3) flymake-err-line-patterns)
+  (add-hook
+   'ruby-mode-hook
+   '(lambda ()
+      ;; Don't want flymake mode for ruby regions in rhtml files
+      (if (not (null buffer-file-name)) (flymake-mode))
+      ;; エラー行で C-c d するとエラーの内容をミニバッファで表示する
+      (define-key ruby-mode-map "\C-cd" 'credmp/flymake-display-err-minibuf)))
+
+  (defun credmp/flymake-display-err-minibuf ()
+    "Displays the error/warning for the current line in the minibuffer"
+    (interactive)
+    (let* ((line-no             (flymake-current-line-no))
+           (line-err-info-list  (nth 0 (flymake-find-err-info flymake-err-info line-no)))
+           (count               (length line-err-info-list)))
+      (while (> count 0)
+        (when line-err-info-list
+          (let* ((file       (flymake-ler-file (nth (1- count) line-err-info-list)))
+                 (full-file  (flymake-ler-full-file (nth (1- count) line-err-info-list)))
+                 (text (flymake-ler-text (nth (1- count) line-err-info-list)))
+                 (line       (flymake-ler-line (nth (1- count) line-err-info-list))))
+            (message "[%s] %s" line text)))
+        (setq count (1- count)))))
+  )
 
 ;; (when (require 'flymake nil t)
 ;;   (global-set-key "\C-cd" 'flymake-display-err-menu-for-current-line)
@@ -950,6 +959,39 @@
 	    ))
 
 ;; -----------------------------------------------------------------------------
+;; ruby-mode
+;; -----------------------------------------------------------------------------
+;;
+(autoload 'ruby-mode "ruby-mode" "Mode for editing ruby source files" t)
+(setq interpreter-mode-alist (append '(("ruby" . ruby-mode)) interpreter-mode-alist))
+
+(autoload 'inf-ruby "inf-ruby" "Run an inferior Ruby process" t)
+(add-hook 'ruby-mode-hook 'inf-ruby-minor-mode)
+
+;; https://raw.github.com/rejeep/ruby-end/master/ruby-end.el
+(require 'ruby-end)
+(add-hook 'ruby-mode-hook
+  '(lambda ()
+     (abbrev-mode 1)
+     (electric-pair-mode t)
+     (electric-indent-mode t)
+     (electric-layout-mode t)
+     (rinari-minor-mode)
+     (require 'inf-ruby)
+     (require 'ruby-compilation)
+     (define-key ruby-mode-map (kbd "M-r") 'run-rails-test-or-ruby-buffer)))
+;; set ruby-mode indent
+(setq ruby-indent-level 2)
+(setq ruby-indent-tabs-mode nil)
+;; rinari
+;; Interactively Do Things (highly recommended, but not strictly required)
+(require 'ido)
+(ido-mode t)
+;; rbenv
+(setenv "PATH" (concat (getenv "HOME") "/.rbenv/shims:" (getenv "HOME") "/.rbenv/bin:" (getenv "PATH")))
+(setq exec-path (cons (concat (getenv "HOME") "/.rbenv/shims") (cons (concat (getenv "HOME") "/.rbenv/bin") exec-path)))
+
+;; -----------------------------------------------------------------------------
 ;; run-script.el
 ;; -----------------------------------------------------------------------------
 ;;(autoload 'run-script "run-script")
@@ -1103,16 +1145,30 @@
 ;; -----------------------------------------------------------------------------
 ;; 関連付けとか
 ;; -----------------------------------------------------------------------------
-(setq auto-mode-alist
-      (append (list
-	       '("\\.php$"	.	php-mode)
-	       '("\\.sql$"	.	sql-mode)
-	       '("\\.tpl$"	.	smarty-mode)
-	       '("\\.el$"	.	lisp-mode)
-	       '("\\.yaml$"	.	yaml-mode)
-	       '("\\.js$"	.	js2-mode)
-	       '("\\.coffee$"	.	coffee-mode)
-               '("\\.md$"       .       markdown-mode)
-               '("\\.markdown$" .       markdown-mode)
-               '("\\.text$"     .       markdown-mode)
-	       auto-mode-alist)))
+(add-to-list 'auto-mode-alist '("\\.php$". php-mode))
+(add-to-list 'auto-mode-alist '("\\.sql$". sql-mode))
+(add-to-list 'auto-mode-alist '("\\.tpl$". smarty-mode))
+(add-to-list 'auto-mode-alist '("\\.el$". lisp-mode))
+(add-to-list 'auto-mode-alist '("\\.yaml$". yaml-mode))
+(add-to-list 'auto-mode-alist '("\\.js$". js2-mode))
+(add-to-list 'auto-mode-alist '("\\.coffee$". coffee-mode))
+(add-to-list 'auto-mode-alist '("\\.md$". markdown-mode))
+(add-to-list 'auto-mode-alist '("\\.markdown$". markdown-mode))
+(add-to-list 'auto-mode-alist '("\\.text$". markdown-mode))
+(add-to-list 'auto-mode-alist '("\\.erb$". web-mode))
+(add-to-list 'auto-mode-alist '("\\.html$". web-mode))
+(add-to-list 'auto-mode-alist
+             '("\\.\\(?:gemspec\\|irbrc\\|gemrc\\|rake\\|rb\\|ru\\|thor\\)\\'" . ruby-mode))
+(add-to-list 'auto-mode-alist
+             '("\\(Capfile\\|Gemfile\\(?:\\.[a-zA-Z0-9._-]+\\)?\\|[rR]akefile\\)\\'" . ruby-mode))
+
+
+;; -----------------------------------------------------------------------------
+;; ELPA
+;; -----------------------------------------------------------------------------
+(cond ((eq emacs24-p t)
+       (require 'package)
+       (add-to-list 'package-archives '("marmalade" . "http://marmalade-repo.org/packages/"))
+       (add-to-list 'package-archives '("tromey" . "http://tromey.com/elpa/"))
+       (add-to-list 'package-archives '("melpa" . "http://melpa.milkbox.net/packages/") t)
+       ))

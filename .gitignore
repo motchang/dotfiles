@@ -6,3 +6,4 @@ emacs.d/download/*
 emacs.d/tramp
 *.elc
 *~
+\#*\#
