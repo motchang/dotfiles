@@ -32,8 +32,19 @@
 	(add-to-list 'load-path default-directory)
 	(if (fboundp 'normal-top-level-add-subdirs-to-load-path)
 	    (normal-top-level-add-subdirs-to-load-path))))))
-;; elispとconfティレクトリをサフティレクトリことload-pathに追加
-(add-to-load-path "elisp" "conf")
+
+;; -----------------------------------------------------------------------------
+;; ELPA
+;; -----------------------------------------------------------------------------
+(cond ((eq emacs24-p t)
+       (require 'package)
+       (add-to-list 'package-archives '("marmalade" . "http://marmalade-repo.org/packages/"))
+       (add-to-list 'package-archives '("tromey" . "http://tromey.com/elpa/"))
+       (add-to-list 'package-archives '("melpa" . "http://melpa.milkbox.net/packages/") t)
+       ))
+
+;; elispとconfティレクトリをサブディレクトリごとload-pathに追加
+(add-to-load-path "elisp" "conf" "elpa")
 
 ;; -----------------------------------------------------------------------------
 ;; (install-elisp "http://www.emacswiki.org/emacs/download/auto-install.el")
@@ -579,6 +590,7 @@
            flymake-err-line-patterns)))
   (add-hook 'php-mode-hook
             '(lambda () (flymake-mode t))))
+
 ;; http://d.hatena.ne.jp/gan2/20080702/1214972962
 ;; flymake for ruby
 (when (require 'flymake nil t)
@@ -961,17 +973,16 @@
 ;; -----------------------------------------------------------------------------
 ;; ruby-mode
 ;; -----------------------------------------------------------------------------
-;;
 (autoload 'ruby-mode "ruby-mode" "Mode for editing ruby source files" t)
 (setq interpreter-mode-alist (append '(("ruby" . ruby-mode)) interpreter-mode-alist))
 
 (autoload 'inf-ruby "inf-ruby" "Run an inferior Ruby process" t)
 (add-hook 'ruby-mode-hook 'inf-ruby-minor-mode)
 
-;; https://raw.github.com/rejeep/ruby-end/master/ruby-end.el
-(require 'ruby-end)
 (add-hook 'ruby-mode-hook
   '(lambda ()
+     (when (require 'ruby-end)
+       (ruby-end-mode t))
      (abbrev-mode 1)
      (electric-pair-mode t)
      (electric-indent-mode t)
@@ -979,17 +990,38 @@
      (rinari-minor-mode)
      (require 'inf-ruby)
      (require 'ruby-compilation)
-     (define-key ruby-mode-map (kbd "M-r") 'run-rails-test-or-ruby-buffer)))
+     (define-key ruby-mode-map (kbd "M-r") 'run-rails-test-or-ruby-buffer))
+  )
+
 ;; set ruby-mode indent
 (setq ruby-indent-level 2)
 (setq ruby-indent-tabs-mode nil)
+
 ;; rinari
 ;; Interactively Do Things (highly recommended, but not strictly required)
 (require 'ido)
 (ido-mode t)
+
 ;; rbenv
 (setenv "PATH" (concat (getenv "HOME") "/.rbenv/shims:" (getenv "HOME") "/.rbenv/bin:" (getenv "PATH")))
 (setq exec-path (cons (concat (getenv "HOME") "/.rbenv/shims") (cons (concat (getenv "HOME") "/.rbenv/bin") exec-path)))
+
+;; -----------------------------------------------------------------------------
+;; scss-mode
+;; -----------------------------------------------------------------------------
+(autoload 'scss-mode "scss-mode")
+
+;; インデント幅を2にする
+;; コンパイルは compass watchで行うので自動コンパイルをオフ
+(defun scss-custom ()
+  "scss-mode-hook"
+  (and
+   (set (make-local-variable 'css-indent-offset) 2)
+   (set (make-local-variable 'scss-compile-at-save) nil)
+   )
+  )
+(add-hook 'scss-mode-hook
+  '(lambda() (scss-custom)))
 
 ;; -----------------------------------------------------------------------------
 ;; run-script.el
@@ -1161,14 +1193,4 @@
              '("\\.\\(?:gemspec\\|irbrc\\|gemrc\\|rake\\|rb\\|ru\\|thor\\)\\'" . ruby-mode))
 (add-to-list 'auto-mode-alist
              '("\\(Capfile\\|Gemfile\\(?:\\.[a-zA-Z0-9._-]+\\)?\\|[rR]akefile\\)\\'" . ruby-mode))
-
-
-;; -----------------------------------------------------------------------------
-;; ELPA
-;; -----------------------------------------------------------------------------
-(cond ((eq emacs24-p t)
-       (require 'package)
-       (add-to-list 'package-archives '("marmalade" . "http://marmalade-repo.org/packages/"))
-       (add-to-list 'package-archives '("tromey" . "http://tromey.com/elpa/"))
-       (add-to-list 'package-archives '("melpa" . "http://melpa.milkbox.net/packages/") t)
-       ))
+(add-to-list 'auto-mode-alist '("\\.scss$". scss-mode))
