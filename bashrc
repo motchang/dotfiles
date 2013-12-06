@@ -28,7 +28,7 @@ fi
 alias rm='rm -i'
 alias cp='cp -i'
 alias mv='mv -i'
-alias emacs='/usr/local/Cellar/emacs/24.3/bin/emacsclient -c -nw -a'
+alias emacs-simple='emacs --no-init-file'
 alias ssh='ssh -o ServerAliveCountMax=5 -o ServerAliveInterval=60'
 # alias screen='LANG=ja_JP.UTF-8 screen'
 
