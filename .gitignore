@@ -5,6 +5,7 @@ emacs.d/geben/*
 emacs.d/download/*
 emacs.d/tramp
 emacs.d/url/cookies
+emacs.d/geben/.storage
 *.elc
 *~
 \#*\#
