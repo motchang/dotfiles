@@ -59,6 +59,82 @@
 (when (require 'auto-async-byte-compile)
   (add-hook 'emacs-lisp-mode-hook 'enable-auto-async-byte-compile-mode))
 
+;; ---------------------------------------------------------
+;; 自慢の.emacsを貼り付けるスレ / 本体の根本的な設定
+;; ---------------------------------------------------------
+;;
+;; スタートアッフメッセーシを表示しない
+;(setq inhibit-startup-message t)
+
+;; emacs 終了時に確認する。
+(if (eq emacs-major-version 21)
+    (setq confirm-kill-emacs 'yes-or-no-p)
+  (defun my-save-buffers-kill-emacs ()
+    (interactive)
+    (if (yes-or-no-p "quit emacs? ")
+	(save-buffers-kill-emacs)))
+  (global-set-key "\C-x\C-c" 'my-save-buffers-kill-emacs))
+
+;; 保存時に余計な空白を削除する
+(add-hook 'before-save-hook 'delete-trailing-whitespace)
+
+;;C-x bてbuffersを選ふ時便利
+;;older than Emacs 21
+;; (iswitchb-default-keybindings)
+;;Emacs 21 or newer
+;;(iswitchb-mode nil)
+
+;; ハッファを切り替えるのに C-x C-b て electric-buffer-list を使う。
+; (global-set-key "\C-x\C-b" 'electric-buffer-list)
+
+;; ステータスラインに時間を表示する
+(display-time)
+
+;; 時間表示
+(setq display-time-24hr-format t)
+(setq display-time-day-and-date t)
+(setq display-time-string-forms
+      '(month "/" day "(" dayname ") " 24-hours ":" minutes))
+(display-time)
+
+;; 行番号・桁番号をモードラインに表示する
+(line-number-mode t)
+(column-number-mode t)
+
+;; 画面から出たとき一行だけスクロールさせる
+(setq scroll-conservatively 1)
+
+;; ハッファの最後の行で next-line しても新しい行を作らない
+(setq next-line-add-newlines nil)
+
+;; ハッファの最初の行で previous-line しても、
+;; "beginning-of-buffer" と注意されないようにする。
+(defun previous-line (arg)
+  (interactive "p")
+  (if (interactive-p)
+      (condition-case nil
+	  (line-move (- arg))
+	((beginning-of-buffer end-of-buffer)))
+    (line-move (- arg)))
+  nil)
+
+;; hoge.txt~ みたいなバックアップファイルを作らないようにする
+; (setq backup-inhibited t)
+
+;; c-mode その他で色が付くようにする
+(global-font-lock-mode t)
+
+;; 検索とかリージョンを色付きに。
+(setq transient-mark-mode t)
+(setq search-highlight t)
+(setq query-replace-highlight t)
+
+(set-face-foreground 'region "black")
+(set-face-background 'region "deeppink")
+
+;; C-xC-oで別のウィンドウに切り替える
+(global-set-key (kbd "C-x C-o") 'other-window)
+
 ;; vc-* の diff switch
 (setq diff-switches "-w")
 
@@ -199,7 +275,7 @@
 ;; (set-face-underline-p FACE nil) 下線を消す
 
 (defface my-hl-line-face
-   ;; 背景かdarkならは背景を黒に
+   ;; 背景が dark ならは背景を黒に
    '((((class color) (background dark))
       (:background "NavyBlue" :underline nil))
      ;; 背景かlightならは背景色を緑に
@@ -672,81 +748,6 @@
 ;; 名:と入力していくと、そのままサーバに接続され、
 ;; まるてローカルファイルのように扱うことができます
 
-;; ---------------------------------------------------------
-;; 自慢の.emacsを貼り付けるスレ
-;; ---------------------------------------------------------
-;;
-;; スタートアッフメッセーシを表示しない
-;(setq inhibit-startup-message t)
-
-;; emacs 終了時に確認する。
-(if (eq emacs-major-version 21)
-    (setq confirm-kill-emacs 'yes-or-no-p)
-  (defun my-save-buffers-kill-emacs ()
-    (interactive)
-    (if (yes-or-no-p "quit emacs? ")
-	(save-buffers-kill-emacs)))
-  (global-set-key "\C-x\C-c" 'my-save-buffers-kill-emacs))
-
-;; 保存時に余計な空白を削除する
-(add-hook 'before-save-hook 'delete-trailing-whitespace)
-
-;;C-x bてbuffersを選ふ時便利
-;;older than Emacs 21
-;; (iswitchb-default-keybindings)
-;;Emacs 21 or newer
-;;(iswitchb-mode nil)
-
-;; ハッファを切り替えるのに C-x C-b て electric-buffer-list を使う。
-; (global-set-key "\C-x\C-b" 'electric-buffer-list)
-
-;; ステータスラインに時間を表示する
-(display-time)
-
-;; 時間表示
-(setq display-time-24hr-format t)
-(setq display-time-day-and-date t)
-(setq display-time-string-forms
-      '(month "/" day "(" dayname ") " 24-hours ":" minutes))
-(display-time)
-
-;; 行番号・桁番号をモードラインに表示する
-(line-number-mode t)
-(column-number-mode t)
-
-;; 画面から出たとき一行だけスクロールさせる
-(setq scroll-conservatively 1)
-
-;; ハッファの最後の行で next-line しても新しい行を作らない
-(setq next-line-add-newlines nil)
-
-;; ハッファの最初の行で previous-line しても、
-;; "beginning-of-buffer" と注意されないようにする。
-(defun previous-line (arg)
-  (interactive "p")
-  (if (interactive-p)
-      (condition-case nil
-	  (line-move (- arg))
-	((beginning-of-buffer end-of-buffer)))
-    (line-move (- arg)))
-  nil)
-
-;; hoge.txt~ みたいなバックアップファイルを作らないようにする
-; (setq backup-inhibited t)
-
-;; c-mode その他で色が付くようにする
-(global-font-lock-mode t)
-
-;; 検索とかリージョンを色付きに。
-(setq transient-mark-mode t)
-(setq search-highlight t)
-(setq query-replace-highlight t)
-
-(set-face-foreground 'region "black")
-(set-face-background 'region "deeppink")
-
-;; C-xC-oで別のウィンドウに切り替える
-(global-set-key (kbd "C-x C-o") 'other-window)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; GNU GLOBAL(gtags)
@@ -763,7 +764,6 @@
          ))
 
 ;; (global-set-key (kbd "M-p") 'gtags-pop-stack)
-
 (add-hook 'php-mode-hook
 	  (lambda ()
 	    (gtags-mode t)
