@@ -1,5 +1,12 @@
 ;; -*- mode: emacs-lisp; coding: utf-8; indent-tabs-mode: nil -*-
 
+(add-hook 'after-init-hook
+          '(lambda ()
+             (let* ((el (expand-file-name "init.el" user-emacs-directory))
+                    (elc (concat el "c")))
+               (when (file-newer-than-file-p el elc)
+                 (byte-compile-file el)))))
+
 ;; スタートアップメッセージを非表示
 ;;(setq inhibit-startup-screen t)
 (setq inhibit-startup-screen nil)
@@ -44,40 +51,57 @@
        ))
 
 ;; elispとconfティレクトリをサブディレクトリごとload-pathに追加
-(add-to-load-path "elisp" "conf" "elpa")
+(add-to-load-path "elpa" "elisp" "conf")
+
+(byte-recompile-directory (expand-file-name "~/.emacs.d") 0)
+
+;; http://d.hatena.ne.jp/rubikitch/20100423/bytecomp
+(when (require 'auto-async-byte-compile)
+  (add-hook 'emacs-lisp-mode-hook 'enable-auto-async-byte-compile-mode))
+
+;; vc-* の diff switch
+(setq diff-switches "-w")
+
+;; C-h で BS
+;; (global-set-key "\C-h" 'delete-backward-char)
+
+;; C-c C-l で折り返し表示をトグル
+(defun toggle-truncate-lines ()
+  "折り返し表示をトグル"
+  (interactive)
+  (if truncate-lines
+      (setq truncate-lines nil)
+    (setq truncate-lines t))
+  (recenter))
+(setq truncate-partial-width-windows t)
+(global-set-key "\C-c \C-l" 'toggle-truncate-lines)
 
 ;; -----------------------------------------------------------------------------
 ;; (install-elisp "http://www.emacswiki.org/emacs/download/auto-install.el")
 (when (require 'auto-install nil t)
-  ;; インストールティレクトリを設定する 初期値は ~/.emacs.d/auto-install/
+  ;; インストールディレクトリを設定する 初期値は ~/.emacs.d/auto-install/
   (setq auto-install-directory "~/.emacs.d/elisp/")
   ;; EmacsWiki に登録されている elisp の名前を取得する
   (auto-install-update-emacswiki-package-name t)
-  ;; 必要てあれはフロキシの設定を行う
+  ;; 必要であれはプロキシの設定を行う
   ;; (setq url-proxy-services '(("http" . "localhost:8339")))
   ;; install-elisp の関数を利用可能にする
   (auto-install-compatibility-setup))
-
-;; ここてC-x C-eとタイフして
-;; みましょう。Emacsを再起動せすとも設定か即座に
-;; 反映されます。C-x C-eはeval-last-sexpにハイント
-;; されており、式を評価してその戻り値をミニハッフ
-;; ァに返します。
 
 ;; -----------------------------------------------------------------------------
 ;; installed
 ;;(install-elisp "http://www.emacswiki.org/emacs/download/redo+.el")
 
 ;; ・C-h a 文字列 RET
-;; 入力した文字列か含まれているコマントのリスト
+;; 入力した文字列か含まれているコマンドのリスト
 ;; を表示する（M-x command-apropos）。例：autoinstall
-;; という文字列か含まれるコマントを調へる
+;; という文字列が含まれるコマンドを調へる
 ;; C-h a auto-install RET
 
 ;; ・C-h b
 ;; 現在のキーの割り当て表を表示する（M-x describe-bindings）
 
-;; ・C-h k キーハイント
+;; ・C-h k キーバインド
 ;; キーハイントか実行するコマント（関数）名とその
 ;; トキュメントを表示する（M-x describe-key）。例：
 ;; C-qて実行されるコマントを調へるC-h k C-q
@@ -105,17 +129,14 @@
 
 ;; -----------------------------------------------------------------------------
 ;; Mac の文字コートの設定
-;; (set-language-environment "Japanese")
-;; (require 'ucs-normalize)
-;; (prefer-coding-system 'utf-8-hfs)
-;; (setq file-name-coding-system 'utf-8-hfs)
-;; (setq locale-coding-system 'utf-8-hfs)
+(cond ((eq darwin-p t)
+       (require 'ucs-normalize)
+       (set-file-name-coding-system 'utf-8-nfd))
+      (t
+       ;; そのほかのOSの設定(Unicodeの場合)
+       (set-file-name-coding-system 'utf-8)))
 
-;; そのほかのOSの設定(Unicodeの場合)
 (set-language-environment "Japanese")
-(prefer-coding-system 'utf-8)
-(setq file-name-coding-system 'utf-8)
-(setq locale-coding-system 'utf-8)
 
 ;; 行番号を表示
 ;(global-linum-mode t)
@@ -137,10 +158,6 @@
          (color-theme-initialize)
          ;; テーマを変更する
          (color-theme-dark-laptop)
-         ;;(color-theme-wheat)
-         ;;(color-theme-arjen)
-         ;;(color-theme-billw)
-         ;;(color-theme-arjen)
          ;; いい感しの
          ;; Wheat Billw Midnight dark-laptop
         )))
@@ -148,8 +165,8 @@
 ;; paren-mode 対応する括弧を強調して表示する
 ;; 表示まての秒数。初期値は0.125
 (setq show-paren-delay 0.125)
-;; 有効化
 (show-paren-mode t)
+
 ;; parenのスタイル: expression は括弧内も強調表示
 ;;(setq show-paren-style 'expression)
 ;; mixed だと画面内に収まらない時にカッコ内も表示する
@@ -170,8 +187,7 @@
 ;; ます。フェイス設定用関数一覧は表1のとおりてす。
 
 ;; リージョンの色を変更
-(set-face-background 'region "darkgreen")
-
+;; (set-face-background 'region "darkgreen")
 ;; (set-face-foreground FACE COLOR) 文字色を変更
 ;; (set-face-background FACE COLOR) 背景色を変更
 ;; (set-face-background FACE nil) 背景色なし
@@ -198,21 +214,6 @@
 
 ;; 現在行をハイライト表示
 (global-hl-line-mode t)
-
-;; http://d.hatena.ne.jp/sandai/20120304/p2
-;; (let ((ws window-system))
-;;   (cond ((eq ws 'w32)
-;;          (set-face-attribute 'default nil
-;;                              :family "Meiryo"  ;; 英数
-;;                              :height 100)
-;;          (set-fontset-font nil 'japanese-jisx0208 (font-spec :family "Meiryo")))  ;; 日本語
-;;         ((eq ws 'ns)
-;;          (set-face-attribute 'default nil
-;;                              :family "Ricty"  ;; 英数
-;;                              :height 140)
-;;          (set-fontset-font nil 'japanese-jisx0208 (font-spec :family "Ricty")))))  ;; 日本語
-
-
 
 (when (window-system)
 ;;; http://d.hatena.ne.jp/setoryohei/20110117/1295336454
@@ -417,7 +418,6 @@
 
 (require 'anything-startup)
 
-;; リスト１
 ;;; anything
 ;; (auto-install-batch "anything")
 (when (require 'anything nil t)
@@ -425,15 +425,16 @@
   (define-key global-map (kbd "\C-x \C-b") 'anything)
   (setq
    ;; 候補を表示するまでの時間。デフォルトは0.5
-   anything-idle-delay 0.3
+   anything-idle-delay 0.1
    ;；タイプして再描画するまでの時間。デフォルトは0.1
-   anything-input-idle-delay 0.2
+   anything-input-idle-delay 0.1
    ;; 候補の最大表示数。デフォルトは50
    anything-candidate-number-limit 100
    ;; 候補が多い時に体感速度を早くする
    anything-quick-update t
    ;; 候補選択ショートカットをアルファベットに
    anything-enable-shortcuts 'alphabet)
+  ;; (set-face-background 'anything-header "yellow")
   (when (require 'anything-config nil t)
     ;; root権限でアクションを実行するときのコマンド
     ;; デフォルトは"su"
@@ -468,6 +469,7 @@
        anything-c-source-apropos-emacs-commands
        anything-c-source-apropos-emacs-functions
        anything-c-source-apropos-emacs-variables))
+
 ;; 　コマントを起動したときにカーソル位置に単語か
 ;; あれは、その単語をすてに絞り込んた状態て表示て
 ;; きれは便利てす。そういったニースも、anything関
@@ -479,6 +481,7 @@
   (anything anything-for-document-sources
 	    (thing-at-point 'symbol) nil nil nil
 	    "*anything for document*"))
+
 ;; 　これて、M-x anything-for-documentて、カーソ
 ;; ルかある単語を即座にトキュメント検索てきるコマ
 ;; ントか作成てきました。頻繁に利用するのてあれは
@@ -526,7 +529,6 @@
 ;; たけを見ることかてきます。なお、そのまま選択す
 ;; るとコマントか実行されます。
 
-
 ;; anything-project：フロシェクトからファイル
 ;; を絞り込み
 ;; 　開発中はフロシェクトの中からファイルを開くこ
@@ -562,6 +564,13 @@
    ;; 起動時にホイントの位置の単語を初期ハターンにする
    anything-c-moccur-enable-initial-pattern t)
   (global-set-key (kbd "C-M-o") 'anything-c-moccur-occur-by-moccur))
+
+;;kill-ring の最大値. デフォルトは 30.
+(setq kill-ring-max 100)
+;;anything で対象とするkill-ring の要素の長さの最小値.
+;;デフォルトは 10.
+(setq anything-kill-ring-threshold 5)
+(global-set-key "\M-y" 'anything-show-kill-ring)
 
 ;; -----------------------------------------------------------------------------
 ;; flymake-mode
@@ -632,64 +641,6 @@
         (setq count (1- count)))))
   )
 
-;; (when (require 'flymake nil t)
-;;   (global-set-key "\C-cd" 'flymake-display-err-menu-for-current-line)
-;;   (set-face-background 'flymake-errline "Red")
-;;   ;(set-face-underline-p 'flymake-errline t)
-;;   (set-face-underline-p 'flymake-errline nil)
-;;   ;; PHP
-;;   (when (not (fboundp 'flymake-php-init))
-;;     (defun flymake-php-init ()
-;;       (let* ((temp-file (flymake-init-create-temp-buffer-copy
-;;                          'flymake-create-temp-inplace))
-;;              (local-file (file-relative-name
-;;                           temp-file
-;;                           (file-name-directory buffer-file-name))))
-;;         (list "php" (list "-f" local-file "-l"))))
-;;     (setq flymake-allowed-file-name-masks
-;;           (append
-;;            flymake-allowed-file-name-masks
-;;            '(("\.php[345]?$" flymake-php-init))))
-;;     (setq flymake-err-line-patterns
-;;           (cons
-;;            '("\(\(?:Parse error\|Fatal error\|Warning\): .*\) in \(.*\) on line \([0-9]+\)" 2 3 nil 1)
-;;            flymake-err-line-patterns)))
-;;   ;; JavaScript
-;;   (when (not (fboundp 'flymake-javascript-init))
-;;     (defun flymake-javascript-init ()
-;;       (let* ((temp-file (flymake-init-create-temp-buffer-copy
-;;                          'flymake-create-temp-inplace))
-;;              (local-file (file-relative-name
-;;                           temp-file
-;;                           (file-name-directory buffer-file-name))))
-;;         (list "/usr/local/bin/jsl" (list "-process" local-file))))
-;;     (setq flymake-allowed-file-name-masks
-;;           (append
-;;            flymake-allowed-file-name-masks
-;;            '(("\.json$" flymake-javascript-init)
-;;              ("\.js$" flymake-javascript-init))))
-;;     (setq flymake-err-line-patterns
-;;           (cons
-;;            '("\(.+\)(\([0-9]+\)): \(?:lint \)?\(\(?:Warning\|SyntaxError\):.+\)" 1 2 nil 3)
-;;            flymake-err-line-patterns)))
-;;   ;; Ruby
-;;   (when (not (fboundp 'flymake-ruby-init))
-;;     (defun flymake-ruby-init ()
-;;       (let* ((temp-file (flymake-init-create-temp-buffer-copy
-;;                          'flymake-create-temp-inplace))
-;;              (local-file (file-relative-name
-;;                           temp-file
-;;                           (file-name-directory buffer-file-name))))
-;;         '("ruby" '("-c" local-file)))))
-  ;; ) ; END OF when require 'flymake nil t
-
-;; (add-hook 'php-mode-hook
-;; 	  '(lambda () (flymake-mode t)))
-;;   (add-hook 'js-mode-hook
-;;             '(lambda () (flymake-mode t)))
-;;   (add-hook 'ruby-mode-hook
-;;             '(lambda () (flymake-mode t))))
-
 ;; -----------------------------------------------------------------------------
 ;; cd ~/.emacs.d/elisp/
 ;; git clone https://github.com/mitsuo-saito/auto-highlight-symbol-mode.git
@@ -710,23 +661,16 @@
 ;; 定するたけてす。
 (when (require 'multi-term nil t)
   (setq multi-term-program "/bin/bash"))
-;; 代表的な使い方
-;; 　M-x multi-term RETを実行するとEmacsのハッ
-;; ファにターミナルか開きます。まるて本当のターミ
-;; ナルにいるかのようにシェルを使うことかてきます。
-;; 　multi-termは、実行のたひに新たなシェルを開く
-;; ことかてき、GNU Screenの代わりとしても利用て
-;; きます。
 
 ;; -----------------------------------------------------------------------------
 ;; Tramp：Emacsから
-;; サーハのファイルを直接編集
-;; 　Emacsは標準てSSHやFTPを使って直接サーハの
-;; ファイルを編集てきます。
+;; サーバのファイルを直接編集
+;; 　Emacsは標準でSSHやFTPを使って直接サーバの
+;; ファイルを編集できます。
 ;; SSHを使った接続
-;; 　C-x C-f（find-file）から/sshx:ユーサ名@ホスト
-;; 名:と入力していくと、そのままサーハに接続され、
-;; まるてローカルファイルのように扱うことかてきま
+;; 　C-x C-f（find-file）から/sshx:ユーザ名@ホスト
+;; 名:と入力していくと、そのままサーバに接続され、
+;; まるてローカルファイルのように扱うことができます
 
 ;; ---------------------------------------------------------
 ;; 自慢の.emacsを貼り付けるスレ
@@ -751,7 +695,7 @@
 ;;older than Emacs 21
 ;; (iswitchb-default-keybindings)
 ;;Emacs 21 or newer
-(iswitchb-mode 1)
+;;(iswitchb-mode nil)
 
 ;; ハッファを切り替えるのに C-x C-b て electric-buffer-list を使う。
 ; (global-set-key "\C-x\C-b" 'electric-buffer-list)
@@ -766,17 +710,17 @@
       '(month "/" day "(" dayname ") " 24-hours ":" minutes))
 (display-time)
 
-;; 行番号・桁番号をモートラインに表示する
+;; 行番号・桁番号をモードラインに表示する
 (line-number-mode t)
 (column-number-mode t)
 
-;; 画面から出たとき一行たけスクロールさせる
+;; 画面から出たとき一行だけスクロールさせる
 (setq scroll-conservatively 1)
 
-;; ハッファの最後の行て next-line しても新しい行を作らない
+;; ハッファの最後の行で next-line しても新しい行を作らない
 (setq next-line-add-newlines nil)
 
-;; ハッファの最初の行て previous-line しても、
+;; ハッファの最初の行で previous-line しても、
 ;; "beginning-of-buffer" と注意されないようにする。
 (defun previous-line (arg)
   (interactive "p")
@@ -787,21 +731,21 @@
     (line-move (- arg)))
   nil)
 
-;; hoge.txt~ みたいなハックアッフファイルを作らないようにする
+;; hoge.txt~ みたいなバックアップファイルを作らないようにする
 ; (setq backup-inhibited t)
 
-;; c-mode その他て色か付くようにする
+;; c-mode その他で色が付くようにする
 (global-font-lock-mode t)
 
-;; 検索とかリーションを色付きに。
+;; 検索とかリージョンを色付きに。
 (setq transient-mark-mode t)
 (setq search-highlight t)
 (setq query-replace-highlight t)
 
 (set-face-foreground 'region "black")
-(set-face-background 'region "pink")
+(set-face-background 'region "deeppink")
 
-;; C-tて別のウィントウに切り替える
+;; C-xC-oで別のウィンドウに切り替える
 (global-set-key (kbd "C-x C-o") 'other-window)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -814,15 +758,16 @@
          (define-key gtags-mode-map "\C-cs" 'gtags-find-symbol)
          (define-key gtags-mode-map "\C-cr" 'gtags-find-rtag)
          (define-key gtags-mode-map "\C-ct" 'gtags-find-tag)
-         (define-key gtags-mode-map "\C-cf" 'gtags-parse-file)))
+         (define-key gtags-mode-map "\C-cf" 'gtags-parse-file)
+         (define-key gtags-mode-map "\M-p" 'gtags-pop-stack)
+         ))
 
-(global-set-key (kbd "M-p") 'gtags-pop-stack)
+;; (global-set-key (kbd "M-p") 'gtags-pop-stack)
 
 (add-hook 'php-mode-hook
 	  (lambda ()
 	    (gtags-mode t)
 	    ))
-
 
 ; gtags auto update
 (defun update-gtags (&optional prefix)
@@ -849,50 +794,6 @@
 ;; "gtags-path-style"のデフォルト値"root"から、"relative"もしくは"absolute"にす
 ;; ればよい。relativeの方が見やすいと思う。
 (setq gtags-path-style 'relative)
-
-;; (define-key global-map (kbd "C-x t")
-;;   (lambda ()
-;;     "Tag jump using etags, gtags and `anything'."
-;;     (interactive)
-;;     (let* ((initial-pattern (regexp-quote (or (thing-at-point 'symbol) ""))))
-;;       (anything (list anything-c-source-gtags-select
-;;  		      anything-c-source-etags-select))
-;;       "Find Tag: " nil)))
-
-;; (defmacro my-let-env (environments &rest body)
-;;   `(let ((process-environment process-environment))
-;;      ,@(mapcar (lambda (env) `(setenv ,@env)) environments)
-;;      (progn ,@body)))
-
-;; (defun anything-c-source-gtags-select-with-root (name gtagsroot)
-;;   (lexical-let ((gtagsroot (expand-file-name gtagsroot)))
-;;     `((name . ,name)
-;;       (init
-;;        . ,(lambda ()
-;; 	    (my-let-env
-;; 	     (("GTAGSROOT" gtagsroot))
-;; 	     (call-process-shell-command
-;; 	      "global -c" nil (anything-candidate-buffer 'global)))))
-;;       (candidates-in-buffer)
-;;       (action
-;;        ("Goto the location"
-;; 	. ,(lambda (candidate)
-;; 	     (my-let-env
-;; 	      (("GTAGSROOT" gtagsroot))
-;; 	      (gtags-push-context)
-;; 	      (gtags-goto-tag candidate ""))))
-;; 	 ("Goto the location (other-window)"
-;; 	  . ,(lambda (candidate)
-;; 	       (my-let-env
-;; 		(("GTAGSROOT" gtagsroot))
-;; 		(gtags-push-context)
-;; 		(gtags-goto-tag candidate "" t))))
-;; 	 ("Move to the referenced point"
-;; 	  . ,(lambda (candidate)
-;; 	       (my-let-env
-;; 		(("GTAGSROOT" gtagsroot))
-;; 		(gtags-push-context)
-;; 		(gtags-goto-tag candidate "r"))))))))
 
 ;; -----------------------------------------------------------------------------
 ;; php-mode
@@ -928,10 +829,12 @@
 	     (setq php-manual-url "http://www.php.net/manual/ja/")
 	     ))
 
+;; geben
 (autoload 'geben "geben" "PHP Debugger on Emacs" t)
 (autoload 'geben-set-breakpoint-line "geben" "Set a breakpoint at the current line." t)
 (setq geben-dbgp-default-port 9005)
 
+;; javascript-mode
 (add-hook 'javascript-mode-hook
          (lambda ()
              (when (require 'auto-complete nil t)
@@ -980,31 +883,40 @@
 (add-hook 'ruby-mode-hook 'inf-ruby-minor-mode)
 
 (add-hook 'ruby-mode-hook
-  '(lambda ()
-     (when (require 'ruby-end)
-       (ruby-end-mode t))
-     (abbrev-mode 1)
-     (electric-pair-mode t)
-     (electric-indent-mode t)
-     (electric-layout-mode t)
-     (rinari-minor-mode)
-     (require 'inf-ruby)
-     (require 'ruby-compilation)
-     (define-key ruby-mode-map (kbd "M-r") 'run-rails-test-or-ruby-buffer))
-  )
+          '(lambda ()
+             (when (require 'ruby-end nil t)
+               (ruby-end-mode t))
+             (abbrev-mode 1)
+             (electric-pair-mode t)
+             (electric-indent-mode t)
+             (electric-layout-mode t)
+             ;; rinari
+             (when (require 'rinari nil t)
+               (rinari-minor-mode 1)
+               (when (require 'ruby-compilation))
+               (define-key ruby-mode-map (kbd "M-r") 'run-rails-test-or-ruby-buffer))))
 
 ;; set ruby-mode indent
 (setq ruby-indent-level 2)
 (setq ruby-indent-tabs-mode nil)
 
-;; rinari
-;; Interactively Do Things (highly recommended, but not strictly required)
-(require 'ido)
-(ido-mode t)
-
-;; rbenv
+;; rbenv の ruby を参照するようにする
 (setenv "PATH" (concat (getenv "HOME") "/.rbenv/shims:" (getenv "HOME") "/.rbenv/bin:" (getenv "PATH")))
 (setq exec-path (cons (concat (getenv "HOME") "/.rbenv/shims") (cons (concat (getenv "HOME") "/.rbenv/bin") exec-path)))
+
+;; web-mode でも rinari する
+(when (require 'web-mode nil t)
+  (defun my/web-mode-hook ()
+    "Hooks for Web mode."
+    (setq web-mode-html-offset   2)
+    (setq web-mode-css-offset    2)
+    (setq web-mode-script-offset 2)
+    (setq web-mode-php-offset    2)
+    (setq web-mode-java-offset   2)
+    (setq web-mode-asp-offset    2)
+    (when (require 'rinari nil t)
+      (setq rinari-minor-mode t)))
+  (add-hook 'web-mode-hook 'my/web-mode-hook))
 
 ;; -----------------------------------------------------------------------------
 ;; scss-mode
@@ -1012,7 +924,7 @@
 (autoload 'scss-mode "scss-mode")
 
 ;; インデント幅を2にする
-;; コンパイルは compass watchで行うので自動コンパイルをオフ
+;; SASSの自動コンパイルをオフ
 (defun scss-custom ()
   "scss-mode-hook"
   (and
@@ -1022,34 +934,6 @@
   )
 (add-hook 'scss-mode-hook
   '(lambda() (scss-custom)))
-
-;; -----------------------------------------------------------------------------
-;; run-script.el
-;; -----------------------------------------------------------------------------
-;;(autoload 'run-script "run-script")
-;;(require 'run-script)
-;;(add-hook 'cperl-mode-hook
-;;	  (lambda ()
-;;	    (setq run-script-command "perl")
-;;	    (setq run-script-switch "-w")
-;;	    (define-key cperl-mode-map "\M-p" 'run-script))
-
-;; -----------------------------------------------------------------------------
-;; dsvn.el
-;; -----------------------------------------------------------------------------
-;(autoload 'svn-status "dsvn" "Run `svn status'." t)
-;(autoload 'svn-update "dsvn" "Run `svn update'." t)
-
-;; -----------------------------------------------------------------------------
-;; psvn.el
-;; -----------------------------------------------------------------------------
-;(require 'psvn)
-;(setq svn-status-verbose nil)
-;(setq svn-status-hide-unmodified t)
-;; ログにファイル名を出さない
-;(setq svn-status-default-log-arguments nil)
-;; プレフィクスをC-x sにする
-;(global-set-key (kbd "C-x s") svn-global-keymap)
 
 ;; -----------------------------------------------------------------------------
 ;; yaml-mode
@@ -1109,39 +993,12 @@
 
 (add-hook 'coffee-mode-hook 'coffee-custom)
 
-(require 'browse-kill-ring)
-(browse-kill-ring-default-keybindings)
-
-;; vc
-(setq diff-switches "-w")
-
-;; C-h で BS
-(global-set-key "\C-h" 'delete-backward-char)
-
-;; 折り返し表示をトグル
-(defun toggle-truncate-lines ()
-  "折り返し表示をトグル"
-  (interactive)
-  (if truncate-lines
-      (setq truncate-lines nil)
-    (setq truncate-lines t))
-  (recenter))
-
-(setq truncate-partial-width-windows t)
-(global-set-key "\C-c \C-l" 'toggle-truncate-lines)
-
 ;; -----------------------------------------------------------------------------
 ;; CEDET
 ;; -----------------------------------------------------------------------------
 ; (load-library "cedet")
 ; (global-ede-mode 1)
 ; (semantic-mode 1)
-
-;; -----------------------------------------------------------------------------
-;; window manager
-;; -----------------------------------------------------------------------------
-;(require 'e2wm)
-;(global-set-key (kbd "M-+") 'e2wm:start-management)
 
 ;; -----------------------------------------------------------------------------
 ;; popup.el
@@ -1154,7 +1011,9 @@
 (setq anything-samewindow nil)
 (push '("*anything*" :height 30) popwin:special-display-config)
 
+;; -----------------------------------------------------------------------------
 ;; ispell
+;; -----------------------------------------------------------------------------
 (setq ispell-program-name "aspell")
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
@@ -1187,7 +1046,7 @@
 (add-to-list 'auto-mode-alist '("\\.md$". markdown-mode))
 (add-to-list 'auto-mode-alist '("\\.markdown$". markdown-mode))
 (add-to-list 'auto-mode-alist '("\\.text$". markdown-mode))
-(add-to-list 'auto-mode-alist '("\\.erb$". web-mode))
+(add-to-list 'auto-mode-alist '("\\.html\\.erb$". web-mode))
 (add-to-list 'auto-mode-alist '("\\.html$". web-mode))
 (add-to-list 'auto-mode-alist
              '("\\.\\(?:gemspec\\|irbrc\\|gemrc\\|rake\\|rb\\|ru\\|thor\\)\\'" . ruby-mode))
