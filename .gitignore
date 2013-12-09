@@ -9,3 +9,4 @@ emacs.d/geben/.storage
 *.elc
 *~
 \#*\#
+.DS_*
