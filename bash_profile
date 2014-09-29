@@ -16,20 +16,20 @@ then
     then
         eval `/usr/bin/ssh-agent`
 
-        if [ -f ~/.ssh/id_rsa ]
-        then
-            ssh-add ~/.ssh/id_rsa
-        fi
-
+#         if [ -f ~/.ssh/id_rsa ]
+#         then
+#             ssh-add ~/.ssh/id_rsa
+#         fi
+ 
         if [ -f ~/Dropbox/ssh/id_rsa ]
         then
             ssh-add ~/Dropbox/ssh/id_rsa
         fi
 
-	if [ -f ~/.ssh/id_rsa-skiyaki ]
-	then
-            ssh-add ~/.ssh/id_rsa-skiyaki
-	fi
+#	if [ -f ~/.ssh/id_rsa-skiyaki ]
+#	then
+#           ssh-add ~/.ssh/id_rsa-skiyaki
+#	fi
 	
     fi
 fi
@@ -70,6 +70,11 @@ then
 fi
 
 export PATH
+
+if [ -d /usr/local/mysql/lib ]
+then
+    export DYLD_LIBRARY_PATH=/usr/local/mysql/lib:${DYLD_LIBRARY_PATH}
+fi
 
 # ------------------------------------------------------------------------------
 # GNU SCREEN

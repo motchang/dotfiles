@@ -1,5 +1,4 @@
 ;; -*- mode: emacs-lisp; coding: utf-8; indent-tabs-mode: nil -*-
-
 (add-hook 'after-init-hook
           '(lambda ()
              (let* ((el (expand-file-name "init.el" user-emacs-directory))
@@ -109,14 +108,14 @@
 
 ;; ハッファの最初の行で previous-line しても、
 ;; "beginning-of-buffer" と注意されないようにする。
-(defun previous-line (arg)
-  (interactive "p")
-  (if (interactive-p)
-      (condition-case nil
-	  (line-move (- arg))
-	((beginning-of-buffer end-of-buffer)))
-    (line-move (- arg)))
-  nil)
+;; (defun previous-line (arg)
+;;   (interactive "p")
+;;   (if (interactive-p)
+;;       (condition-case nil
+;;   	  (line-move (- arg))
+;;   	((beginning-of-buffer end-of-buffer)))
+;;     (line-move (- arg)))
+;;   nil)
 
 ;; hoge.txt~ みたいなバックアップファイルを作らないようにする
 ; (setq backup-inhibited t)
@@ -128,9 +127,6 @@
 (setq transient-mark-mode t)
 (setq search-highlight t)
 (setq query-replace-highlight t)
-
-(set-face-foreground 'region "black")
-(set-face-background 'region "deeppink")
 
 ;; C-xC-oで別のウィンドウに切り替える
 (global-set-key (kbd "C-x C-o") 'other-window)
@@ -238,6 +234,9 @@
          ;; Wheat Billw Midnight dark-laptop
         )))
 
+(set-face-foreground 'region "black")
+(set-face-background 'region "deeppink")
+
 ;; paren-mode 対応する括弧を強調して表示する
 ;; 表示まての秒数。初期値は0.125
 (setq show-paren-delay 0.125)
@@ -277,11 +276,11 @@
 (defface my-hl-line-face
    ;; 背景が dark ならは背景を黒に
    '((((class color) (background dark))
-      (:background "NavyBlue" :underline nil))
+      (:background "maroon4" :underline nil))
      ;; 背景かlightならは背景色を緑に
      (((class color) (background light))
       (:background "LightGoldenrodYellow" t))
-     (t (:bold t))
+     ;; (t (:bold t))
      ;; (t (:underline t))
      )
    "hl-line's my face")
@@ -654,7 +653,7 @@
 (when (require 'flymake nil t)
   (global-set-key "\C-cd" 'flymake-display-err-menu-for-current-line)
   (set-face-background 'flymake-errline "Red")
-  (set-face-underline-p 'flymake-errline t)
+  (set-face-underline 'flymake-errline t)
   ;; PHP
   ;; PHPで flymake する時は display_errors = On じゃないとダメだよ
   (when (not (fboundp 'flymake-php-init))
@@ -876,16 +875,22 @@
 ;; -----------------------------------------------------------------------------
 ;; ruby-mode
 ;; -----------------------------------------------------------------------------
-(autoload 'ruby-mode "ruby-mode" "Mode for editing ruby source files" t)
-(setq interpreter-mode-alist (append '(("ruby" . ruby-mode)) interpreter-mode-alist))
+;; (autoload 'ruby-mode "ruby-mode" "Mode for editing ruby source files" t)
+;; (setq interpreter-mode-alist (append '(("ruby" . ruby-mode)) interpreter-mode-alist))
 
-(autoload 'inf-ruby "inf-ruby" "Run an inferior Ruby process" t)
-(add-hook 'ruby-mode-hook 'inf-ruby-minor-mode)
+;; (autoload 'inf-ruby "inf-ruby" "Run an inferior Ruby process" t)
+;; (add-hook 'ruby-mode-hook 'inf-ruby-minor-mode)
 
 (add-hook 'ruby-mode-hook
           '(lambda ()
              (when (require 'ruby-end nil t)
-               (ruby-end-mode t))
+               (ruby-end-mode t)
+               (setq ruby-end-insert-newline nil)
+               (setq ruby-end-check-statement-modifiers nil))
+             (c-toggle-hungry-state t)
+;;             (define-key ruby-mode-map "\C-h" 'c-hungry-backspace)
+             (define-key ruby-mode-map [backspace] 'c-hungry-backspace)
+             (define-key ruby-mode-map [delete] 'c-hungry-delete)
              (abbrev-mode 1)
              (electric-pair-mode t)
              (electric-indent-mode t)
@@ -894,17 +899,21 @@
              (when (require 'rinari nil t)
                (rinari-minor-mode 1)
                (when (require 'ruby-compilation))
-               (define-key ruby-mode-map (kbd "M-r") 'run-rails-test-or-ruby-buffer))))
+               (define-key ruby-mode-map (kbd "\M-r") 'run-rails-test-or-ruby-buffer))
+             (when (require 'smartparens-ruby)
+               (set-face-attribute 'sp-show-pair-match-face nil
+                                   :background "gray20" :foreground "green")))
+          )
 
-;; set ruby-mode indent
+;; ;; set ruby-mode indent
 (setq ruby-indent-level 2)
 (setq ruby-indent-tabs-mode nil)
 
-;; rbenv の ruby を参照するようにする
+;; ;; rbenv の ruby を参照するようにする
 (setenv "PATH" (concat (getenv "HOME") "/.rbenv/shims:" (getenv "HOME") "/.rbenv/bin:" (getenv "PATH")))
 (setq exec-path (cons (concat (getenv "HOME") "/.rbenv/shims") (cons (concat (getenv "HOME") "/.rbenv/bin") exec-path)))
 
-;; web-mode でも rinari する
+;; ;; web-mode でも rinari する
 (when (require 'web-mode nil t)
   (defun my/web-mode-hook ()
     "Hooks for Web mode."
@@ -919,7 +928,7 @@
   (add-hook 'web-mode-hook 'my/web-mode-hook))
 
 ;; -----------------------------------------------------------------------------
-;; scss-mode
+;; scssmode
 ;; -----------------------------------------------------------------------------
 (autoload 'scss-mode "scss-mode")
 
@@ -928,6 +937,7 @@
 (defun scss-custom ()
   "scss-mode-hook"
   (and
+   (setq tab-width 4)
    (set (make-local-variable 'css-indent-offset) 2)
    (set (make-local-variable 'scss-compile-at-save) nil)
    )
@@ -935,6 +945,21 @@
 (add-hook 'scss-mode-hook
   '(lambda() (scss-custom)))
 
+;; -----------------------------------------------------------------------------
+;; Sassmode
+;; -----------------------------------------------------------------------------
+(require 'sass-mode)
+(defun sass-custom ()
+  "sass-mode-hook"
+  (and
+   ;インデントはタブ。
+   (setq tab-width 4)
+   (setq indent-tabs-mode t)
+   (setq sass-indent-offset 4)
+   )
+  )
+(add-hook 'sass-mode-hook
+  '(lambda() (sass-custom)))
 ;; -----------------------------------------------------------------------------
 ;; yaml-mode
 ;; -----------------------------------------------------------------------------
@@ -1053,3 +1078,9 @@
 (add-to-list 'auto-mode-alist
              '("\\(Capfile\\|Gemfile\\(?:\\.[a-zA-Z0-9._-]+\\)?\\|[rR]akefile\\)\\'" . ruby-mode))
 (add-to-list 'auto-mode-alist '("\\.scss$". scss-mode))
+(add-to-list 'auto-mode-alist '("\\.sass$". sass-mode))
+
+;; -----------------------------------------------------------------------------
+;; 鬼軍曹
+;; -----------------------------------------------------------------------------
+(require 'drill-instructor)
