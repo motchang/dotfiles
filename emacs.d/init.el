@@ -158,8 +158,8 @@
       (setq truncate-lines nil)
     (setq truncate-lines t))
   (recenter))
-(setq truncate-partial-width-windows t)
-(global-set-key "\C-c \C-l" 'toggle-truncate-lines)
+(setq truncate-partial-width-windows nil)
+(global-set-key (kbd "C-c C-l") 'toggle-truncate-lines)
 
 ;; -----------------------------------------------------------------------------
 ;; (install-elisp "http://www.emacswiki.org/emacs/download/auto-install.el")
