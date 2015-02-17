@@ -72,3 +72,10 @@ then
     export PATH=${HOME}/.rbenv/bin:${PATH}
     eval "$(rbenv init -)"
 fi
+
+# ------------------------------------------------------------------------------
+# docker
+# ------------------------------------------------------------------------------
+if [ -f $(brew --prefix)/etc/bash_completion ]; then
+    . $(brew --prefix)/etc/bash_completion
+fi
