@@ -7,3 +7,4 @@
 	ln -sf src/dotfiles/bash_profile ~/.bash_profile
 	ln -sf src/dotfiles/emacs.d ~/.emacs.d
 	ln -sf src/dotfiles/tmux.conf ~/.tmux.conf
+	ln -sf src/dotfiles/gitignore_global ~/.gitignore_global

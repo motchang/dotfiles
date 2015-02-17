@@ -1,3 +1,16 @@
+(dolist (dir (list
+	      "/sbin"
+	      "/usr/sbin"
+	      "/bin"
+	      "/usr/bin"
+	      "/usr/local/bin"
+	      (expand-file-name "~/bin")
+	      (expand-file-name "~/.emacs.d/bin")
+	      ))
+  (when (and (file-exists-p dir) (not (member dir exec-path)))
+    (setenv "PATH" (concat dir ":" (getenv "PATH")))
+    (setq exec-path (append (list dir) exec-path))))
+
 ;; -*- mode: emacs-lisp; coding: utf-8; indent-tabs-mode: nil -*-
 (add-hook 'after-init-hook
           '(lambda ()
@@ -209,6 +222,11 @@
        (set-file-name-coding-system 'utf-8)))
 
 (set-language-environment "Japanese")
+
+;; デフォルトをUTF8に変更する
+(set-default-coding-systems 'utf-8)
+(setq default-buffer-file-coding-system 'utf-8)
+(prefer-coding-system 'utf-8)
 
 ;; 行番号を表示
 ;(global-linum-mode t)
@@ -447,14 +465,18 @@
 
 ;; successfully installed!
 ;; Add the following code to your .emacs:
+;; (require 'auto-complete-config)
+;; (when (require 'auto-complete-config nil t)
+;;   ;; (add-to-list 'ac-dictionary-directories
+;;   ;; 	       "~/.emacs.d/elisp/ac-dict")
+;;   (define-key ac-mode-map (kbd "M-i") 'auto-complete)
+;;   (setq ac-auto-start 3)
+;;   (ac-config-default))
+;; (global-set-key (kbd "M-i") 'auto-complete)
+
+(require 'auto-complete)
 (require 'auto-complete-config)
-(when (require 'auto-complete-config nil t)
-  (add-to-list 'ac-dictionary-directories
-	       "~/.emacs.d/elisp/ac-dict")
-  (define-key ac-mode-map (kbd "M-i") 'auto-complete)
-  (setq ac-auto-start 5)
-  (ac-config-default))
-(global-set-key (kbd "M-i") 'auto-complete)
+(global-auto-complete-mode t)
 
 ;; 補完候補について
 ;; 　auto-complete-modeの補完候補は、ソースと呼ば
@@ -717,10 +739,15 @@
   )
 
 ;; -----------------------------------------------------------------------------
+;; flycheck
+;; -----------------------------------------------------------------------------
+;; (add-hook 'after-init-hook #'global-flycheck-mode)
+
+;; -----------------------------------------------------------------------------
 ;; cd ~/.emacs.d/elisp/
 ;; git clone https://github.com/mitsuo-saito/auto-highlight-symbol-mode.git
-(require 'auto-highlight-symbol)
-(global-auto-highlight-symbol-mode t)
+;(require 'auto-highlight-symbol)
+;(global-auto-highlight-symbol-mode t)
 
 ;; -----------------------------------------------------------------------------
 ;; Emacsから本格的にシェルを使う
@@ -875,11 +902,16 @@
 ;; -----------------------------------------------------------------------------
 ;; ruby-mode
 ;; -----------------------------------------------------------------------------
-;; (autoload 'ruby-mode "ruby-mode" "Mode for editing ruby source files" t)
-;; (setq interpreter-mode-alist (append '(("ruby" . ruby-mode)) interpreter-mode-alist))
+(autoload 'ruby-mode "ruby-mode" "Mode for editing ruby source files" t)
+(setq interpreter-mode-alist (append '(("ruby" . ruby-mode)) interpreter-mode-alist))
 
-;; (autoload 'inf-ruby "inf-ruby" "Run an inferior Ruby process" t)
-;; (add-hook 'ruby-mode-hook 'inf-ruby-minor-mode)
+(require 'inf-ruby)
+(setq inf-ruby-default-implementation "pry")
+(setq inf-ruby-eval-binding "Pry.toplevel_binding")
+
+(autoload 'inf-ruby "inf-ruby" "Run an inferior Ruby process" t)
+(add-hook 'ruby-mode-hook 'inf-ruby-minor-mode)
+(add-hook 'inf-ruby-mode-hook 'ansi-color-for-comint-mode-on)
 
 (add-hook 'ruby-mode-hook
           '(lambda ()
@@ -887,14 +919,34 @@
                (ruby-end-mode t)
                (setq ruby-end-insert-newline nil)
                (setq ruby-end-check-statement-modifiers nil))
-             (c-toggle-hungry-state t)
-;;             (define-key ruby-mode-map "\C-h" 'c-hungry-backspace)
-             (define-key ruby-mode-map [backspace] 'c-hungry-backspace)
-             (define-key ruby-mode-map [delete] 'c-hungry-delete)
+             (set-default-coding-systems 'utf-8)
+             (setq c-toggle-hungry-state t)
+             (setq ruby-insert-encoding-magic-comment nil)
+	     ;; http://qiita.com/tadsan/items/ab3c3b594b5bf6203f02
+	     (make-local-variable 'ac-ignore-case)
+	     (setq ac-ignore-case nil)
              (abbrev-mode 1)
              (electric-pair-mode t)
              (electric-indent-mode t)
              (electric-layout-mode t)
+             (setq ruby-deep-indent-paren-style nil)
+
+             ;; http://stackoverflow.com/questions/7961533/emacs-ruby-method-parameter-indentation
+             (defadvice ruby-indent-line (after unindent-closing-paren activate)
+               (let ((column (current-column))
+                     indent offset)
+                 (save-excursion
+                   (back-to-indentation)
+                   (let ((state (syntax-ppss)))
+                     (setq offset (- column (current-column)))
+                     (when (and (eq (char-after) ?\))
+                                (not (zerop (car state))))
+                       (goto-char (cadr state))
+                       (setq indent (current-indentation)))))
+                 (when indent
+                   (indent-line-to indent)
+                         (when (> offset 0) (forward-char offset)))))
+
              ;; rinari
              (when (require 'rinari nil t)
                (rinari-minor-mode 1)
@@ -905,24 +957,31 @@
                                    :background "gray20" :foreground "green")))
           )
 
-;; ;; set ruby-mode indent
+;; set ruby-mode indent
 (setq ruby-indent-level 2)
 (setq ruby-indent-tabs-mode nil)
 
-;; ;; rbenv の ruby を参照するようにする
+;; rbenv の ruby を参照するようにする
 (setenv "PATH" (concat (getenv "HOME") "/.rbenv/shims:" (getenv "HOME") "/.rbenv/bin:" (getenv "PATH")))
 (setq exec-path (cons (concat (getenv "HOME") "/.rbenv/shims") (cons (concat (getenv "HOME") "/.rbenv/bin") exec-path)))
 
-;; ;; web-mode でも rinari する
+;; rspec-mode
+(custom-set-variables '(rspec-use-rake-flag nil))
+(custom-set-faces)
+
+;; web-mode でも rinari する
 (when (require 'web-mode nil t)
   (defun my/web-mode-hook ()
     "Hooks for Web mode."
-    (setq web-mode-html-offset   2)
-    (setq web-mode-css-offset    2)
-    (setq web-mode-script-offset 2)
-    (setq web-mode-php-offset    2)
-    (setq web-mode-java-offset   2)
-    (setq web-mode-asp-offset    2)
+    (setq web-mode-html-offset          4)
+    (setq web-mode-markup-indent-offset 4)
+    (setq web-mode-css-offset           2)
+    (setq web-mode-script-offset        2)
+    (setq web-mode-php-offset           2)
+    (setq web-mode-java-offset          2)
+    (setq web-mode-asp-offset           2)
+    (setq indent-tabs-mode              t)
+    (setq tab-width                     4)
     (when (require 'rinari nil t)
       (setq rinari-minor-mode t)))
   (add-hook 'web-mode-hook 'my/web-mode-hook))
@@ -1059,6 +1118,11 @@
 (autoload 'markdown-mode "markdown-mode" "Major mode for editing Markdown files" t)
 
 ;; -----------------------------------------------------------------------------
+;; magit
+;; -----------------------------------------------------------------------------
+(require 'magit)
+
+;; -----------------------------------------------------------------------------
 ;; 関連付けとか
 ;; -----------------------------------------------------------------------------
 (add-to-list 'auto-mode-alist '("\\.php$". php-mode))
@@ -1084,3 +1148,16 @@
 ;; 鬼軍曹
 ;; -----------------------------------------------------------------------------
 (require 'drill-instructor)
+
+;; -----------------------------------------------------------------------------
+;; twittering-mode
+;; -----------------------------------------------------------------------------
+(when (require 'twittering-mode)
+  (setq twittering-use-master-password t)
+  (setq twittering-icon-mode nil)
+  (setq twittering-timer-interval 500))
+
+;; -----------------------------------------------------------------------------
+;; 2ch
+;; -----------------------------------------------------------------------------
+(autoload 'navi2ch "navi2ch" "Navigator for 2ch for Emacs" t)
