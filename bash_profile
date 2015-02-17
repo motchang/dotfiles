@@ -11,26 +11,10 @@ fi
 if [ `uname` = "Darwin" ]
 then
     #mac用のコード
-    # ssh agent forwarding
-    if [ -f /usr/bin/ssh-agent ]
+    if [ -f /usr/bin/ssh-agent -a -f ~/.ssh/id_rsa ]
     then
         eval `/usr/bin/ssh-agent`
-
-#         if [ -f ~/.ssh/id_rsa ]
-#         then
-#             ssh-add ~/.ssh/id_rsa
-#         fi
- 
-        if [ -f ~/Dropbox/ssh/id_rsa ]
-        then
-            ssh-add ~/Dropbox/ssh/id_rsa
-        fi
-
-#	if [ -f ~/.ssh/id_rsa-skiyaki ]
-#	then
-#           ssh-add ~/.ssh/id_rsa-skiyaki
-#	fi
-	
+        ssh-add ~/.ssh/id_rsa
     fi
 fi
 
@@ -41,8 +25,6 @@ then
     export LC_CTYPE=ja_JP.utf8
 fi
 
-#export SVN_EDITOR='~/bin/emacs --no-init-file -nw'
-export SVN_EDITOR='vi'
 # PATH
 PATH=$HOME/bin:/usr/local/bin:$PATH
 
@@ -76,15 +58,11 @@ then
     export DYLD_LIBRARY_PATH=/usr/local/mysql/lib:${DYLD_LIBRARY_PATH}
 fi
 
-# ------------------------------------------------------------------------------
-# GNU SCREEN
-# ------------------------------------------------------------------------------
-if [ "$TERM" = 'xterm' -o "$TERM" = 'linux' ]; then
-#	export TERM=xterm-256color
-#	$HOME/bin/emacs --daemon
-#	screen -rx || screen -D -RR
-	NOP='NOP'
-fi
+# git
+unset SSH_ASKPASS
+
+# svn
+export SVN_EDITOR='emacs --no-init-file -nw'
 
 # ------------------------------------------------------------------------------
 # ruby
@@ -94,10 +72,3 @@ then
     export PATH=${HOME}/.rbenv/bin:${PATH}
     eval "$(rbenv init -)"
 fi
-
-# if [ -d ${HOME}/rubygem_repository/bin/ ]; then
-#     export PATH=${HOME}/rubygem_repository/bin/:${PATH}
-# fi
-
-# git コマンドがイカれるので変数を握りつぶす
-unset SSH_ASKPASS
