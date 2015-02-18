@@ -1,3 +1,4 @@
+#!/bin/bash
 # .bashrc
 
 # Source global definitions
@@ -50,7 +51,6 @@ if [ ! -z "$SSH_AUTH_SOCK" -a "$SSH_AUTH_SOCK" != "$HOME/.ssh/agent_sock" ] ; th
     ln -s "$SSH_AUTH_SOCK" "$HOME/.ssh/agent_sock"
     export SSH_AUTH_SOCK="$HOME/.ssh/agent_sock"
 fi
-
 
 ### Added by the Heroku Toolbelt
 export PATH="/usr/local/heroku/bin:$PATH"

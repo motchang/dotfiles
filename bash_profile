@@ -77,14 +77,14 @@ export SVN_EDITOR='emacs --no-init-file -nw'
 # ------------------------------------------------------------------------------
 # ruby
 # ------------------------------------------------------------------------------
-if [ -d ${HOME}/.rbenv/bin ]
+which rbenv >> /dev/null
+if [ $? -eq 0 ]
 then
-    export PATH=${HOME}/.rbenv/bin:${PATH}
     eval "$(rbenv init -)"
 fi
 
 # ------------------------------------------------------------------------------
-# docker
+# bash compiletion
 # ------------------------------------------------------------------------------
 if [ -f $(brew --prefix)/etc/bash_completion ]; then
     . $(brew --prefix)/etc/bash_completion
