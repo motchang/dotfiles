@@ -43,7 +43,7 @@
 (defvar darwin-p (eq system-type 'darwin))      ; Mac OS X 用
 (defvar nt-p (eq system-type 'windows-nt))      ; Windows 用
 
-;load-path を追加する関数を定義
+;; load-path を追加する関数を定義
 (defun add-to-load-path (&rest paths)
  (let (path)
     (dolist (path paths paths)
@@ -213,10 +213,13 @@
 ;(global-set-key (kbd "C-x ?") 'help-command)
 
 ;; -----------------------------------------------------------------------------
-;; Mac の文字コートの設定
 (cond ((eq darwin-p t)
+       ;; Mac の文字コートの設定
        (require 'ucs-normalize)
-       (set-file-name-coding-system 'utf-8-nfd))
+       (set-file-name-coding-system 'utf-8-nfd)
+       (require 'ls-lisp)
+       (setq ls-lisp-use-insert-directory-program nil)
+       (setq dired-use-ls-dired t))
       (t
        ;; そのほかのOSの設定(Unicodeの場合)
        (set-file-name-coding-system 'utf-8)))
