@@ -16,6 +16,16 @@ then
         eval `/usr/bin/ssh-agent`
         ssh-add ~/.ssh/id_rsa
     fi
+    # coreutils
+    if [ -d /usr/local/opt/coreutils/libexec/gnubin ]
+    then
+	PATH=/usr/local/opt/coreutils/libexec/gnubin:${PATH}
+    fi
+    if [ -d /usr/local/opt/coreutils/libexec/gnuman ]
+    then
+	MANPATH=/usr/local/opt/coreutils/libexec/gnuman:${MANPATH}
+	export MANPATH
+    fi
 fi
 
 if [ `uname` = "Linux" ]
@@ -26,7 +36,7 @@ then
 fi
 
 # PATH
-PATH=$HOME/bin:/usr/local/bin:$PATH
+PATH=${HOME}/bin:/usr/local/bin:${PATH}
 
 if [ -d /usr/share/php/ZendFramework/bin/ ]
 then
