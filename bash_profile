@@ -86,7 +86,7 @@ export SVN_EDITOR='emacs --no-init-file -nw'
 # ------------------------------------------------------------------------------
 # ruby
 # ------------------------------------------------------------------------------
-which rbenv >> /dev/null
+which rbenv >> /dev/null 2>&1
 if [ $? -eq 0 ]
 then
     eval "$(rbenv init -)"
