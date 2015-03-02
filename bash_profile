@@ -16,6 +16,10 @@ then
         eval `/usr/bin/ssh-agent`
         ssh-add ~/.ssh/id_rsa
     fi
+    # bash compiletion
+    if [ -f $(brew --prefix)/etc/bash_completion ]; then
+	. $(brew --prefix)/etc/bash_completion
+    fi
     # coreutils
     if [ -d /usr/local/opt/coreutils/libexec/gnubin ]
     then
@@ -25,6 +29,11 @@ then
     then
 	MANPATH=/usr/local/opt/coreutils/libexec/gnuman:${MANPATH}
 	export MANPATH
+    fi
+    # python
+    if [ -d /usr/local/share/python ]
+    then
+	PATH=/usr/local/share/python:$PATH
     fi
 fi
 
@@ -81,11 +90,4 @@ which rbenv >> /dev/null
 if [ $? -eq 0 ]
 then
     eval "$(rbenv init -)"
-fi
-
-# ------------------------------------------------------------------------------
-# bash compiletion
-# ------------------------------------------------------------------------------
-if [ -f $(brew --prefix)/etc/bash_completion ]; then
-    . $(brew --prefix)/etc/bash_completion
 fi

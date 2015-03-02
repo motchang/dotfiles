@@ -159,6 +159,7 @@
     (setq truncate-lines t))
   (recenter))
 (setq truncate-partial-width-windows nil)
+(setq truncate-lines t)
 (global-set-key (kbd "C-c C-l") 'toggle-truncate-lines)
 
 ;; -----------------------------------------------------------------------------
@@ -925,6 +926,7 @@
              (set-default-coding-systems 'utf-8)
              (setq c-toggle-hungry-state t)
              (setq ruby-insert-encoding-magic-comment nil)
+	     ;; (define-key ruby-mode-map "M-p" 'pop-tag-mark)
 	     ;; http://qiita.com/tadsan/items/ab3c3b594b5bf6203f02
 	     (make-local-variable 'ac-ignore-case)
 	     (setq ac-ignore-case nil)
@@ -976,15 +978,15 @@
 (when (require 'web-mode nil t)
   (defun my/web-mode-hook ()
     "Hooks for Web mode."
-    (setq web-mode-html-offset          4)
-    (setq web-mode-markup-indent-offset 4)
+    (setq web-mode-html-offset          2)
+    (setq web-mode-markup-indent-offset 2)
     (setq web-mode-css-offset           2)
     (setq web-mode-script-offset        2)
     (setq web-mode-php-offset           2)
     (setq web-mode-java-offset          2)
     (setq web-mode-asp-offset           2)
-    (setq indent-tabs-mode              t)
-    (setq tab-width                     4)
+    (setq indent-tabs-mode            nil)
+    (setq tab-width                     2)
     (when (require 'rinari nil t)
       (setq rinari-minor-mode t)))
   (add-hook 'web-mode-hook 'my/web-mode-hook))
@@ -1039,47 +1041,19 @@
 ;; coffee mode
 ;; -----------------------------------------------------------------------------
 (require 'coffee-mode)
-(setq whitespace-action '(auto-cleanup)) ;; automatically clean up bad whitespace
-(setq whitespace-style '(trailing space-before-tab indentation empty space-after-tab)) ;; only show bad whitespace
+(setq whitespace-action '(auto-cleanup))
+ ;; only show bad whitespace
+(setq whitespace-style '(trailing space-before-tab indentation empty space-after-tab))
 
 (defun coffee-custom ()
   "coffee-mode-hook"
-
   ;; CoffeeScript uses two spaces.
-  ;(make-local-variable 'tab-width)
-  ;(set 'tab-width 2)
-
-  ;; code style
-  (setq tab-width 2)
-  (setq indent-tabs-mode nil)
-  (c-toggle-hungry-state t)
-  (c-set-offset 'case-label' 2)
-  (c-set-offset 'arglist-intro' 2)
-  (c-set-offset 'arglist-close' 0)
-  (setq tab-width 2
-	c-basic-offset 2
-	c-hanging-comment-ender-p nil
-	indent-tabs-mode nil)
-
-
-  ;; If you don't want your compiled files to be wrapped
-  (setq coffee-args-compile '("-c" "--bare"))
-
-  ;; Emacs key binding
-  (define-key coffee-mode-map [(meta r)] 'coffee-compile-buffer)
-
-  ;; Riding edge.
-  ;;(setq coffee-command "~/dev/coffee")
-
-  ;; Compile '.coffee' files on every save
-  (and (file-exists-p (buffer-file-name))
-       (file-exists-p (coffee-compiled-file-name))
-       (coffee-cos-mode t))
-
-  )
-
+  (custom-set-variables '(coffee-tab-width 2)))
 (add-hook 'coffee-mode-hook 'coffee-custom)
 
+(require 'flymake-coffee)
+(add-hook 'coffee-mode-hook 'flymake-coffee-load)
+(setq flymake-coffee-coffeelint-configuration-file "~/src/dotfiles/coffeelint.json")
 ;; -----------------------------------------------------------------------------
 ;; CEDET
 ;; -----------------------------------------------------------------------------
@@ -1158,7 +1132,11 @@
 (when (require 'twittering-mode)
   (setq twittering-use-master-password t)
   (setq twittering-icon-mode nil)
-  (setq twittering-timer-interval 500))
+  (setq twittering-timer-interval 500)
+  (setq twittering-initial-timeline-spec-string
+	'(":home"
+	  ":search/#ruby OR #rails OR #rspec lang:ja/"
+	  "motchang/met")))
 
 ;; -----------------------------------------------------------------------------
 ;; 2ch
@@ -1169,3 +1147,7 @@
 ;; docker
 ;; -----------------------------------------------------------------------------
 (require 'dockerfile-mode)
+
+(require 'jabber)
+
+(require 'w3m)

@@ -17,7 +17,8 @@ fi
 if [ `uname` = "Darwin" ]
 then
     #mac用のコード
-    alias ls='ls -G'
+    alias ls='ls -G --color'
+    alias emacs='emacsclient -nw'
 fi
 
 if [ `uname` = "Linux" ]
