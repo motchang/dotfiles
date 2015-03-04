@@ -100,14 +100,14 @@
 ; (global-set-key "\C-x\C-b" 'electric-buffer-list)
 
 ;; ステータスラインに時間を表示する
-(display-time)
+;; (display-time)
 
 ;; 時間表示
-(setq display-time-24hr-format t)
-(setq display-time-day-and-date t)
-(setq display-time-string-forms
-      '(month "/" day "(" dayname ") " 24-hours ":" minutes))
-(display-time)
+;; (setq display-time-24hr-format t)
+;; (setq display-time-day-and-date t)
+;; (setq display-time-string-forms
+;;       '(month "/" day "(" dayname ") " 24-hours ":" minutes))
+;; (display-time)
 
 ;; 行番号・桁番号をモードラインに表示する
 (line-number-mode t)
@@ -158,9 +158,9 @@
       (setq truncate-lines nil)
     (setq truncate-lines t))
   (recenter))
+(global-set-key (kbd "C-c C-l") 'toggle-truncate-lines)
 (setq truncate-partial-width-windows nil)
 (setq truncate-lines t)
-(global-set-key (kbd "C-c C-l") 'toggle-truncate-lines)
 
 ;; -----------------------------------------------------------------------------
 ;; (install-elisp "http://www.emacswiki.org/emacs/download/auto-install.el")
@@ -220,7 +220,8 @@
        (set-file-name-coding-system 'utf-8-nfd)
        (require 'ls-lisp)
        (setq ls-lisp-use-insert-directory-program nil)
-       (setq dired-use-ls-dired t))
+       (setq dired-use-ls-dired t)
+       (setq dired-listing-switches "-FlL --group-directories-first"))
       (t
        ;; そのほかのOSの設定(Unicodeの場合)
        (set-file-name-coding-system 'utf-8)))
@@ -241,7 +242,8 @@
 
 (cond ((eq emacs24-p t)
        (add-to-list 'custom-theme-load-path "~/.emacs.d/themes")
-       (load-theme 'pastels-on-dark t))
+       (load-theme 'pastels-on-dark t)
+       )
 
       ((when (require 'color-theme nil t)
          ;; カラーテーマの選択
@@ -258,6 +260,10 @@
 
 (set-face-foreground 'region "black")
 (set-face-background 'region "deeppink")
+
+(set-face-background 'default "black")
+
+
 
 ;; paren-mode 対応する括弧を強調して表示する
 ;; 表示まての秒数。初期値は0.125
@@ -298,12 +304,13 @@
 (defface my-hl-line-face
    ;; 背景が dark ならは背景を黒に
    '((((class color) (background dark))
-      (:background "maroon4" :underline nil))
+      ;; (:background "maroon4" :underline nil))
+      (:background "color-52" :underline nil))
      ;; 背景かlightならは背景色を緑に
      (((class color) (background light))
       (:background "LightGoldenrodYellow" t))
      ;; (t (:bold t))
-     ;; (t (:underline t))
+     (:underline t)
      )
    "hl-line's my face")
 
@@ -516,7 +523,6 @@
 ;; ートされます。タウンロートか完了すると、インス
 ;; トールするかとうかを聞かれますのてC-c C-cてイ
 ;; ンストールしてきましょう。
-
 (require 'anything-startup)
 
 ;;; anything
@@ -546,7 +552,7 @@
        (require 'anything-migemo nil t))
   (when (require 'anything-complete nil t)
     ;; M-xによる補完をAnythingて行う
-    ;; (anything-read-string-mode 1) ←
+    (anything-read-string-mode 1)
     ;; lispシンボルの補完候補の再検索時間
     (anything-lisp-complete-symbol-set-timer 150))
   (require 'anything-show-completion nil t)
@@ -750,8 +756,8 @@
 ;; -----------------------------------------------------------------------------
 ;; cd ~/.emacs.d/elisp/
 ;; git clone https://github.com/mitsuo-saito/auto-highlight-symbol-mode.git
-;(require 'auto-highlight-symbol)
-;(global-auto-highlight-symbol-mode t)
+(require 'auto-highlight-symbol)
+(global-auto-highlight-symbol-mode t)
 
 ;; -----------------------------------------------------------------------------
 ;; Emacsから本格的にシェルを使う
@@ -1135,6 +1141,7 @@
   (setq twittering-timer-interval 500)
   (setq twittering-initial-timeline-spec-string
 	'(":home"
+	  ":mentions"
 	  ":search/#ruby OR #rails OR #rspec lang:ja/"
 	  "motchang/met")))
 
@@ -1147,7 +1154,3 @@
 ;; docker
 ;; -----------------------------------------------------------------------------
 (require 'dockerfile-mode)
-
-(require 'jabber)
-
-(require 'w3m)
