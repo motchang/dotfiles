@@ -1,9 +1,11 @@
+;; (setq debug-on-error t)
+(setq debug-on-error nil)
 (dolist (dir (list
+	      "/usr/local/bin"
 	      "/sbin"
 	      "/usr/sbin"
 	      "/bin"
 	      "/usr/bin"
-	      "/usr/local/bin"
 	      (expand-file-name "~/bin")
 	      (expand-file-name "~/.emacs.d/bin")
 	      ))
@@ -23,19 +25,18 @@
 ;;(setq inhibit-startup-screen t)
 (setq inhibit-startup-screen nil)
 
-;; GUIの時にメニューバーとかを制御する
 (when (window-system)
-  ;; tool-barを非表示
-  (tool-bar-mode 0)
-  ;; scroll-barを非表示
-  (scroll-bar-mode 0)
-  ;; menu-barを非表示
-  (menu-bar-mode 0)
-  ;; メニューハーにファイルハスを表示する
-  ;; frame-title-format変数にフォーマットを追加します。
-  (setq frame-title-format
-        (format "%%f - Emacs@%s" (system-name)))
 )
+;; tool-barを非表示
+(tool-bar-mode 0)
+;; scroll-barを非表示
+(scroll-bar-mode 0)
+;; menu-barを非表示
+(menu-bar-mode 0)
+;; メニューハーにファイルハスを表示する
+;; frame-title-format変数にフォーマットを追加します。
+(setq frame-title-format
+      (format "%%f - Emacs@%s" (system-name)))
 
 (defvar oldemacs-p (<= emacs-major-version 22)) ; 22 以下
 (defvar emacs23-p (<= emacs-major-version 23))  ; 23 以下
@@ -157,10 +158,10 @@
   (if truncate-lines
       (setq truncate-lines nil)
     (setq truncate-lines t))
-  (recenter))
-(global-set-key (kbd "C-c C-l") 'toggle-truncate-lines)
+  ;; (recenter)
+  )
+(global-set-key (kbd "C-c l") 'toggle-truncate-lines)
 (setq truncate-partial-width-windows nil)
-(setq truncate-lines t)
 
 ;; -----------------------------------------------------------------------------
 ;; (install-elisp "http://www.emacswiki.org/emacs/download/auto-install.el")
@@ -221,7 +222,8 @@
        (require 'ls-lisp)
        (setq ls-lisp-use-insert-directory-program nil)
        (setq dired-use-ls-dired t)
-       (setq dired-listing-switches "-FlL --group-directories-first"))
+       ;; (setq dired-listing-switches "-FlL --group-directories-first")
+       )
       (t
        ;; そのほかのOSの設定(Unicodeの場合)
        (set-file-name-coding-system 'utf-8)))
@@ -260,10 +262,7 @@
 
 (set-face-foreground 'region "black")
 (set-face-background 'region "deeppink")
-
 (set-face-background 'default "black")
-
-
 
 ;; paren-mode 対応する括弧を強調して表示する
 ;; 表示まての秒数。初期値は0.125
@@ -310,7 +309,7 @@
      (((class color) (background light))
       (:background "LightGoldenrodYellow" t))
      ;; (t (:bold t))
-     (:underline t)
+     (t :underline t)
      )
    "hl-line's my face")
 
@@ -541,7 +540,7 @@
    anything-quick-update t
    ;; 候補選択ショートカットをアルファベットに
    anything-enable-shortcuts 'alphabet)
-  ;; (set-face-background 'anything-header "yellow")
+  (set-face-background 'anything-header "blue")
   (when (require 'anything-config nil t)
     ;; root権限でアクションを実行するときのコマンド
     ;; デフォルトは"su"
@@ -552,9 +551,10 @@
        (require 'anything-migemo nil t))
   (when (require 'anything-complete nil t)
     ;; M-xによる補完をAnythingて行う
-    (anything-read-string-mode 1)
+    ;; (anything-read-string-mode nil)
+    (anything-read-string-mode '(string variable command))
     ;; lispシンボルの補完候補の再検索時間
-    (anything-lisp-complete-symbol-set-timer 150))
+    (anything-lisp-complete-symbol-set-timer 100))
   (require 'anything-show-completion nil t)
   (when (require 'auto-install nil t)
     (require 'anything-auto-install nil t))
@@ -674,10 +674,13 @@
 
 ;;kill-ring の最大値. デフォルトは 30.
 (setq kill-ring-max 100)
+
 ;;anything で対象とするkill-ring の要素の長さの最小値.
 ;;デフォルトは 10.
-(setq anything-kill-ring-threshold 5)
+(setq anything-kill-ring-threshold 10)
 (global-set-key "\M-y" 'anything-show-kill-ring)
+
+(global-set-key (kbd "<f5> a i") 'anything-imenu)
 
 ;; -----------------------------------------------------------------------------
 ;; flymake-mode
@@ -932,7 +935,6 @@
              (set-default-coding-systems 'utf-8)
              (setq c-toggle-hungry-state t)
              (setq ruby-insert-encoding-magic-comment nil)
-	     ;; (define-key ruby-mode-map "M-p" 'pop-tag-mark)
 	     ;; http://qiita.com/tadsan/items/ab3c3b594b5bf6203f02
 	     (make-local-variable 'ac-ignore-case)
 	     (setq ac-ignore-case nil)
@@ -941,7 +943,9 @@
              (electric-indent-mode t)
              (electric-layout-mode t)
              (setq ruby-deep-indent-paren-style nil)
-
+	     (setq truncate-lines t)
+	     (define-key ruby-mode-map (kbd "M-.") 'find-tag)
+	     (define-key ruby-mode-map (kbd "M-p") 'pop-tag-mark)
              ;; http://stackoverflow.com/questions/7961533/emacs-ruby-method-parameter-indentation
              (defadvice ruby-indent-line (after unindent-closing-paren activate)
                (let ((column (current-column))
@@ -957,7 +961,6 @@
                  (when indent
                    (indent-line-to indent)
                          (when (> offset 0) (forward-char offset)))))
-
              ;; rinari
              (when (require 'rinari nil t)
                (rinari-minor-mode 1)
@@ -965,8 +968,9 @@
                (define-key ruby-mode-map (kbd "\M-r") 'run-rails-test-or-ruby-buffer))
              (when (require 'smartparens-ruby)
                (set-face-attribute 'sp-show-pair-match-face nil
-                                   :background "gray20" :foreground "green")))
-          )
+                                   :background "gray20" :foreground "green"))
+	     )
+	  )
 
 ;; set ruby-mode indent
 (setq ruby-indent-level 2)
@@ -1077,6 +1081,7 @@
 ;; anything
 (setq anything-samewindow nil)
 (push '("*anything*" :height 30) popwin:special-display-config)
+(push '("*anything imenu*" :height 30) popwin:special-display-config)
 
 ;; -----------------------------------------------------------------------------
 ;; ispell
@@ -1104,6 +1109,20 @@
 ;; magit
 ;; -----------------------------------------------------------------------------
 (require 'magit)
+
+;; -----------------------------------------------------------------------------
+;; http://noqisofon.hatenablog.com/entry/20101102/1288647885
+;; テンポラリバッファを作成し、それをウィンドウに表示します。
+;; -----------------------------------------------------------------------------
+(defun create-temporary-buffer ()
+  "テンポラリバッファを作成し、それをウィンドウに表示します。"
+  (interactive)
+  ;; *temp* なバッファを作成し、それをウィンドウに表示します。
+  (switch-to-buffer (generate-new-buffer "*temp*"))
+  ;; セーブが必要ないことを示します？
+  (setq buffer-offer-save nil))
+;; C-c t でテンポラリバッファを作成します。
+(global-set-key "\C-ct" 'create-temporary-buffer)
 
 ;; -----------------------------------------------------------------------------
 ;; 関連付けとか
