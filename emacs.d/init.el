@@ -120,19 +120,19 @@
 ;; ハッファの最後の行で next-line しても新しい行を作らない
 (setq next-line-add-newlines nil)
 
-;; ハッファの最初の行で previous-line しても、
-;; "beginning-of-buffer" と注意されないようにする。
-;; (defun previous-line (arg)
-;;   (interactive "p")
-;;   (if (interactive-p)
-;;       (condition-case nil
-;;   	  (line-move (- arg))
-;;   	((beginning-of-buffer end-of-buffer)))
-;;     (line-move (- arg)))
-;;   nil)
+;; User Option: make-backup-files
+;;   この変数は, バックアップファイルを作成するかどうかを決定する.
+(setq make-backup-files nil)
 
-;; hoge.txt~ みたいなバックアップファイルを作らないようにする
-; (setq backup-inhibited t)
+;; Variable: backup-inhibited
+;;   この変数がnil以外であると, バックアップを禁止する.
+;;   これは恒久的にバッファローカルであり, メジャーモードを変更しても値は
+;;   失われない. メジャーモードはこの変数に設定するべきではなく, かわりに,
+;;   make-backup-filesに設定するべきである.
+(setq backup-inhibited t)
+
+;; #file-name# を作らない
+(setq auto-save-default nil)
 
 ;; c-mode その他で色が付くようにする
 (global-font-lock-mode t)
@@ -162,6 +162,10 @@
   )
 (global-set-key (kbd "C-c l") 'toggle-truncate-lines)
 (setq truncate-partial-width-windows nil)
+
+
+;; http://akisute3.hatenablog.com/entry/20120409/1333899842
+(setq recentf-max-saved-items 100)
 
 ;; -----------------------------------------------------------------------------
 ;; (install-elisp "http://www.emacswiki.org/emacs/download/auto-install.el")
@@ -245,6 +249,7 @@
 (cond ((eq emacs24-p t)
        (add-to-list 'custom-theme-load-path "~/.emacs.d/themes")
        (load-theme 'pastels-on-dark t)
+       (setq eww-search-prefix "https://www.google.co.jp/search?q=")
        )
 
       ((when (require 'color-theme nil t)
@@ -261,7 +266,7 @@
         )))
 
 (set-face-foreground 'region "black")
-(set-face-background 'region "deeppink")
+(set-face-background 'region "yellow")
 (set-face-background 'default "black")
 
 ;; paren-mode 対応する括弧を強調して表示する
@@ -301,18 +306,17 @@
 ;; (set-face-underline-p FACE nil) 下線を消す
 
 (defface my-hl-line-face
-   ;; 背景が dark ならは背景を黒に
+   ;; 背景が dark なら
    '((((class color) (background dark))
       ;; (:background "maroon4" :underline nil))
-      (:background "color-52" :underline nil))
-     ;; 背景かlightならは背景色を緑に
+      (:background "dark blue" :underline nil))
+     ;; 背景かlightなら
      (((class color) (background light))
       (:background "LightGoldenrodYellow" t))
      ;; (t (:bold t))
      (t :underline t)
      )
    "hl-line's my face")
-
 (setq hl-line-face 'my-hl-line-face)
 
 ;; 現在行をハイライト表示
@@ -540,7 +544,8 @@
    anything-quick-update t
    ;; 候補選択ショートカットをアルファベットに
    anything-enable-shortcuts 'alphabet)
-  (set-face-background 'anything-header "blue")
+  (set-face-background 'anything-header "Blue")
+  (set-face-foreground 'anything-header "Green")
   (when (require 'anything-config nil t)
     ;; root権限でアクションを実行するときのコマンド
     ;; デフォルトは"su"
@@ -646,6 +651,7 @@
 ;(install-elisp "http://github.com/imakado/anything-project/raw/master/anything-project.el")
 (when (require 'anything-project nil t)
   (global-set-key (kbd "C-c C-f") 'anything-project)
+  ;; (global-set-key (kbd "C-x C-f") 'anything-project)
   ;; 検索対象から除外するフィルタ
   (setq ap:project-files-filters
 	(list
@@ -678,9 +684,10 @@
 ;;anything で対象とするkill-ring の要素の長さの最小値.
 ;;デフォルトは 10.
 (setq anything-kill-ring-threshold 10)
-(global-set-key "\M-y" 'anything-show-kill-ring)
+(global-set-key (kbd "M-y") 'anything-show-kill-ring)
 
 (global-set-key (kbd "<f5> a i") 'anything-imenu)
+(global-set-key (kbd "C-x C-f") 'anything-find-file)
 
 ;; -----------------------------------------------------------------------------
 ;; flymake-mode
@@ -688,6 +695,7 @@
 (when (require 'flymake nil t)
   (global-set-key "\C-cd" 'flymake-display-err-menu-for-current-line)
   (set-face-background 'flymake-errline "Red")
+  (set-face-foreground 'flymake-errline "Cyan")
   (set-face-underline 'flymake-errline t)
   ;; PHP
   ;; PHPで flymake する時は display_errors = On じゃないとダメだよ
@@ -946,6 +954,8 @@
 	     (setq truncate-lines t)
 	     (define-key ruby-mode-map (kbd "M-.") 'find-tag)
 	     (define-key ruby-mode-map (kbd "M-p") 'pop-tag-mark)
+	     (define-key ruby-mode-map (kbd "<backspace>") 'c-hungry-delete)
+	     (define-key ruby-mode-map (kbd "<delete>") 'c-hungry-delete)
              ;; http://stackoverflow.com/questions/7961533/emacs-ruby-method-parameter-indentation
              (defadvice ruby-indent-line (after unindent-closing-paren activate)
                (let ((column (current-column))
@@ -976,13 +986,33 @@
 (setq ruby-indent-level 2)
 (setq ruby-indent-tabs-mode nil)
 
+;; http://d.hatena.ne.jp/khiker/20071130/emacs_ruby_block
+(require 'ruby-block)
+(ruby-block-mode t)
+;; ミニバッファに表示し, かつ, オーバレイする.
+(setq ruby-block-highlight-toggle t)
+
 ;; rbenv の ruby を参照するようにする
 (setenv "PATH" (concat (getenv "HOME") "/.rbenv/shims:" (getenv "HOME") "/.rbenv/bin:" (getenv "PATH")))
 (setq exec-path (cons (concat (getenv "HOME") "/.rbenv/shims") (cons (concat (getenv "HOME") "/.rbenv/bin") exec-path)))
 
 ;; rspec-mode
-(custom-set-variables '(rspec-use-rake-flag nil))
-(custom-set-faces)
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(custom-safe-themes
+   (quote
+    ("211bb9b24001d066a646809727efb9c9a2665c270c753aa125bace5e899cb523" default)))
+ '(rspec-use-rake-flag nil)
+ '(rspec-use-rake-when-possible nil))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(my-hl-line-face ((t (:background "dark blue" :underline nil)))))
 
 ;; web-mode でも rinari する
 (when (require 'web-mode nil t)
@@ -1087,18 +1117,8 @@
 ;; ispell
 ;; -----------------------------------------------------------------------------
 (setq ispell-program-name "aspell")
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(custom-safe-themes (quote ("211bb9b24001d066a646809727efb9c9a2665c270c753aa125bace5e899cb523" default))))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- )
+
+
 
 ;; -----------------------------------------------------------------------------
 ;; markdown-mode
