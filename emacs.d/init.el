@@ -1112,6 +1112,8 @@
 (setq anything-samewindow nil)
 (push '("*anything*" :height 30) popwin:special-display-config)
 (push '("*anything imenu*" :height 30) popwin:special-display-config)
+(push '("*anything find-file*" :height 30) popwin:special-display-config)
+
 
 ;; -----------------------------------------------------------------------------
 ;; ispell
@@ -1158,6 +1160,7 @@
 (add-to-list 'auto-mode-alist '("\\.markdown$". markdown-mode))
 (add-to-list 'auto-mode-alist '("\\.text$". markdown-mode))
 (add-to-list 'auto-mode-alist '("\\.html\\.erb$". web-mode))
+(add-to-list 'auto-mode-alist '("\\.erb$". web-mode))
 (add-to-list 'auto-mode-alist '("\\.html$". web-mode))
 (add-to-list 'auto-mode-alist
              '("\\.\\(?:gemspec\\|irbrc\\|gemrc\\|rake\\|rb\\|ru\\|thor\\)\\'" . ruby-mode))
