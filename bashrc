@@ -38,7 +38,6 @@ if [ `uname` = "Darwin" ]
 then
     alias ls='ls -G --color'
     alias emacs='emacsclient -nw'
-    mac_prompting
 fi
 
 if [ `uname` = "Linux" ]
