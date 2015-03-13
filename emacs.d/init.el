@@ -687,7 +687,7 @@
 (global-set-key (kbd "M-y") 'anything-show-kill-ring)
 
 (global-set-key (kbd "<f5> a i") 'anything-imenu)
-(global-set-key (kbd "C-x C-f") 'anything-find-file)
+(global-set-key (kbd "C-x C-f") 'find-file)
 
 ;; -----------------------------------------------------------------------------
 ;; flymake-mode
@@ -1111,7 +1111,7 @@
 ;; anything
 (setq anything-samewindow nil)
 (push '("*anything*" :height 30) popwin:special-display-config)
-(push '("*anything imenu*" :height 30) popwin:special-display-config)
+(push '("*anything imenu*" :height 20) popwin:special-display-config)
 (push '("*anything find-file*" :height 30) popwin:special-display-config)
 
 
