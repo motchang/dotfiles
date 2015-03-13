@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # Get the aliases and functions
 
 if [ -f ~/.bashrc ]; then
@@ -39,7 +39,7 @@ fi
 
 if [ `uname` = "Linux" ]
 then
-    #Linux用のコード
+    # Linux
     export LANG=ja_JP.utf8
     export LC_CTYPE=ja_JP.utf8
 fi
@@ -79,6 +79,11 @@ fi
 
 # git
 unset SSH_ASKPASS
+type __git_ps1 2>/dev/null | grep '__git_ps1 is a function' 2>&1 >/dev/null
+if [ $? -eq 0 ]
+then
+    export PS1='\u@\e[0;36m\h\e[0m \t job(s):\[\033[0;32m\]\j\[\033[0m\] wd:\w\033[32m\]$(__git_ps1)\[\033[00m\]\nbash-\v \$ '
+fi
 
 # svn
 export SVN_EDITOR='emacs --no-init-file -nw'
