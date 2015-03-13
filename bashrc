@@ -32,13 +32,21 @@ alias cp='cp -i'
 alias mv='mv -i'
 alias emacs-simple='emacs --no-init-file'
 alias ssh='ssh -o ServerAliveCountMax=5 -o ServerAliveInterval=60'
-# alias screen='LANG=ja_JP.UTF-8 screen'
 
-# if [ "$TERM" = 'xterm' -o "$TERM" = 'linux' ]; then
-#   screen -rx || screen -D -RR
-# fi
+# brew install bash-completion
+if [ -f $(brew --prefix)/etc/bash_completion ]
+then
+    . $(brew --prefix)/etc/bash_completion
+    # brew install git
+    type __git_ps1 2>/dev/null | grep '__git_ps1 is a function' 2>&1 >/dev/null
+    if [ $? -eq 0 ]
+    then
+	export PS1='\u@\e[0;36m\h\e[0m \t job(s):\[\033[0;32m\]\j\[\033[0m\] wd:\w\033[32m\]$(__git_ps1)\[\033[00m\]\nbash-\v \$ '
+    else
+	export PS1='\u@\e[0;36m\h\e[0m \t job(s):\[\033[0;32m\]\j\[\033[0m\] wd:\w \nbash-\v \$ '
+    fi
+fi
 
-export PS1='\u@\e[0;36m\h\e[0m \t \d job(s):\[\033[0;32m\]\j\[\033[0m\] wd:\w \nbash-\v \$ '
 export PROMPT_COMMAND='echo -n -e "\033]0;${HOSTNAME%%.*}:${PWD/$HOME/~}\007"; history -a; history -c; history -r;'
 export HISTSIZE=100000
 export HISTFILE=~/.bash_history
