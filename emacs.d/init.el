@@ -236,7 +236,12 @@
 
 ;; デフォルトをUTF8に変更する
 (set-default-coding-systems 'utf-8)
-(setq default-buffer-file-coding-system 'utf-8)
+
+(cond ((eq emacs24-p t)
+       (setq buffer-file-coding-system 'utf-8))
+      (setq default-buffer-file-coding-system 'utf-8))
+
+
 (prefer-coding-system 'utf-8)
 
 ;; 行番号を表示
@@ -900,7 +905,7 @@
 	     ))
 
 ;; -----------------------------------------------------------------------------
-;; javascript mode
+;; js2 mode (javascript)
 ;; -----------------------------------------------------------------------------
 (require 'js2-mode)
 (add-hook 'js2-mode-hook
@@ -908,17 +913,20 @@
 	    (when (require 'auto-complete nil t)
 	      (make-variable-buffer-local 'ac-sources)
 	      (auto-complete-mode t))
-	    (setq tab-width 2)
 	    (setq indent-tabs-mode nil)
+	    (setq tab-width 2)
+	    (setq c-basic-offset 2)
+	    (setq js2-basic-offset 2)
+	    (setq c-hanging-comment-ender-p nil)
 	    (c-toggle-hungry-state t)
 	    (c-set-offset 'case-label' 2)
 	    (c-set-offset 'arglist-intro' 2)
-	    (c-set-offset 'arglist-close' 0)
-	    (setq tab-width 2
-		  c-basic-offset 2
-		  c-hanging-comment-ender-p nil
-		  indent-tabs-mode nil)
-	    ))
+	    (c-set-offset 'arglist-close' 0)))
+
+;; -----------------------------------------------------------------------------
+;; json-mode
+;; -----------------------------------------------------------------------------
+(require 'json-mode)
 
 ;; -----------------------------------------------------------------------------
 ;; ruby-mode
@@ -1005,14 +1013,23 @@
  '(custom-safe-themes
    (quote
     ("211bb9b24001d066a646809727efb9c9a2665c270c753aa125bace5e899cb523" default)))
+<<<<<<< Updated upstream
  '(rspec-use-rake-flag nil)
  '(rspec-use-rake-when-possible nil))
+=======
+ '(js2-basic-offset 2)
+ '(rspec-use-rake-flag nil))
+>>>>>>> Stashed changes
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+<<<<<<< Updated upstream
  '(my-hl-line-face ((t (:background "dark blue" :underline nil)))))
+=======
+ )
+>>>>>>> Stashed changes
 
 ;; web-mode でも rinari する
 (when (require 'web-mode nil t)
@@ -1147,6 +1164,7 @@
 (global-set-key "\C-ct" 'create-temporary-buffer)
 
 ;; -----------------------------------------------------------------------------
+<<<<<<< Updated upstream
 ;; 関連付けとか
 ;; -----------------------------------------------------------------------------
 (add-to-list 'auto-mode-alist '("\\.php$". php-mode))
@@ -1170,6 +1188,8 @@
 (add-to-list 'auto-mode-alist '("\\.sass$". sass-mode))
 
 ;; -----------------------------------------------------------------------------
+=======
+>>>>>>> Stashed changes
 ;; 鬼軍曹
 ;; -----------------------------------------------------------------------------
 (require 'drill-instructor)
@@ -1196,3 +1216,32 @@
 ;; docker
 ;; -----------------------------------------------------------------------------
 (require 'dockerfile-mode)
+
+;; -----------------------------------------------------------------------------
+;; nodejs-repl
+;; -----------------------------------------------------------------------------
+(require 'nodejs-repl)
+
+;; -----------------------------------------------------------------------------
+;; 関連付けとか
+;; -----------------------------------------------------------------------------
+(add-to-list 'auto-mode-alist '("\\.php$". php-mode))
+(add-to-list 'auto-mode-alist '("\\.sql$". sql-mode))
+(add-to-list 'auto-mode-alist '("\\.tpl$". smarty-mode))
+(add-to-list 'auto-mode-alist '("\\.el$". lisp-mode))
+(add-to-list 'auto-mode-alist '("\\.yaml$". yaml-mode))
+(add-to-list 'auto-mode-alist '("\\.js$". js2-mode))
+(add-to-list 'auto-mode-alist '("\\.json$". js2-mode))
+;; (add-to-list 'auto-mode-alist '("\\.json$". json-mode))
+(add-to-list 'auto-mode-alist '("\\.coffee$". coffee-mode))
+(add-to-list 'auto-mode-alist '("\\.md$". markdown-mode))
+(add-to-list 'auto-mode-alist '("\\.markdown$". markdown-mode))
+(add-to-list 'auto-mode-alist '("\\.text$". markdown-mode))
+(add-to-list 'auto-mode-alist '("\\.html\\.erb$". web-mode))
+(add-to-list 'auto-mode-alist '("\\.html$". web-mode))
+(add-to-list 'auto-mode-alist
+             '("\\.\\(?:gemspec\\|irbrc\\|gemrc\\|rake\\|rb\\|ru\\|thor\\)\\'" . ruby-mode))
+(add-to-list 'auto-mode-alist
+             '("\\(Capfile\\|Gemfile\\(?:\\.[a-zA-Z0-9._-]+\\)?\\|[rR]akefile\\)\\'" . ruby-mode))
+(add-to-list 'auto-mode-alist '("\\.scss$". scss-mode))
+(add-to-list 'auto-mode-alist '("\\.sass$". sass-mode))
