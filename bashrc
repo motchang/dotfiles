@@ -18,6 +18,11 @@ alias cp='cp -i'
 alias mv='mv -i'
 alias emacs-simple='emacs --no-init-file'
 alias ssh='ssh -o ServerAliveCountMax=5 -o ServerAliveInterval=60'
+<<<<<<< Updated upstream
+=======
+alias tmux='tmux -2'
+# alias screen='LANG=ja_JP.UTF-8 screen'
+>>>>>>> Stashed changes
 
 export PS1='\u@\e[0;36m\h\e[0m \t job(s):\[\033[0;32m\]\j\[\033[0m\] wd:\w \nbash-\v \$ '
 export PROMPT_COMMAND='echo -n -e "\033]0;${HOSTNAME%%.*}:${PWD/$HOME/~}\007"; history -a; history -c; history -r;'
