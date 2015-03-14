@@ -14,7 +14,7 @@ then
     if [ -f /usr/bin/ssh-agent -a -f ~/.ssh/id_rsa ]
     then
         eval `/usr/bin/ssh-agent`
-        ssh-add ~/.ssh/id_rsa
+        # ssh-add ~/.ssh/id_rsa
     fi
     # bash compiletion
     if [ -f $(brew --prefix)/etc/bash_completion ]; then
