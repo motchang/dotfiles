@@ -8,5 +8,3 @@
 	ln -sf src/dotfiles/emacs.d ~/.emacs.d
 	ln -sf src/dotfiles/tmux.conf ~/.tmux.conf
 	ln -sf src/dotfiles/gitignore_global ~/.gitignore_global
-	ln -sf src/dotfiles/rubocop.yml ~/..rubocop.yml
-	ln -sf src/dotfiles/rubocop_todo.yml ~/.rubocop_todo.yml
