@@ -227,8 +227,7 @@
        (setq ls-lisp-use-insert-directory-program nil)
        (setq dired-use-ls-dired t)
        ;; (setq dired-listing-switches "-FlL --group-directories-first")
-       (setq interprogram-cut-function 'paste-to-osx)
-       (setq interprogram-paste-function 'copy-from-osx))
+       )
       (t
        ;; そのほかのOSの設定(Unicodeの場合)
        (set-file-name-coding-system 'utf-8)))
@@ -768,7 +767,7 @@
 ;; -----------------------------------------------------------------------------
 ;; flycheck
 ;; -----------------------------------------------------------------------------
-;; (add-hook 'after-init-hook #'global-flycheck-mode)
+(add-hook 'after-init-hook 'global-flycheck-mode)
 
 ;; -----------------------------------------------------------------------------
 ;; cd ~/.emacs.d/elisp/
@@ -926,8 +925,6 @@
 	    (c-set-offset 'arglist-close' 0)
 	    (set-face-background 'js2-error "orange")
 	    (set-face-foreground 'js2-error "#0000F1")))
-
-(add-hook 'after-init-hook 'global-flycheck-mode)
 
 ;; -----------------------------------------------------------------------------
 ;; json-mode
