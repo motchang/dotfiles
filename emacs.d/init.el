@@ -227,7 +227,8 @@
        (setq ls-lisp-use-insert-directory-program nil)
        (setq dired-use-ls-dired t)
        ;; (setq dired-listing-switches "-FlL --group-directories-first")
-       )
+       (setq interprogram-cut-function 'paste-to-osx)
+       (setq interprogram-paste-function 'copy-from-osx))
       (t
        ;; そのほかのOSの設定(Unicodeの場合)
        (set-file-name-coding-system 'utf-8)))
@@ -1195,6 +1196,17 @@
 ;; nodejs-repl
 ;; -----------------------------------------------------------------------------
 (require 'nodejs-repl)
+
+;; -----------------------------------------------------------------------------
+;;
+;; -----------------------------------------------------------------------------
+(require 'rainbow-mode)
+(add-hook 'css-mode-hook 'rainbow-mode)
+(add-hook 'scss-mode-hook 'rainbow-mode)
+(add-hook 'php-mode-hook 'rainbow-mode)
+(add-hook 'html-mode-hook 'rainbow-mode)
+(add-hook 'lisp-mode 'rainbow-mode)
+(add-hook 'lisp-mode 'rainbow-mode)
 
 ;; -----------------------------------------------------------------------------
 ;; 関連付けとか
