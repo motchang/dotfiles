@@ -767,8 +767,15 @@
 ;; -----------------------------------------------------------------------------
 ;; flycheck
 ;; -----------------------------------------------------------------------------
+(require 'flycheck)
 (add-hook 'after-init-hook 'global-flycheck-mode)
-
+(add-hook 'ruby-mode-hook
+	  (lambda ()
+	    (flycheck-select-checker 'flycheck-select-checker)
+	    (flycheck-mode)))
+(add-hook 'js2-mode-hook
+	  (lambda ()
+	    (flycheck-mode)))
 ;; -----------------------------------------------------------------------------
 ;; cd ~/.emacs.d/elisp/
 ;; git clone https://github.com/mitsuo-saito/auto-highlight-symbol-mode.git
@@ -962,7 +969,7 @@
 	     (make-local-variable 'ac-ignore-case)
 	     (setq ac-ignore-case nil)
              (abbrev-mode 1)
-             (electric-pair-mode t)
+             (electric-pair-mode nil)
              (electric-indent-mode t)
              (electric-layout-mode t)
              (setq ruby-deep-indent-paren-style nil)
