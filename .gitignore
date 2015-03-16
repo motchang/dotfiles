@@ -6,7 +6,9 @@ emacs.d/download/*
 emacs.d/tramp
 emacs.d/url/cookies
 emacs.d/geben/.storage
-emacs.d/elpa/archives/melpa/archive-contents
+emacs.d/elpa/archives/melpa/archive-contents*
+emacs.d/elpa/archives/gnu/archive-contents*
+emacs.d/elpa/archives/marmalade/archive-contents*
 emacs.d/url/cache/
 emacs.d/recentf
 *.elc
