@@ -768,7 +768,6 @@
 ;; flycheck
 ;; -----------------------------------------------------------------------------
 (require 'flycheck)
-(add-hook 'after-init-hook 'global-flycheck-mode)
 (add-hook 'ruby-mode-hook
 	  (lambda ()
 	    (flycheck-select-checker 'flycheck-select-checker)
@@ -776,6 +775,7 @@
 (add-hook 'js2-mode-hook
 	  (lambda ()
 	    (flycheck-mode)))
+
 ;; -----------------------------------------------------------------------------
 ;; cd ~/.emacs.d/elisp/
 ;; git clone https://github.com/mitsuo-saito/auto-highlight-symbol-mode.git
