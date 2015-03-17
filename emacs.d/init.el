@@ -768,10 +768,18 @@
 ;; flycheck
 ;; -----------------------------------------------------------------------------
 (require 'flycheck)
+(require 'flycheck-pos-tip)
+
+(eval-after-load 'flycheck
+  '(custom-set-variables
+    '(flycheck-display-errors-function #'flycheck-pos-tip-error-messages)))
+
 (add-hook 'ruby-mode-hook
 	  (lambda ()
-	    (flycheck-select-checker 'flycheck-select-checker)
+	    (flycheck-select-checker 'ruby-rubocop)
+	    (flycheck-disable-checker 'ruby-rubylint)
 	    (flycheck-mode)))
+
 (add-hook 'js2-mode-hook
 	  (lambda ()
 	    (flycheck-mode)))
