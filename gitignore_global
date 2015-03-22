@@ -75,4 +75,6 @@ cscope.po.out
 #
 .pryrc
 .observer
+.rubocop.yml
+.rubocop_todo.yml
 wget-log*
