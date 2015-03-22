@@ -253,10 +253,13 @@
 
 (cond ((eq emacs24-p t)
        (add-to-list 'custom-theme-load-path "~/.emacs.d/themes")
+       ;; (load-theme 'wombat t)
+       ;; (load-theme 'manoj-dark t)
        (load-theme 'pastels-on-dark t)
-       (setq eww-search-prefix "https://www.google.co.jp/search?q=")
-       )
-
+       (set-face-background 'default "black")
+       (set-face-foreground 'font-lock-comment-face "#00AA00")
+       (set-face-foreground 'font-lock-string-face "#AABBEE")
+       (setq eww-search-prefix "https://www.google.co.jp/search?q="))
       ((when (require 'color-theme nil t)
          ;; カラーテーマの選択
          ;; M-x color-theme-select
@@ -270,9 +273,8 @@
          ;; Wheat Billw Midnight dark-laptop
         )))
 
-(set-face-foreground 'region "black")
-(set-face-background 'region "yellow")
-(set-face-background 'default "black")
+;; (set-face-foreground 'region "black")
+;; (set-face-background 'region "yellow")
 
 ;; paren-mode 対応する括弧を強調して表示する
 ;; 表示まての秒数。初期値は0.125
@@ -544,13 +546,15 @@
    ;；タイプして再描画するまでの時間。デフォルトは0.1
    anything-input-idle-delay 0.1
    ;; 候補の最大表示数。デフォルトは50
-   anything-candidate-number-limit 100
+   anything-candidate-number-limit 200
    ;; 候補が多い時に体感速度を早くする
    anything-quick-update t
    ;; 候補選択ショートカットをアルファベットに
-   anything-enable-shortcuts 'alphabet)
+   ;; アルファベットで入力できるようにすると大文字で絞込ができない
+   ;;  anything-enable-shortcuts 'alphabet
+   anything-enable-shortcuts nil)
   (set-face-background 'anything-header "Blue")
-  (set-face-foreground 'anything-header "Green")
+  (set-face-foreground 'anything-header "White")
   (when (require 'anything-config nil t)
     ;; root権限でアクションを実行するときのコマンド
     ;; デフォルトは"su"
@@ -719,7 +723,7 @@
     (setq flymake-err-line-patterns
           (cons
            '("\(\(?:Parse error\|Fatal error\|Warning\): .*\) in \(.*\) on line \([0-9]+\)" 2 3 nil 1)
-           flymake-err-line-patterns)))
+           flymake-errline-patterns)))
   (add-hook 'php-mode-hook
             '(lambda () (flymake-mode t))))
 
@@ -728,7 +732,7 @@
 (when (require 'flymake nil t)
   ;; Invoke ruby with '-c' to get syntax checking
   (set-face-background 'flymake-errline "deeppink")
-  (set-face-foreground 'flymake-errline "black")
+  (set-face-foreground 'flymake-errline "#110000")
   (set-face-background 'flymake-warnline "dark slate blue")
   (defun flymake-ruby-init ()
     (let* ((temp-file   (flymake-init-create-temp-buffer-copy
@@ -784,7 +788,22 @@
 ;; -----------------------------------------------------------------------------
 ;; flycheck
 ;; -----------------------------------------------------------------------------
-;; (add-hook 'after-init-hook #'global-flycheck-mode)
+(require 'flycheck)
+(require 'flycheck-pos-tip)
+
+(eval-after-load 'flycheck
+  '(custom-set-variables
+    '(flycheck-display-errors-function #'flycheck-pos-tip-error-messages)))
+
+(add-hook 'ruby-mode-hook
+	  (lambda ()
+	    (flycheck-select-checker 'ruby-rubocop)
+	    (flycheck-disable-checker 'ruby-rubylint)
+	    (flycheck-mode)))
+
+(add-hook 'js2-mode-hook
+	  (lambda ()
+	    (flycheck-mode)))
 
 ;; -----------------------------------------------------------------------------
 ;; cd ~/.emacs.d/elisp/
@@ -944,8 +963,6 @@
 	    (set-face-background 'js2-external-variable "orange")
 	    (set-face-foreground 'js2-external-variable "#0000F1")))
 
-(add-hook 'after-init-hook 'global-flycheck-mode)
-
 ;; -----------------------------------------------------------------------------
 ;; json-mode
 ;; -----------------------------------------------------------------------------
@@ -988,7 +1005,7 @@
 	     (make-local-variable 'ac-ignore-case)
 	     (setq ac-ignore-case nil)
              (abbrev-mode 1)
-             (electric-pair-mode t)
+             (electric-pair-mode nil)
              (electric-indent-mode t)
              (electric-layout-mode t)
              (setq ruby-deep-indent-paren-style nil)
@@ -1045,11 +1062,11 @@
  ;; If there is more than one, they won't work right.
  '(custom-safe-themes
    (quote
-    ("211bb9b24001d066a646809727efb9c9a2665c270c753aa125bace5e899cb523" default)))
- '(rspec-use-rake-flag nil)
- '(rspec-use-rake-when-possible nil)
+    ("e80932ca56b0f109f8545576531d3fc79487ca35a9a9693b62bf30d6d08c9aaf" "4aee8551b53a43a883cb0b7f3255d6859d766b6c5e14bcb01bed572fcbef4328" "211bb9b24001d066a646809727efb9c9a2665c270c753aa125bace5e899cb523" default)))
+ '(flycheck-display-errors-function (function flycheck-pos-tip-error-messages))
  '(js2-basic-offset 2)
- '(rspec-use-rake-flag nil))
+ '(rspec-use-rake-flag nil)
+ '(rspec-use-rake-when-possible nil))
 
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
@@ -1146,19 +1163,6 @@
 ; (semantic-mode 1)
 
 ;; -----------------------------------------------------------------------------
-;; popup.el
-;; -----------------------------------------------------------------------------
-;(auto-install-from-url "https://raw.github.com/m2ym/popwin-el/master/popwin.el")
-(require 'popwin)
-(setq display-buffer-function 'popwin:display-buffer)
-
-;; anything
-(setq anything-samewindow nil)
-(push '("*anything*" :height 30) popwin:special-display-config)
-(push '("*anything imenu*" :height 20) popwin:special-display-config)
-(push '("*anything find-file*" :height 30) popwin:special-display-config)
-
-;; -----------------------------------------------------------------------------
 ;; ispell
 ;; -----------------------------------------------------------------------------
 (setq ispell-program-name "aspell")
@@ -1219,6 +1223,29 @@
 ;; nodejs-repl
 ;; -----------------------------------------------------------------------------
 (require 'nodejs-repl)
+
+;; -----------------------------------------------------------------------------
+;;
+;; -----------------------------------------------------------------------------
+(require 'rainbow-mode)
+(add-hook 'css-mode-hook 'rainbow-mode)
+(add-hook 'scss-mode-hook 'rainbow-mode)
+(add-hook 'php-mode-hook 'rainbow-mode)
+(add-hook 'html-mode-hook 'rainbow-mode)
+(add-hook 'lisp-mode 'rainbow-mode)
+(add-hook 'web-mode 'rainbow-mode)
+
+;; -----------------------------------------------------------------------------
+;; popup.el
+;; -----------------------------------------------------------------------------
+;(auto-install-from-url "https://raw.github.com/m2ym/popwin-el/master/popwin.el")
+(when (require 'popwin)
+  ;; anything
+  (setq anything-samewindow nil)
+  (push '("*anything imenu*" :height 20) popwin:special-display-config)
+
+  (setq display-buffer-function 'popwin:display-buffer)
+  (setq popwin:popup-window-height 0.5))
 
 ;; -----------------------------------------------------------------------------
 ;; 関連付けとか
