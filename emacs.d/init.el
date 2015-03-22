@@ -1,4 +1,4 @@
-;; (setq debug-on-error t)
+;;(setq debug-on-error t)
 (setq debug-on-error nil)
 (dolist (dir (list
 	      "/usr/local/bin"
@@ -761,8 +761,25 @@
                  (text (flymake-ler-text (nth (1- count) line-err-info-list)))
                  (line       (flymake-ler-line (nth (1- count) line-err-info-list))))
             (message "[%s] %s" line text)))
-        (setq count (1- count)))))
-  )
+        (setq count (1- count))))))
+
+;; flymake for jade
+(defun flymake-jade-init ()
+  (let* ((temp-file (flymake-init-create-temp-buffer-copy
+		     'flymake-create-temp-intemp))
+	 (local-file (file-relative-name
+		      temp-file
+		      (file-name-directory buffer-file-name)))
+	 (arglist (list local-file)))
+    (list "jade" arglist)))
+
+(setq flymake-err-line-patterns
+      (cons '("\\(.*\\): \\(.+\\):\\([[:digit:]]+\\)$"
+	      2 3 nil 1)
+	    flymake-err-line-patterns))
+
+(add-to-list 'flymake-allowed-file-name-masks
+	              '("\\.jade\\'" flymake-jade-init))
 
 ;; -----------------------------------------------------------------------------
 ;; flycheck
@@ -908,7 +925,6 @@
 ;; js2 mode (javascript)
 ;; -----------------------------------------------------------------------------
 (require 'js2-mode)
-
 (add-hook 'js2-mode-hook
 	  (lambda ()
 	    (when (require 'auto-complete nil t)
@@ -924,7 +940,9 @@
 	    (c-set-offset 'arglist-intro' 2)
 	    (c-set-offset 'arglist-close' 0)
 	    (set-face-background 'js2-error "orange")
-	    (set-face-foreground 'js2-error "#0000F1")))
+	    (set-face-foreground 'js2-error "#0000F1")
+	    (set-face-background 'js2-external-variable "orange")
+	    (set-face-foreground 'js2-external-variable "#0000F1")))
 
 (add-hook 'after-init-hook 'global-flycheck-mode)
 
@@ -936,6 +954,12 @@
 	  (lambda ()
 	    (make-local-variable 'js-indent-level)
 	                (setq js-indent-level 2)))
+
+;; -----------------------------------------------------------------------------
+;; jade-mode
+;; -----------------------------------------------------------------------------
+(require 'sws-mode)
+(require 'jade-mode)
 
 ;; -----------------------------------------------------------------------------
 ;; ruby-mode
@@ -1205,7 +1229,9 @@
 (add-to-list 'auto-mode-alist '("\\.el$".	lisp-mode))
 (add-to-list 'auto-mode-alist '("\\.yaml$".	yaml-mode))
 (add-to-list 'auto-mode-alist '("\\.js$".	js2-mode))
-(add-to-list 'auto-mode-alist '("\\.json$".	js2-mode))
+(add-to-list 'auto-mode-alist '("\\.json$".	json-mode))
+(add-to-list 'auto-mode-alist '("\\.styl$\\'".  sws-mode))
+(add-to-list 'auto-mode-alist '("\\.jade$\\'".  jade-mode))
 (add-to-list 'auto-mode-alist '("\\.coffee$".	coffee-mode))
 (add-to-list 'auto-mode-alist '("\\.md$".	markdown-mode))
 (add-to-list 'auto-mode-alist '("\\.markdown$".	markdown-mode))
