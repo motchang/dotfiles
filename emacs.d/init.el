@@ -1,5 +1,5 @@
-(setq debug-on-error t)
-;; (setq debug-on-error nil)
+;; (setq debug-on-error t)
+(setq debug-on-error nil)
 (dolist (dir (list
 	      "/usr/local/bin"
 	      "/sbin"
