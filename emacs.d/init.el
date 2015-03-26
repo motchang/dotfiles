@@ -1,5 +1,5 @@
-;; (setq debug-on-error t)
-(setq debug-on-error nil)
+(setq debug-on-error t)
+;; (setq debug-on-error nil)
 (dolist (dir (list
 	      "/usr/local/bin"
 	      "/sbin"
@@ -246,6 +246,10 @@
 
 ;; 行番号を表示
 ;(global-linum-mode t)
+(add-hook 'linum-mode-hook
+	  '(lambda ()
+	     (set-face-foreground 'linum "#00ff00")
+	     (set-face-background 'linum nil)))
 
 ;; 各メシャーモートのインテントサイス
 ;(setq js-indent-level 4)
@@ -844,18 +848,21 @@
 (autoload 'gtags-mode "" t)
 (setq gtags-mode-hook
       '(lambda ()
-         (define-key gtags-mode-map "\C-cs" 'gtags-find-symbol)
-         (define-key gtags-mode-map "\C-cr" 'gtags-find-rtag)
-         (define-key gtags-mode-map "\C-ct" 'gtags-find-tag)
-         (define-key gtags-mode-map "\C-cf" 'gtags-parse-file)
-         (define-key gtags-mode-map "\M-p" 'gtags-pop-stack)
-         ))
+	 (define-key gtags-mode-map (kbd "M-.") 'gtags-find-tag-from-here)
+         (define-key gtags-mode-map (kbd "C-c s") 'gtags-find-symbol)
+         (define-key gtags-mode-map (kbd "C-c r") 'gtags-find-rtag)
+         (define-key gtags-mode-map (kbd "C-c t") 'gtags-find-tag)
+         (define-key gtags-mode-map (kbd "C-c f") 'gtags-parse-file)
+         (define-key gtags-mode-map (kbd "M-p") 'gtags-pop-stack)))
 
 ;; (global-set-key (kbd "M-p") 'gtags-pop-stack)
 (add-hook 'php-mode-hook
 	  (lambda ()
-	    (gtags-mode t)
-	    ))
+	    (gtags-mode t)))
+
+(add-hook 'ruby-mode-hook
+	  (lambda ()
+	    (gtags-mode t)))
 
 ; gtags auto update
 (defun update-gtags (&optional prefix)
@@ -868,10 +875,7 @@
         (save-excursion
           (set-buffer buffer)
           (erase-buffer)
-          (let ((result (process-file "gtags" nil buffer nil args)))
-            (if (= 0 result)
-                (message "GTAGS successfully updated.")
-              (message "update GTAGS error with exit status %d" result))))))))
+	  (let ((result (start-process "gtags" "*update GTAGS*" "gtags" args "-w" "--gtagsconf" (expand-file-name"~/gtags.conf") "--gtagslabel=pygments" "--debug")))))))))
 (add-hook 'after-save-hook 'update-gtags)
 
 ;; tag jump
@@ -1010,8 +1014,8 @@
              (electric-layout-mode t)
              (setq ruby-deep-indent-paren-style nil)
 	     (setq truncate-lines t)
-	     (define-key ruby-mode-map (kbd "M-.") 'find-tag)
-	     (define-key ruby-mode-map (kbd "M-p") 'pop-tag-mark)
+	     ;; (define-key ruby-mode-map (kbd "M-.") 'find-tag)
+	     ;; (define-key ruby-mode-map (kbd "M-p") 'pop-tag-mark)
 	     (define-key ruby-mode-map (kbd "<backspace>") 'c-hungry-delete)
 	     (define-key ruby-mode-map (kbd "<delete>") 'c-hungry-delete)
              ;; http://stackoverflow.com/questions/7961533/emacs-ruby-method-parameter-indentation
@@ -1055,6 +1059,7 @@
 (setq exec-path (cons (concat (getenv "HOME") "/.rbenv/shims") (cons (concat (getenv "HOME") "/.rbenv/bin") exec-path)))
 
 ;; rspec-mode
+(require 'rspec-mode)
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -1067,6 +1072,12 @@
  '(js2-basic-offset 2)
  '(rspec-use-rake-flag nil)
  '(rspec-use-rake-when-possible nil))
+
+(add-hook 'rspec-mode-hook
+	  (lambda ()
+	    ()
+	    (linum-mode)
+	    ))
 
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
@@ -1232,8 +1243,8 @@
 (add-hook 'scss-mode-hook 'rainbow-mode)
 (add-hook 'php-mode-hook 'rainbow-mode)
 (add-hook 'html-mode-hook 'rainbow-mode)
-(add-hook 'lisp-mode 'rainbow-mode)
-(add-hook 'web-mode 'rainbow-mode)
+(add-hook 'lisp-mode-hook 'rainbow-mode)
+(add-hook 'web-mode-hook 'rainbow-mode)
 
 ;; -----------------------------------------------------------------------------
 ;; popup.el
@@ -1243,7 +1254,7 @@
   ;; anything
   (setq anything-samewindow nil)
   (push '("*anything imenu*" :height 20) popwin:special-display-config)
-
+  (push '("*anything gtags*" :height 20) popwin:special-display-config)
   (setq display-buffer-function 'popwin:display-buffer)
   (setq popwin:popup-window-height 0.5))
 
