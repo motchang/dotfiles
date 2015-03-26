@@ -799,6 +799,8 @@
   '(custom-set-variables
     '(flycheck-display-errors-function #'flycheck-pos-tip-error-messages)))
 
+(set-face-background 'popup-tip-face "#110000")
+
 (add-hook 'ruby-mode-hook
 	  (lambda ()
 	    (flycheck-select-checker 'ruby-rubocop)
@@ -810,8 +812,8 @@
 	    (flycheck-mode)))
 
 ;; -----------------------------------------------------------------------------
-;; cd ~/.emacs.d/elisp/
-;; git clone https://github.com/mitsuo-saito/auto-highlight-symbol-mode.git
+;; auto-highlight-symbol
+;; -----------------------------------------------------------------------------
 (require 'auto-highlight-symbol)
 (global-auto-highlight-symbol-mode t)
 
