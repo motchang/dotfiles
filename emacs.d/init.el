@@ -1,5 +1,5 @@
-(setq debug-on-error t)
-;; (setq debug-on-error nil)
+;; (setq debug-on-error t)
+(setq debug-on-error nil)
 (dolist (dir (list
 	      "/usr/local/bin"
 	      "/sbin"
@@ -25,8 +25,6 @@
 ;;(setq inhibit-startup-screen t)
 (setq inhibit-startup-screen nil)
 
-(when (window-system)
-)
 ;; tool-barを非表示
 (tool-bar-mode 0)
 ;; scroll-barを非表示
@@ -490,18 +488,15 @@
 
 ;; successfully installed!
 ;; Add the following code to your .emacs:
-;; (require 'auto-complete-config)
-;; (when (require 'auto-complete-config nil t)
-;;   ;; (add-to-list 'ac-dictionary-directories
-;;   ;; 	       "~/.emacs.d/elisp/ac-dict")
-;;   (define-key ac-mode-map (kbd "M-i") 'auto-complete)
-;;   (setq ac-auto-start 3)
-;;   (ac-config-default))
-;; (global-set-key (kbd "M-i") 'auto-complete)
-
 (require 'auto-complete)
 (require 'auto-complete-config)
+(when (require 'auto-complete-config nil t)
+  (define-key ac-mode-map (kbd "M-i") 'auto-complete)
+  (setq ac-auto-start 3)
+  (ac-config-default))
 (global-auto-complete-mode t)
+(global-set-key (kbd "M-i") 'auto-complete)
+
 
 ;; 補完候補について
 ;; 　auto-complete-modeの補完候補は、ソースと呼ば
@@ -799,7 +794,22 @@
   '(custom-set-variables
     '(flycheck-display-errors-function #'flycheck-pos-tip-error-messages)))
 
-(set-face-background 'popup-tip-face "#110000")
+(set-face-foreground 'popup-tip-face "#CC0000")
+(set-face-background 'popup-tip-face "#33FFFF")
+
+(set-face-background 'ac-completion-face "#000066")
+(set-face-foreground 'ac-completion-face "#FFFF33")
+
+(set-face-foreground 'ac-candidate-face "#33FFFF")
+
+(set-face-background 'ac-selection-face "#CC0000")
+(set-face-foreground 'ac-selection-face "#33FFFF")
+
+;; 候補のサマリー部分
+(set-face-foreground 'popup-summary-face "#FFFFFF")
+;; ドキュメント部分
+(set-face-background 'popup-tip-face "cyan")
+(set-face-foreground 'popup-tip-face "black")
 
 (add-hook 'ruby-mode-hook
 	  (lambda ()
@@ -1259,6 +1269,13 @@
   (push '("*anything gtags*" :height 20) popwin:special-display-config)
   (setq display-buffer-function 'popwin:display-buffer)
   (setq popwin:popup-window-height 0.5))
+
+;; -----------------------------------------------------------------------------
+;; nyan-mode
+;; -----------------------------------------------------------------------------
+(when (window-system)
+  (when (require 'nyan-mode)
+    (nyan-mode 1)))
 
 ;; -----------------------------------------------------------------------------
 ;; 関連付けとか
