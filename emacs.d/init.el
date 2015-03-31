@@ -967,25 +967,23 @@
 ;; -----------------------------------------------------------------------------
 ;; js2 mode (javascript)
 ;; -----------------------------------------------------------------------------
-;; (require 'js2-mode)
-;; (add-hook 'js2-mode-hook
-;; 	  (lambda ()
-;; 	    (when (require 'auto-complete nil t)
-;; 	      (make-variable-buffer-local 'ac-sources)
-;; 	      (auto-complete-mode t))
-;; 	    (setq indent-tabs-mode nil)
-;; 	    (setq tab-width 2)
-;; 	    (setq c-basic-offset 2)
-;; 	    (setq js2-basic-offset 2)
-;; 	    (setq c-hanging-comment-ender-p nil)
-;; 	    (c-toggle-hungry-state t)
-;; 	    (c-set-offset 'case-label' 2)
-;; 	    (c-set-offset 'arglist-intro' 2)
-;; 	    (c-set-offset 'arglist-close' 0)
-;; 	    (set-face-background 'js2-error "orange")
-;; 	    (set-face-foreground 'js2-error "#0000F1")
-;; 	    (set-face-background 'js2-external-variable "orange")
-;; 	    (set-face-foreground 'js2-external-variable "#0000F1")))
+(require 'js2-mode)
+(add-hook 'js2-mode-hook
+	  (lambda ()
+	    (when (require 'auto-complete nil t)
+	      (make-variable-buffer-local 'ac-sources)
+	      (auto-complete-mode t))
+	    (setq indent-tabs-mode nil)
+	    (setq tab-width 2)
+	    (setq c-basic-offset 2)
+	    (setq js2-basic-offset 2)
+	    (setq c-hanging-comment-ender-p nil)
+	    (c-toggle-hungry-state t)
+	    (c-set-offset 'case-label' 2)
+	    (c-set-offset 'arglist-intro' 2)
+	    (c-set-offset 'arglist-close' 0)
+	    (when (require 'auto-highlight-symbol nil t)
+	      (auto-highlight-symbol-mode t))))
 
 ;; -----------------------------------------------------------------------------
 ;; json-mode
