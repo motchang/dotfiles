@@ -726,6 +726,8 @@
   (add-hook 'php-mode-hook
             '(lambda () (flymake-mode t))))
 
+(when (require 'flymake-cursor nil t))
+
 ;; http://d.hatena.ne.jp/gan2/20080702/1214972962
 ;; flymake for ruby
 (when (require 'flymake nil t)
@@ -765,6 +767,9 @@
                  (line       (flymake-ler-line (nth (1- count) line-err-info-list))))
             (message "[%s] %s" line text)))
         (setq count (1- count))))))
+
+(when (require 'flymake-coffee nil t)
+  (add-hook 'coffee-mode-hook 'flymake-coffee-load))
 
 ;; flymake for jade
 (defun flymake-jade-init ()
@@ -938,15 +943,18 @@
 (autoload 'geben-set-breakpoint-line "geben" "Set a breakpoint at the current line." t)
 (setq geben-dbgp-default-port 9005)
 
+;; -----------------------------------------------------------------------------
 ;; javascript-mode
-(add-hook 'javascript-mode-hook
+;; -----------------------------------------------------------------------------
+(add-hook 'js-mode-hook
          (lambda ()
              (when (require 'auto-complete nil t)
 	       (make-variable-buffer-local 'ac-sources)
 	       (auto-complete-mode t))
-	     (setq tab-width 4)
+	     (setq tab-width 2)
 	     (setq indent-tabs-mode nil)
 	     (c-toggle-hungry-state t)
+	     (setq c-basic-offset 2)
 	     (c-set-offset 'case-label' 2)
 	     (c-set-offset 'arglist-intro' 2)
 	     (c-set-offset 'arglist-close' 0)
@@ -959,25 +967,25 @@
 ;; -----------------------------------------------------------------------------
 ;; js2 mode (javascript)
 ;; -----------------------------------------------------------------------------
-(require 'js2-mode)
-(add-hook 'js2-mode-hook
-	  (lambda ()
-	    (when (require 'auto-complete nil t)
-	      (make-variable-buffer-local 'ac-sources)
-	      (auto-complete-mode t))
-	    (setq indent-tabs-mode nil)
-	    (setq tab-width 2)
-	    (setq c-basic-offset 2)
-	    (setq js2-basic-offset 2)
-	    (setq c-hanging-comment-ender-p nil)
-	    (c-toggle-hungry-state t)
-	    (c-set-offset 'case-label' 2)
-	    (c-set-offset 'arglist-intro' 2)
-	    (c-set-offset 'arglist-close' 0)
-	    (set-face-background 'js2-error "orange")
-	    (set-face-foreground 'js2-error "#0000F1")
-	    (set-face-background 'js2-external-variable "orange")
-	    (set-face-foreground 'js2-external-variable "#0000F1")))
+;; (require 'js2-mode)
+;; (add-hook 'js2-mode-hook
+;; 	  (lambda ()
+;; 	    (when (require 'auto-complete nil t)
+;; 	      (make-variable-buffer-local 'ac-sources)
+;; 	      (auto-complete-mode t))
+;; 	    (setq indent-tabs-mode nil)
+;; 	    (setq tab-width 2)
+;; 	    (setq c-basic-offset 2)
+;; 	    (setq js2-basic-offset 2)
+;; 	    (setq c-hanging-comment-ender-p nil)
+;; 	    (c-toggle-hungry-state t)
+;; 	    (c-set-offset 'case-label' 2)
+;; 	    (c-set-offset 'arglist-intro' 2)
+;; 	    (c-set-offset 'arglist-close' 0)
+;; 	    (set-face-background 'js2-error "orange")
+;; 	    (set-face-foreground 'js2-error "#0000F1")
+;; 	    (set-face-background 'js2-external-variable "orange")
+;; 	    (set-face-foreground 'js2-external-variable "#0000F1")))
 
 ;; -----------------------------------------------------------------------------
 ;; json-mode
@@ -1286,6 +1294,7 @@
 (add-to-list 'auto-mode-alist '("\\.el$".	lisp-mode))
 (add-to-list 'auto-mode-alist '("\\.yaml$".	yaml-mode))
 (add-to-list 'auto-mode-alist '("\\.js$".	js2-mode))
+;;(add-to-list 'auto-mode-alist '("\\.js$".	js-mode))
 (add-to-list 'auto-mode-alist '("\\.json$".	json-mode))
 (add-to-list 'auto-mode-alist '("\\.styl$\\'".  sws-mode))
 (add-to-list 'auto-mode-alist '("\\.jade$\\'".  jade-mode))
