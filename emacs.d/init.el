@@ -806,7 +806,7 @@
 (set-face-foreground 'ac-selection-face "#33FFFF")
 
 ;; 候補のサマリー部分
-(set-face-foreground 'popup-summary-face "#FFFFFF")
+(set-face-foreground 'popup-summary-face "#333333")
 ;; ドキュメント部分
 (set-face-background 'popup-tip-face "cyan")
 (set-face-foreground 'popup-tip-face "black")
@@ -887,7 +887,7 @@
         (save-excursion
           (set-buffer buffer)
           (erase-buffer)
-	  (let ((result (start-process "gtags" "*update GTAGS*" "gtags" args "-w" "--gtagsconf" (expand-file-name"~/gtags.conf") "--gtagslabel=pygments" "--debug")))))))))
+	  (let ((result (start-process "gtags" "*update GTAGS*" "gtags" args "-w" "--gtagsconf" (expand-file-name "~/gtags.conf") "--gtagslabel=pygments" "--debug")))))))))
 (add-hook 'after-save-hook 'update-gtags)
 
 ;; tag jump
