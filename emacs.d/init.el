@@ -816,15 +816,22 @@
 (set-face-background 'popup-tip-face "cyan")
 (set-face-foreground 'popup-tip-face "black")
 
-(add-hook 'ruby-mode-hook
-	  (lambda ()
-	    (flycheck-select-checker 'ruby-rubocop)
-	    (flycheck-disable-checker 'ruby-rubylint)
-	    (flycheck-mode)))
+(when (require 'ruby-mode nil t)
+  (add-hook 'ruby-mode-hook
+	    (lambda ()
+	      (flycheck-mode)
+	      (flycheck-select-checker 'ruby-rubocop)
+	      (flycheck-disable-checker 'ruby-rubylint))))
 
-(add-hook 'js2-mode-hook
-	  (lambda ()
-	    (flycheck-mode)))
+(when (require 'rspec-mode nil t)
+  (add-hook 'rspec-mode-hook
+	    (lambda ()
+	      (flycheck-mode))))
+
+(when (require 'js2-mode nil t)
+  (add-hook 'js2-mode-hook
+	    (lambda ()
+	      (flycheck-mode))))
 
 ;; -----------------------------------------------------------------------------
 ;; auto-highlight-symbol
@@ -1094,8 +1101,7 @@
 (add-hook 'rspec-mode-hook
 	  (lambda ()
 	    ()
-	    (linum-mode)
-	    ))
+	    (linum-mode)))
 
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
