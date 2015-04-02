@@ -8,16 +8,17 @@ fi
 # ------------------------------------------------------------------------------
 # User specific environment and startup programs
 # ------------------------------------------------------------------------------
+#mac用のコード
 if [ `uname` = "Darwin" ]
 then
-    #mac用のコード
-    if [ -f /usr/bin/ssh-agent -a -f ~/.ssh/id_rsa ]
+    if [ -x /usr/bin/ssh-agent -a -f ~/.ssh/id_rsa ]
     then
         eval `/usr/bin/ssh-agent`
         # ssh-add ~/.ssh/id_rsa
     fi
     # bash compiletion
-    if [ -f $(brew --prefix)/etc/bash_completion ]; then
+    if [ -x /usr/local/bin/brew -a -f $(brew --prefix)/etc/bash_completion ]
+    then
 	. $(brew --prefix)/etc/bash_completion
     fi
     # coreutils
@@ -35,6 +36,9 @@ then
     then
 	PATH=/usr/local/share/python:$PATH
     fi
+export NVM_DIR="/Users/koji.okamoto/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"  # This loads nvm
+
 fi
 
 if [ `uname` = "Linux" ]
@@ -70,6 +74,11 @@ then
     PATH=${PATH}:/usr/local/mysql/bin
 fi
 
+if [ -d /usr/local/heroku/bin ]
+then
+   PATH=${PATH}:/usr/local/heroku/bin
+fi
+
 export PATH
 
 if [ -d /usr/local/mysql/lib ]
@@ -95,4 +104,13 @@ which rbenv >> /dev/null 2>&1
 if [ $? -eq 0 ]
 then
     eval "$(rbenv init -)"
+fi
+
+# ------------------------------------------------------------------------------
+# node
+# ------------------------------------------------------------------------------
+if [ -d ${HOME}/.nvm ]
+then
+    export NVM_DIR=${HOME}/.nvm
+    [ -s {$NVM_DIR}/nvm.sh ] && . ${NVM_DIR}/nvm.sh
 fi
