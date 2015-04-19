@@ -230,28 +230,19 @@
        ;; そのほかのOSの設定(Unicodeの場合)
        (set-file-name-coding-system 'utf-8)))
 
-(set-language-environment "Japanese")
-
 ;; デフォルトをUTF8に変更する
 (set-default-coding-systems 'utf-8)
-
 (cond ((eq emacs24-p t)
        (setq buffer-file-coding-system 'utf-8))
       (setq default-buffer-file-coding-system 'utf-8))
-
-
 (prefer-coding-system 'utf-8)
+(set-language-environment "Japanese")
 
 ;; 行番号を表示
-;(global-linum-mode t)
 (add-hook 'linum-mode-hook
 	  '(lambda ()
 	     (set-face-foreground 'linum "#00ff00")
 	     (set-face-background 'linum nil)))
-
-;; 各メシャーモートのインテントサイス
-;(setq js-indent-level 4)
-;(setq cperl-indent-level 4)
 
 (cond ((eq emacs24-p t)
        (add-to-list 'custom-theme-load-path "~/.emacs.d/themes")
@@ -488,15 +479,23 @@
 
 ;; successfully installed!
 ;; Add the following code to your .emacs:
-(require 'auto-complete)
-(require 'auto-complete-config)
+(when (require 'auto-complete nil t)
+  (global-auto-complete-mode t)
+  (global-set-key (kbd "M-i") 'auto-complete)
+
+  (set-face-background 'ac-completion-face "#000066")
+  (set-face-foreground 'ac-completion-face "#FFFF33")
+
+  (set-face-foreground 'ac-candidate-face "#33aaaa")
+  (set-face-background 'ac-candidate-face "#777777")
+
+  (set-face-background 'ac-selection-face "#009988")
+  (set-face-foreground 'ac-selection-face "#FF6677"))
+
 (when (require 'auto-complete-config nil t)
   (define-key ac-mode-map (kbd "M-i") 'auto-complete)
   (setq ac-auto-start 3)
   (ac-config-default))
-(global-auto-complete-mode t)
-(global-set-key (kbd "M-i") 'auto-complete)
-
 
 ;; 補完候補について
 ;; 　auto-complete-modeの補完候補は、ソースと呼ば
@@ -802,16 +801,9 @@
 (set-face-foreground 'popup-tip-face "#CC0000")
 (set-face-background 'popup-tip-face "#33FFFF")
 
-(set-face-background 'ac-completion-face "#000066")
-(set-face-foreground 'ac-completion-face "#FFFF33")
-
-(set-face-foreground 'ac-candidate-face "#33FFFF")
-
-(set-face-background 'ac-selection-face "#CC0000")
-(set-face-foreground 'ac-selection-face "#33FFFF")
-
 ;; 候補のサマリー部分
-(set-face-foreground 'popup-summary-face "#333333")
+(set-face-foreground 'popup-summary-face "#666633")
+
 ;; ドキュメント部分
 (set-face-background 'popup-tip-face "cyan")
 (set-face-foreground 'popup-tip-face "black")
@@ -990,7 +982,14 @@
 	    (c-set-offset 'arglist-intro' 2)
 	    (c-set-offset 'arglist-close' 0)
 	    (when (require 'auto-highlight-symbol nil t)
-	      (auto-highlight-symbol-mode t))))
+	      (auto-highlight-symbol-mode t))
+	    ;; (set-face-background 'js2-error "orange")
+	    ;; (set-face-foreground 'js2-error "#0000F1")
+	    ;; (set-face-background 'js2-external-variable nil)
+	    ;; (set-face-foreground 'js2-external-variable "#0000F1")))
+	    ;; Disable auto newline insertion after input semi colon (;) at javascript-mode
+	    ;; http://insnvlovn.blogspot.jp/2010/04/emacs-php-mode.html
+	    (setq-local electric-layout-rules '((?\{ . after) (?\} . before)))))
 
 ;; -----------------------------------------------------------------------------
 ;; json-mode
@@ -1027,22 +1026,6 @@
                (ruby-end-mode t)
                (setq ruby-end-insert-newline nil)
                (setq ruby-end-check-statement-modifiers nil))
-             (set-default-coding-systems 'utf-8)
-             (setq c-toggle-hungry-state t)
-             (setq ruby-insert-encoding-magic-comment nil)
-	     ;; http://qiita.com/tadsan/items/ab3c3b594b5bf6203f02
-	     (make-local-variable 'ac-ignore-case)
-	     (setq ac-ignore-case nil)
-             (abbrev-mode 1)
-             (electric-pair-mode nil)
-             (electric-indent-mode t)
-             (electric-layout-mode t)
-             (setq ruby-deep-indent-paren-style nil)
-	     (setq truncate-lines t)
-	     ;; (define-key ruby-mode-map (kbd "M-.") 'find-tag)
-	     ;; (define-key ruby-mode-map (kbd "M-p") 'pop-tag-mark)
-	     (define-key ruby-mode-map (kbd "<backspace>") 'c-hungry-delete)
-	     (define-key ruby-mode-map (kbd "<delete>") 'c-hungry-delete)
              ;; http://stackoverflow.com/questions/7961533/emacs-ruby-method-parameter-indentation
              (defadvice ruby-indent-line (after unindent-closing-paren activate)
                (let ((column (current-column))
@@ -1066,42 +1049,57 @@
              (when (require 'smartparens-ruby)
                (set-face-attribute 'sp-show-pair-match-face nil
                                    :background "gray20" :foreground "green"))
-	     )
-	  )
+             (set-default-coding-systems 'utf-8)
+             (setq c-toggle-hungry-state t)
+             (setq ruby-insert-encoding-magic-comment nil)
+	     ;; http://qiita.com/tadsan/items/ab3c3b594b5bf6203f02
+	     (make-local-variable 'ac-ignore-case)
+	     (setq ac-ignore-case nil)
+             (abbrev-mode 1)
+	     ;; (define-key ruby-mode-map (kbd "M-.") 'find-tag)
+	     ;; (define-key ruby-mode-map (kbd "M-p") 'pop-tag-mark)
+	     (define-key ruby-mode-map (kbd "<backspace>") 'c-hungry-delete)
+	     (define-key ruby-mode-map (kbd "<delete>") 'c-hungry-delete)
+             (electric-indent-mode t)
+             (electric-layout-mode t)
+             (setq ruby-deep-indent-paren-style nil)
+	     (setq truncate-lines t)
+             (electric-pair-mode 0)
+	     (set-face-foreground 'font-lock-type-face "cyan")))
 
 ;; set ruby-mode indent
 (setq ruby-indent-level 2)
 (setq ruby-indent-tabs-mode nil)
 
 ;; http://d.hatena.ne.jp/khiker/20071130/emacs_ruby_block
-(require 'ruby-block)
-(ruby-block-mode t)
-;; ミニバッファに表示し, かつ, オーバレイする.
-(setq ruby-block-highlight-toggle t)
+(when (require 'ruby-block nil t)
+  (ruby-block-mode t)
+  ;; ミニバッファに表示し, かつ, オーバレイする.
+  (setq ruby-block-highlight-toggle t))
 
 ;; rbenv の ruby を参照するようにする
 (setenv "PATH" (concat (getenv "HOME") "/.rbenv/shims:" (getenv "HOME") "/.rbenv/bin:" (getenv "PATH")))
 (setq exec-path (cons (concat (getenv "HOME") "/.rbenv/shims") (cons (concat (getenv "HOME") "/.rbenv/bin") exec-path)))
 
 ;; rspec-mode
-(require 'rspec-mode)
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(custom-safe-themes
-   (quote
-    ("e80932ca56b0f109f8545576531d3fc79487ca35a9a9693b62bf30d6d08c9aaf" "4aee8551b53a43a883cb0b7f3255d6859d766b6c5e14bcb01bed572fcbef4328" "211bb9b24001d066a646809727efb9c9a2665c270c753aa125bace5e899cb523" default)))
- '(flycheck-display-errors-function (function flycheck-pos-tip-error-messages))
- '(js2-basic-offset 2)
- '(rspec-use-rake-flag nil)
- '(rspec-use-rake-when-possible nil))
+(when (require 'rspec-mode nil t)
+  (custom-set-variables
+   ;; custom-set-variables was added by Custom.
+   ;; If you edit it by hand, you could mess it up, so be careful.
+   ;; Your init file should contain only one such instance.
+   ;; If there is more than one, they won't work right.
+   '(custom-safe-themes
+     (quote
+      ("e80932ca56b0f109f8545576531d3fc79487ca35a9a9693b62bf30d6d08c9aaf" "4aee8551b53a43a883cb0b7f3255d6859d766b6c5e14bcb01bed572fcbef4328" "211bb9b24001d066a646809727efb9c9a2665c270c753aa125bace5e899cb523" default)))
+   '(flycheck-display-errors-function (function flycheck-pos-tip-error-messages))
+   '(js2-basic-offset 2)
+   '(rspec-use-rake-flag nil)
+   '(rspec-use-rake-when-possible nil))
 
-(add-hook 'rspec-mode-hook
-	  (lambda ()
-	    ()
-	    (linum-mode)))
+  (add-hook 'rspec-mode-hook
+	    (lambda ()
+	      ()
+	      (linum-mode))))
 
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
@@ -1139,32 +1137,29 @@
   (and
    (setq tab-width 4)
    (set (make-local-variable 'css-indent-offset) 2)
-   (set (make-local-variable 'scss-compile-at-save) nil)
-   )
-  )
+   (set (make-local-variable 'scss-compile-at-save) nil)))
 (add-hook 'scss-mode-hook
   '(lambda() (scss-custom)))
 
 ;; -----------------------------------------------------------------------------
 ;; Sassmode
 ;; -----------------------------------------------------------------------------
-(require 'sass-mode)
-(defun sass-custom ()
-  "sass-mode-hook"
-  (and
-   ;インデントはタブ。
-   (setq tab-width 4)
-   (setq indent-tabs-mode t)
-   (setq sass-indent-offset 4)
-   )
-  )
-(add-hook 'sass-mode-hook
-  '(lambda() (sass-custom)))
+(when (require 'sass-mode nil t)
+  (defun sass-custom ()
+    "sass-mode-hook"
+    (and
+     ;; インデントはタブ。
+     (setq tab-width 4)
+     (setq indent-tabs-mode t)
+     (setq sass-indent-offset 4)))
+  (add-hook 'sass-mode-hook
+	    '(lambda() (sass-custom))))
+
 ;; -----------------------------------------------------------------------------
 ;; yaml-mode
 ;; -----------------------------------------------------------------------------
-(require 'yaml-mode)
-(add-to-list 'auto-mode-alist '("\\.yml$" . yaml-mode))
+(when (require 'yaml-mode nil t)
+  (add-to-list 'auto-mode-alist '("\\.yml$" . yaml-mode)))
 
 ;; -----------------------------------------------------------------------------
 ;; smarty-mode
@@ -1176,20 +1171,20 @@
 ;; -----------------------------------------------------------------------------
 ;; coffee mode
 ;; -----------------------------------------------------------------------------
-(require 'coffee-mode)
-(setq whitespace-action '(auto-cleanup))
- ;; only show bad whitespace
-(setq whitespace-style '(trailing space-before-tab indentation empty space-after-tab))
+(when (require 'coffee-mode nil t)
+  (setq whitespace-action '(auto-cleanup))
+  ;; only show bad whitespace
+  (setq whitespace-style '(trailing space-before-tab indentation empty space-after-tab))
+  (defun coffee-custom ()
+    "coffee-mode-hook"
+    ;; CoffeeScript uses two spaces.
+    (custom-set-variables '(coffee-tab-width 2)))
+  (add-hook 'coffee-mode-hook 'coffee-custom))
 
-(defun coffee-custom ()
-  "coffee-mode-hook"
-  ;; CoffeeScript uses two spaces.
-  (custom-set-variables '(coffee-tab-width 2)))
-(add-hook 'coffee-mode-hook 'coffee-custom)
+(when (require 'flymake-coffee nil t)
+  (add-hook 'coffee-mode-hook 'flymake-coffee-load)
+  (setq flymake-coffee-coffeelint-configuration-file "~/src/dotfiles/coffeelint.json"))
 
-(require 'flymake-coffee)
-(add-hook 'coffee-mode-hook 'flymake-coffee-load)
-(setq flymake-coffee-coffeelint-configuration-file "~/src/dotfiles/coffeelint.json")
 ;; -----------------------------------------------------------------------------
 ;; CEDET
 ;; -----------------------------------------------------------------------------
@@ -1210,7 +1205,7 @@
 ;; -----------------------------------------------------------------------------
 ;; magit
 ;; -----------------------------------------------------------------------------
-(require 'magit)
+(when (require 'magit nil t))
 
 ;; -----------------------------------------------------------------------------
 ;; http://noqisofon.hatenablog.com/entry/20101102/1288647885
@@ -1229,7 +1224,7 @@
 ;; -----------------------------------------------------------------------------
 ;; 鬼軍曹
 ;; -----------------------------------------------------------------------------
-(require 'drill-instructor)
+(when (require 'drill-instructor nil t))
 
 ;; -----------------------------------------------------------------------------
 ;; twittering-mode
@@ -1252,23 +1247,23 @@
 ;; -----------------------------------------------------------------------------
 ;; docker
 ;; -----------------------------------------------------------------------------
-(require 'dockerfile-mode)
+(when (require 'dockerfile-mode nil t))
 
 ;; -----------------------------------------------------------------------------
 ;; nodejs-repl
 ;; -----------------------------------------------------------------------------
-(require 'nodejs-repl)
+(when (require 'nodejs-repl nil t))
 
 ;; -----------------------------------------------------------------------------
 ;;
 ;; -----------------------------------------------------------------------------
-(require 'rainbow-mode)
-(add-hook 'css-mode-hook 'rainbow-mode)
-(add-hook 'scss-mode-hook 'rainbow-mode)
-(add-hook 'php-mode-hook 'rainbow-mode)
-(add-hook 'html-mode-hook 'rainbow-mode)
-(add-hook 'lisp-mode-hook 'rainbow-mode)
-(add-hook 'web-mode-hook 'rainbow-mode)
+(when (require 'rainbow-mode nil t)
+  (add-hook 'css-mode-hook 'rainbow-mode)
+  (add-hook 'scss-mode-hook 'rainbow-mode)
+  (add-hook 'php-mode-hook 'rainbow-mode)
+  (add-hook 'html-mode-hook 'rainbow-mode)
+  (add-hook 'lisp-mode-hook 'rainbow-mode)
+  (add-hook 'web-mode-hook 'rainbow-mode))
 
 ;; -----------------------------------------------------------------------------
 ;; popup.el
