@@ -36,9 +36,6 @@ then
     then
 	PATH=/usr/local/share/python:$PATH
     fi
-export NVM_DIR="/Users/koji.okamoto/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"  # This loads nvm
-
 fi
 
 if [ `uname` = "Linux" ]
@@ -111,6 +108,6 @@ fi
 # ------------------------------------------------------------------------------
 if [ -d ${HOME}/.nvm ]
 then
-    export NVM_DIR=${HOME}/.nvm
-    [ -s {$NVM_DIR}/nvm.sh ] && . ${NVM_DIR}/nvm.sh
+    export NVM_DIR=~/.nvm
+    source $(brew --prefix nvm)/nvm.sh
 fi
