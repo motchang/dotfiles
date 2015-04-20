@@ -1229,7 +1229,7 @@
 ;; -----------------------------------------------------------------------------
 ;; twittering-mode
 ;; -----------------------------------------------------------------------------
-(when (require 'twittering-mode)
+(when (require 'twittering-mode nil t)
   (setq twittering-use-master-password t)
   (setq twittering-icon-mode nil)
   (setq twittering-timer-interval 500)
@@ -1269,7 +1269,7 @@
 ;; popup.el
 ;; -----------------------------------------------------------------------------
 ;(auto-install-from-url "https://raw.github.com/m2ym/popwin-el/master/popwin.el")
-(when (require 'popwin)
+(when (require 'popwin nil t)
   ;; anything
   (setq anything-samewindow nil)
   (push '("*anything imenu*" :height 20) popwin:special-display-config)
@@ -1281,8 +1281,17 @@
 ;; nyan-mode
 ;; -----------------------------------------------------------------------------
 (when (window-system)
-  (when (require 'nyan-mode)
+  (when (require 'nyan-mode nil t)
     (nyan-mode 1)))
+
+;; -----------------------------------------------------------------------------
+;; string-inflection
+;; -----------------------------------------------------------------------------
+(when (require 'string-inflection nil t)
+  (global-set-key (kbd "C-c i") 'string-inflection-cycle)
+  (global-set-key (kbd "C-c C") 'string-inflection-camelcase)		;; Force to CamelCase
+  (global-set-key (kbd "C-c L") 'string-inflection-lower-camelcase)	;; Force to lowerCamelCase
+  (global-set-key (kbd "C-c J") 'string-inflection-java-style-cycle))	;; Cycle through Java styles
 
 ;; -----------------------------------------------------------------------------
 ;; 関連付けとか
