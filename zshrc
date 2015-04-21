@@ -16,6 +16,9 @@ compinit
 #
 # User specific aliases and functions
 #
+bindkey    "^[[3~"          delete-char
+bindkey    "^[3;5~"         delete-char
+
 setopt HIST_IGNORE_DUPS SHARE_HISTORY
 autoload colors
 
