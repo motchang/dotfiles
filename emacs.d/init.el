@@ -494,7 +494,7 @@
 
 (when (require 'auto-complete-config nil t)
   (define-key ac-mode-map (kbd "M-i") 'auto-complete)
-  (setq ac-auto-start 3)
+  (setq ac-auto-start 4)
   (ac-config-default))
 
 ;; 補完候補について
