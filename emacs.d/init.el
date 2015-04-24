@@ -486,8 +486,8 @@
   (set-face-background 'ac-completion-face "#000066")
   (set-face-foreground 'ac-completion-face "#FFFF33")
 
-  (set-face-foreground 'ac-candidate-face "#33aaaa")
-  (set-face-background 'ac-candidate-face "#777777")
+  (set-face-foreground 'ac-candidate-face "#33bbbb")
+  (set-face-background 'ac-candidate-face "#555555")
 
   (set-face-background 'ac-selection-face "#009988")
   (set-face-foreground 'ac-selection-face "#FF6677"))
