@@ -19,7 +19,7 @@ compinit
 bindkey    "^[[3~"          delete-char
 bindkey    "^[3;5~"         delete-char
 
-setopt HIST_IGNORE_DUPS SHARE_HISTORY
+setopt SHARE_HISTORY
 autoload colors
 
 if [ ! -f /usr/bin/vim ]
