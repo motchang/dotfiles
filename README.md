@@ -10,3 +10,5 @@
 	ln -sf src/dotfiles/gitignore_global ~/.gitignore_global
 	ln -sf ~/src/dotfiles/zshrc ~/.zshrc
 	ln -sf ~/src/dotfiles/zshenv ~/.zshenv
+	ln -sf ~/src/dotfiles/Renviron ~/.Renviron
+	ln -sf ~/src/dotfiles/Rprofile ~/.Rprofile
