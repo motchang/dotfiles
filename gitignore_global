@@ -78,3 +78,6 @@ cscope.po.out
 .rubocop.yml
 .rubocop_todo.yml
 wget-log*
+
+# skiyaki/skiyaki
+lib/tasks/import/fent_ec/images/products
