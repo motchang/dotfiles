@@ -19,6 +19,7 @@ compinit
 bindkey    "^[[3~"          delete-char
 bindkey    "^[3;5~"         delete-char
 
+setopt HIST_IGNORE_DUPS
 setopt SHARE_HISTORY
 autoload colors
 
@@ -84,3 +85,21 @@ PROMPT='%F{cyan}%M%f %D %t job:%F{green}%j%f wd:%~ ${vcs_info_msg_0_}
 %n %# '
 
 export WORDCHARS='*?_.[]~-=&;!#$%^(){}<>'
+
+# http://qiita.com/uchiko/items/f6b1528d7362c9310da0
+function peco-select-history() {
+    local tac
+    if which tac > /dev/null; then
+        tac="tac"
+    else
+        tac="tail -r"
+    fi
+    BUFFER=$(\history -n 1 | \
+        eval $tac | \
+        peco --query "$LBUFFER")
+    CURSOR=$#BUFFER
+    zle clear-screen
+}
+zle -N peco-select-history
+bindkey '^r' peco-select-history
+
