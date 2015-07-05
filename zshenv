@@ -82,3 +82,14 @@ then
     export NVM_DIR=~/.nvm
     source $(brew --prefix nvm)/nvm.sh
 fi
+
+# ------------------------------------------------------------------------------
+# golang
+# ------------------------------------------------------------------------------
+if [ ! -d ${HOME}/.go ]
+then
+    mkdir ${HOME}/.go
+fi
+
+export GOPATH=${HOME}/.go
+export PATH=${GOPATH}/bin:${PATH}
