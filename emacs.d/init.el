@@ -252,6 +252,7 @@
        (set-face-background 'default "black")
        (set-face-foreground 'font-lock-comment-face "#00AA00")
        (set-face-foreground 'font-lock-string-face "#AABBEE")
+       (set-face-foreground 'font-lock-type-face "color-45")
        (setq eww-search-prefix "https://www.google.co.jp/search?q="))
       ((when (require 'color-theme nil t)
          ;; カラーテーマの選択
@@ -1106,6 +1107,7 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(font-lock-type-face ((t (:foreground "brightcyan" :weight bold))))
  '(my-hl-line-face ((t (:background "dark blue" :underline nil)))))
 
 ;; web-mode でも rinari する
