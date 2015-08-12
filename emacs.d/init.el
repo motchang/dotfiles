@@ -13,7 +13,6 @@
     (setenv "PATH" (concat dir ":" (getenv "PATH")))
     (setq exec-path (append (list dir) exec-path))))
 
-;; -*- mode: emacs-lisp; coding: utf-8; indent-tabs-mode: nil -*-
 (add-hook 'after-init-hook
           '(lambda ()
              (let* ((el (expand-file-name "init.el" user-emacs-directory))
@@ -217,6 +216,13 @@
 ;(global-set-key (kbd "C-x ?") 'help-command)
 
 ;; -----------------------------------------------------------------------------
+;; デフォルトをUTF8に変更する
+(set-default-coding-systems 'utf-8)
+(set-keyboard-coding-system 'utf-8)
+(set-terminal-coding-system 'utf-8)
+(set-buffer-file-coding-system 'utf-8)
+(prefer-coding-system 'utf-8)
+
 (cond ((eq darwin-p t)
        ;; Mac の文字コートの設定
        (require 'ucs-normalize)
@@ -230,8 +236,6 @@
        ;; そのほかのOSの設定(Unicodeの場合)
        (set-file-name-coding-system 'utf-8)))
 
-;; デフォルトをUTF8に変更する
-(set-default-coding-systems 'utf-8)
 (cond ((eq emacs24-p t)
        (setq buffer-file-coding-system 'utf-8))
       (setq default-buffer-file-coding-system 'utf-8))
@@ -329,7 +333,8 @@
   (let* ((fontset-name "myfonts") ; フォントセットの名前
          (size 12) ; ASCIIフォントのサイズ [9/10/12/14/15/17/19/20/...]
           (asciifont "Menlo") ; ASCIIフォント
-          (jpfont "Hiragino Maru Gothic ProN") ; 日本語フォント
+          ;; (jpfont "Hiragino Maru Gothic ProN") ; 日本語フォント
+          (jpfont "Ricty") ; 日本語フォント
           (font (format "%s-%d:weight=normal:slant=normal" asciifont size))
           (fontspec (font-spec :family asciifont))
           (jp-fontspec (font-spec :family jpfont))
@@ -1044,9 +1049,9 @@
                          (when (> offset 0) (forward-char offset)))))
              ;; rinari
              (when (require 'rinari nil t)
-               (rinari-minor-mode 1)
-               (when (require 'ruby-compilation))
-               (define-key ruby-mode-map (kbd "\M-r") 'run-rails-test-or-ruby-buffer))
+               (rinari-minor-mode 1))
+	     (when (require 'ruby-compilation nil t)
+	       (define-key ruby-mode-map (kbd "\M-r") 'run-rails-test-or-ruby-buffer))
              (when (require 'smartparens-ruby)
                (set-face-attribute 'sp-show-pair-match-face nil
                                    :background "gray20" :foreground "green"))
@@ -1093,7 +1098,6 @@
      (quote
       ("e80932ca56b0f109f8545576531d3fc79487ca35a9a9693b62bf30d6d08c9aaf" "4aee8551b53a43a883cb0b7f3255d6859d766b6c5e14bcb01bed572fcbef4328" "211bb9b24001d066a646809727efb9c9a2665c270c753aa125bace5e899cb523" default)))
    '(flycheck-display-errors-function (function flycheck-pos-tip-error-messages))
-   '(js2-basic-offset 2)
    '(rspec-use-rake-flag nil)
    '(rspec-use-rake-when-possible nil))
 
@@ -1160,8 +1164,7 @@
 ;; -----------------------------------------------------------------------------
 ;; yaml-mode
 ;; -----------------------------------------------------------------------------
-(when (require 'yaml-mode nil t)
-  (add-to-list 'auto-mode-alist '("\\.yml$" . yaml-mode)))
+(when (require 'yaml-mode nil t))
 
 ;; -----------------------------------------------------------------------------
 ;; smarty-mode
@@ -1300,7 +1303,7 @@
 ;; https://gist.github.com/abicky/5da654e3a7858ec60aed
 ;; -----------------------------------------------------------------------------
 ;; 拡張子が .r, .R の場合に R-mode を起動
-(add-to-list 'auto-mode-alist '("\\.[rR]\\'" . R-mode))
+;; (add-to-list 'auto-mode-alist '("\\.[rR]\\'" . R-mode))
 ;; R-mode は ess-r-d.el に定義されているが全機能をロードするために ess-site をロード
 (autoload 'R-mode "ess-site" "Major mode for editing R source.  See `ess-mode' for more help." t)
 
@@ -1357,12 +1360,12 @@
 (add-to-list 'auto-mode-alist '("\\.sql$".	sql-mode))
 (add-to-list 'auto-mode-alist '("\\.tpl$".	smarty-mode))
 (add-to-list 'auto-mode-alist '("\\.el$".	lisp-mode))
-(add-to-list 'auto-mode-alist '("\\.yaml$".	yaml-mode))
+(add-to-list 'auto-mode-alist '("\\.\\(?:yml\\|yaml\\)$".	yaml-mode))
 (add-to-list 'auto-mode-alist '("\\.js$".	js2-mode))
 ;;(add-to-list 'auto-mode-alist '("\\.js$".	js-mode))
 (add-to-list 'auto-mode-alist '("\\.json$".	json-mode))
-(add-to-list 'auto-mode-alist '("\\.styl$\\'".  sws-mode))
-(add-to-list 'auto-mode-alist '("\\.jade$\\'".  jade-mode))
+(add-to-list 'auto-mode-alist '("\\.styl$'".    sws-mode))
+(add-to-list 'auto-mode-alist '("\\.jade$'".    jade-mode))
 (add-to-list 'auto-mode-alist '("\\.coffee$".	coffee-mode))
 (add-to-list 'auto-mode-alist '("\\.md$".	markdown-mode))
 (add-to-list 'auto-mode-alist '("\\.markdown$".	markdown-mode))
@@ -1375,3 +1378,9 @@
              '("\\.\\(?:gemspec\\|irbrc\\|gemrc\\|rake\\|rb\\|ru\\|thor\\)\\'" . ruby-mode))
 (add-to-list 'auto-mode-alist
              '("\\(Capfile\\|Gemfile\\(?:\\.[a-zA-Z0-9._-]+\\)?\\|[rR]akefile\\)\\'" . ruby-mode))
+(add-to-list 'auto-mode-alist '("\\.[rR]\\'" . R-mode))
+
+;; -----------------------------------------------------------------------------
+;; http://qiita.com/alpha22jp/items/01e614474e7dbfd78305
+(set-default-coding-systems 'utf-8)
+(prefer-coding-system 'utf-8)

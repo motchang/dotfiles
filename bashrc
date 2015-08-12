@@ -45,3 +45,6 @@ if [ `uname` = "Linux" ]
 then
     alias ls='ls --color'
 fi
+
+
+export HISTFILESIZE=100000
