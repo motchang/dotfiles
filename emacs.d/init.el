@@ -20,6 +20,18 @@
                (when (file-newer-than-file-p el elc)
                  (byte-compile-file el)))))
 
+;; http://d.hatena.ne.jp/tarao/20150221/1424518030
+(when load-file-name
+  (setq user-emacs-directory (file-name-directory load-file-name)))
+
+;; (add-to-list 'load-path (locate-user-emacs-file "el-get/el-get"))
+;; (unless (require 'el-get nil 'noerror)
+;;   (with-current-buffer
+;;       (url-retrieve-synchronously
+;;        "https://raw.githubusercontent.com/dimitri/el-get/master/el-get-install.el")
+;;     (goto-char (point-max))
+;;     (eval-print-last-sexp)))
+
 ;; スタートアップメッセージを非表示
 ;;(setq inhibit-startup-screen t)
 (setq inhibit-startup-screen nil)
@@ -332,7 +344,8 @@
 ;;; フォントセットを作る
   (let* ((fontset-name "myfonts") ; フォントセットの名前
          (size 12) ; ASCIIフォントのサイズ [9/10/12/14/15/17/19/20/...]
-          (asciifont "Menlo") ; ASCIIフォント
+          (asciifont "Ricty") ; ASCIIフォント
+          ;; (asciifont "Menlo") ; ASCIIフォント
           ;; (jpfont "Hiragino Maru Gothic ProN") ; 日本語フォント
           (jpfont "Ricty") ; 日本語フォント
           (font (format "%s-%d:weight=normal:slant=normal" asciifont size))
@@ -361,6 +374,9 @@
 ;;; デフォルトフェイスにフォントセットを設定
 ;;; (これは起動時に default-frame-alist に従ったフレームが作成されない現象への対処)
   (set-face-font 'default "fontset-myfonts"))
+
+;; (el-get-bundle zonuexe/emoji-fontset.el
+;;   (emoji-fontset/turn-on "Symbola"))
 
 ;; 　Emacsは23.1から1文字単位てフォントを指定て
 ;; きるようになりました。たたし、そのためのインタ
@@ -1183,7 +1199,8 @@
   (defun coffee-custom ()
     "coffee-mode-hook"
     ;; CoffeeScript uses two spaces.
-    (custom-set-variables '(coffee-tab-width 2)))
+    (custom-set-variables '(tab-width 2)))
+    (custom-set-variables '(coffee-tab-width 2))
   (add-hook 'coffee-mode-hook 'coffee-custom))
 
 (when (require 'flymake-coffee nil t)
@@ -1242,7 +1259,7 @@
 	'(":home"
 	  ":mentions"
 	  ":search/#ruby OR #rails OR #rspec lang:ja/"
-	  "motchang/met")))
+	  "motchang_/met")))
 
 ;; -----------------------------------------------------------------------------
 ;; docker
@@ -1354,8 +1371,15 @@
 (add-hook 'ess-pre-run-hook 'ess-pre-run-init)
 
 ;; -----------------------------------------------------------------------------
+;; csv-mode
+;; -----------------------------------------------------------------------------
+(autoload 'csv-mode "csv-mode"
+  "Major mode for editing comma-separated value files." t)
+
+;; -----------------------------------------------------------------------------
 ;; 関連付けとか
 ;; -----------------------------------------------------------------------------
+(add-to-list 'auto-mode-alist '("\\.org\\'" .   org-mode))
 (add-to-list 'auto-mode-alist '("\\.php$".	php-mode))
 (add-to-list 'auto-mode-alist '("\\.sql$".	sql-mode))
 (add-to-list 'auto-mode-alist '("\\.tpl$".	smarty-mode))
@@ -1379,8 +1403,27 @@
 (add-to-list 'auto-mode-alist
              '("\\(Capfile\\|Gemfile\\(?:\\.[a-zA-Z0-9._-]+\\)?\\|[rR]akefile\\)\\'" . ruby-mode))
 (add-to-list 'auto-mode-alist '("\\.[rR]\\'" . R-mode))
+(add-to-list 'auto-mode-alist '("\\.[Cc][Ss][Vv]\\'" . csv-mode))
 
 ;; -----------------------------------------------------------------------------
 ;; http://qiita.com/alpha22jp/items/01e614474e7dbfd78305
 (set-default-coding-systems 'utf-8)
 (prefer-coding-system 'utf-8)
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(custom-safe-themes
+   (quote
+    ("e80932ca56b0f109f8545576531d3fc79487ca35a9a9693b62bf30d6d08c9aaf" "4aee8551b53a43a883cb0b7f3255d6859d766b6c5e14bcb01bed572fcbef4328" "211bb9b24001d066a646809727efb9c9a2665c270c753aa125bace5e899cb523" default)))
+ '(flycheck-display-errors-function (function flycheck-pos-tip-error-messages))
+ '(rspec-use-rake-when-possible nil)
+ '(safe-local-variable-values
+   (quote
+    ((encoding . utf-8)
+     (ruby-compilation-executable . "ruby")
+     (ruby-compilation-executable . "ruby1.8")
+     (ruby-compilation-executable . "ruby1.9")
+     (ruby-compilation-executable . "rbx")
+     (ruby-compilation-executable . "jruby")))))

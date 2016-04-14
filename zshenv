@@ -50,6 +50,11 @@ then
     PATH=${PATH}:/usr/local/mysql/bin
 fi
 
+if [ -d /usr/local/mysql/lib ]
+then
+    export DYLD_LIBRARY_PATH=/usr/local/mysql/lib:${DYLD_LIBRARY_PATH}
+fi
+
 if [ -d /usr/local/heroku/bin ]
 then
    PATH=${PATH}:/usr/local/heroku/bin
@@ -57,39 +62,6 @@ fi
 
 export PATH
 
-if [ -d /usr/local/mysql/lib ]
-then
-    export DYLD_LIBRARY_PATH=/usr/local/mysql/lib:${DYLD_LIBRARY_PATH}
-fi
-
 # git
 unset SSH_ASKPASS
 
-# ------------------------------------------------------------------------------
-# ruby
-# ------------------------------------------------------------------------------
-which rbenv >> /dev/null 2>&1
-if [ $? -eq 0 ]
-then
-    eval "$(rbenv init -)"
-fi
-
-# ------------------------------------------------------------------------------
-# node
-# ------------------------------------------------------------------------------
-if [ -d ${HOME}/.nvm ]
-then
-    export NVM_DIR=~/.nvm
-    source $(brew --prefix nvm)/nvm.sh
-fi
-
-# ------------------------------------------------------------------------------
-# golang
-# ------------------------------------------------------------------------------
-if [ ! -d ${HOME}/.go ]
-then
-    mkdir ${HOME}/.go
-fi
-
-export GOPATH=${HOME}/.go
-export PATH=${GOPATH}/bin:${PATH}

@@ -181,7 +181,8 @@ Style/SignalException:
   Enabled: false
 
 # Cop supports --auto-correct.
-Style/SingleSpaceBeforeFirstArg:
+# Style/SingleSpaceBeforeFirstArg:
+Style/SpaceBeforeFirstArg:
   Enabled: false
 
 # Cop supports --auto-correct.
