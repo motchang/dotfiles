@@ -3,8 +3,8 @@
 ;;; Code:
 (add-to-list 'load-path (or (file-name-directory #$) (car load-path)))
 
-;;;### (autoloads nil "twittering-mode" "twittering-mode.el" (21725
-;;;;;;  23617 0 0))
+;;;### (autoloads nil "twittering-mode" "twittering-mode.el" (22211
+;;;;;;  53856 0 0))
 ;;; Generated autoloads from twittering-mode.el
 
 (autoload 'twit "twittering-mode" "\

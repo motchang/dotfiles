@@ -1,4 +1,3 @@
-#!/usr/bin/env zsh
 # Lines configured by zsh-newuser-install
 HISTFILE=~/.zsh_history
 HISTSIZE=1000000
@@ -38,7 +37,7 @@ alias history='history -E 1'
 
 if [ `uname` = "Darwin" ]
 then
-    alias ls='ls -G --color'
+    alias ls='gls -G --color'
     alias emacs='emacsclient -nw'
 fi
 
@@ -105,3 +104,36 @@ bindkey '^r' peco-select-history
 
 # https://github.com/rhysd/zsh-bundle-exec
 #. ~/src/dotfiles/zsh-bundle-exec/zsh-bundle-exec.zsh
+
+# ------------------------------------------------------------------------------
+# ruby
+# ------------------------------------------------------------------------------
+which rbenv >> /dev/null 2>&1
+if [ $? -eq 0 ]
+then
+    eval "$(rbenv init -)"
+fi
+
+# ------------------------------------------------------------------------------
+# node
+# ------------------------------------------------------------------------------
+if [ -d ${HOME}/.nvm ]
+then
+    export NVM_DIR=~/.nvm
+    source $(brew --prefix nvm)/nvm.sh
+fi
+
+eval "$(nodenv init -)"
+
+# ------------------------------------------------------------------------------
+# golang
+# ------------------------------------------------------------------------------
+if [ ! -d ${HOME}/.go ]
+then
+    mkdir ${HOME}/.go
+fi
+
+export GOPATH=${HOME}/.go
+export PATH=${GOPATH}/bin:${PATH}
+
+export GHQ_ROOT="${HOME}/src/"

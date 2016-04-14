@@ -11,9 +11,9 @@
 ;;	Alberto Garcia <agarcia@igalia.com>
 ;;	Xavier Maillard <xavier@maillard.im>
 ;; Created: Sep 4, 2007
-;; Version: 20150131.708
-;; X-Original-Version: HEAD
-;; Identity: $Id: f0574b157c4e8ac5e3b25e0385a7131681260343 $
+;; Version: HEAD
+;; Package-Version: 20160207.156
+;; Identity: $Id: b20989c3ab709b4b7b7542df70801828f9b346d1 $
 ;; Keywords: twitter web
 ;; URL: http://twmode.sf.net/
 
@@ -46,7 +46,8 @@
 
 ;;; Code:
 
-(eval-when-compile (require 'cl))
+(eval-when-compile (require 'cl)
+		   (require 'easymenu))
 (require 'xml)
 
 (eval-and-compile
@@ -90,10 +91,12 @@
 
 (defgroup twittering-mode nil
   "Settings for twittering-mode."
+  :link '(url-link "https://github.com/hayamiz/twittering-mode")
+  :prefix "twittering-"
   :group 'hypermedia)
 
 (defconst twittering-mode-version "HEAD")
-(defconst twittering-mode-identity "$Id: f0574b157c4e8ac5e3b25e0385a7131681260343 $")
+(defconst twittering-mode-identity "$Id: b20989c3ab709b4b7b7542df70801828f9b346d1 $")
 (defvar twittering-api-host "api.twitter.com")
 (defvar twittering-api-search-host "search.twitter.com")
 (defvar twittering-web-host "twitter.com")
@@ -590,6 +593,9 @@ SSL connections use an external command as a backend."
 DO NOT SET VALUE MANUALLY.")
 (defvar twittering-curl-program-https-capability nil
   "Cache a result of `twittering-start-http-session-curl-https-p'.
+DO NOT SET VALUE MANUALLY.")
+(defvar twittering-curl-program-http2-capability nil
+  "Cache a result of `twittering-start-http-session-curl-http2-p'.
 DO NOT SET VALUE MANUALLY.")
 
 (defvar twittering-wget-program nil
@@ -1492,33 +1498,6 @@ A4GBAFjOKer89961zgK5F7WF0bnj4JXMJTENAKaSbn+2kmOeUJXRmm/kEd5jhW6Y
 1voqZiegDfqnc1zqcPGUIWVEX/r87yloqaKHee9570+sB3c4
 -----END CERTIFICATE-----
 "
-;; Verisign Class 3 Public Primary Certification Authority - G2
-;; issuer= /C=US/O=VeriSign, Inc./OU=Class 3 Public Primary Certification Authority - G2/OU=(c) 1998 VeriSign, Inc. - For authorized use only/OU=VeriSign Trust Network
-;; subject= /C=US/O=VeriSign, Inc./OU=Class 3 Public Primary Certification Authority - G2/OU=(c) 1998 VeriSign, Inc. - For authorized use only/OU=VeriSign Trust Network
-;; serial=7DD9FE07CFA81EB7107967FBA78934C6
-;; SHA1 Fingerprint=85:37:1C:A6:E5:50:14:3D:CE:28:03:47:1B:DE:3A:09:E8:F8:77:0F
-;; notBefore=May 18 00:00:00 1998 GMT
-;; notAfter=Aug  1 23:59:59 2028 GMT
-"-----BEGIN CERTIFICATE-----
-MIIDAjCCAmsCEH3Z/gfPqB63EHln+6eJNMYwDQYJKoZIhvcNAQEFBQAwgcExCzAJ
-BgNVBAYTAlVTMRcwFQYDVQQKEw5WZXJpU2lnbiwgSW5jLjE8MDoGA1UECxMzQ2xh
-c3MgMyBQdWJsaWMgUHJpbWFyeSBDZXJ0aWZpY2F0aW9uIEF1dGhvcml0eSAtIEcy
-MTowOAYDVQQLEzEoYykgMTk5OCBWZXJpU2lnbiwgSW5jLiAtIEZvciBhdXRob3Jp
-emVkIHVzZSBvbmx5MR8wHQYDVQQLExZWZXJpU2lnbiBUcnVzdCBOZXR3b3JrMB4X
-DTk4MDUxODAwMDAwMFoXDTI4MDgwMTIzNTk1OVowgcExCzAJBgNVBAYTAlVTMRcw
-FQYDVQQKEw5WZXJpU2lnbiwgSW5jLjE8MDoGA1UECxMzQ2xhc3MgMyBQdWJsaWMg
-UHJpbWFyeSBDZXJ0aWZpY2F0aW9uIEF1dGhvcml0eSAtIEcyMTowOAYDVQQLEzEo
-YykgMTk5OCBWZXJpU2lnbiwgSW5jLiAtIEZvciBhdXRob3JpemVkIHVzZSBvbmx5
-MR8wHQYDVQQLExZWZXJpU2lnbiBUcnVzdCBOZXR3b3JrMIGfMA0GCSqGSIb3DQEB
-AQUAA4GNADCBiQKBgQDMXtERXVxp0KvTuWpMmR9ZmDCOFoUgRm1HP9SFIIThbbP4
-pO0M8RcPO/mn+SXXwc+EY/J8Y8+iR/LGWzOOZEAEaMGAuWQcRXfH2G71lSk8UOg0
-13gfqLptQ5GVj0VXXn7F+8qkBOvqlzdUMG+7AUcyM83cV5tkaWH4mx0ciU9cZwID
-AQABMA0GCSqGSIb3DQEBBQUAA4GBAFFNzb5cy5gZnBWyATl4Lk0PZ3BwmcYQWpSk
-U01UbSuvDV1Ai2TT1+7eVmGSX6bEHRBhNtMsJzzoKQm5EWR0zLVznxxIqbxhAe7i
-F6YM40AIOw7n60RzKprxaZLvcRTDOaxxp5EJb+RxBrO6WVcmeQD2+A2iMzAo1KpY
-oJ2daZH9
------END CERTIFICATE-----
-"
 ;; Verisign Class 3 Public Primary Certification Authority - G3
 ;; issuer= /C=US/O=VeriSign, Inc./OU=VeriSign Trust Network/OU=(c) 1999 VeriSign, Inc. - For authorized use only/CN=VeriSign Class 3 Public Primary Certification Authority - G3
 ;; subject= /C=US/O=VeriSign, Inc./OU=VeriSign Trust Network/OU=(c) 1999 VeriSign, Inc. - For authorized use only/CN=VeriSign Class 3 Public Primary Certification Authority - G3
@@ -1583,52 +1562,35 @@ fjaF3H48ZwC15DtS4KjrXRX5xm3wrR0OhbepmnMUWluPQSjA1egtTaRezarZ7c7c
 bLvSHgCwIe34QWKCudiyxLtGUPMxxY8BqHTr9Xgn2uf3ZkPznoM+IKrDNWCRzg==
 -----END CERTIFICATE-----
 "
-;; Equifax Secure Global eBusiness CA
-;; issuer= /C=US/O=Equifax Secure Inc./CN=Equifax Secure Global eBusiness CA-1
-;; subject= /C=US/O=Equifax Secure Inc./CN=Equifax Secure Global eBusiness CA-1
-;; serial=01
-;; SHA1 Fingerprint=7E:78:4A:10:1C:82:65:CC:2D:E1:F1:6D:47:B4:40:CA:D9:0A:19:45
-;; notBefore=Jun 21 04:00:00 1999 GMT
-;; notAfter=Jun 21 04:00:00 2020 GMT
+;; DigiCert High Assurance EV Root CA
+;; issuer= /C=US/O=DigiCert Inc/OU=www.digicert.com/CN=DigiCert High Assurance EV Root CA
+;; subject= /C=US/O=DigiCert Inc/OU=www.digicert.com/CN=DigiCert High Assurance EV Root CA
+;; serial=02AC5C266A0B409B8F0B79F2AE462577
+;; SHA1 Fingerprint=5F:B7:EE:06:33:E2:59:DB:AD:0C:4C:9A:E6:D3:8F:1A:61:C7:DC:25
+;; notBefore=Nov 10 00:00:00 2006 GMT
+;; notAfter=Nov 10 00:00:00 2031 GMT
 "-----BEGIN CERTIFICATE-----
-MIICkDCCAfmgAwIBAgIBATANBgkqhkiG9w0BAQQFADBaMQswCQYDVQQGEwJVUzEc
-MBoGA1UEChMTRXF1aWZheCBTZWN1cmUgSW5jLjEtMCsGA1UEAxMkRXF1aWZheCBT
-ZWN1cmUgR2xvYmFsIGVCdXNpbmVzcyBDQS0xMB4XDTk5MDYyMTA0MDAwMFoXDTIw
-MDYyMTA0MDAwMFowWjELMAkGA1UEBhMCVVMxHDAaBgNVBAoTE0VxdWlmYXggU2Vj
-dXJlIEluYy4xLTArBgNVBAMTJEVxdWlmYXggU2VjdXJlIEdsb2JhbCBlQnVzaW5l
-c3MgQ0EtMTCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEAuucXkAJlsTRVPEnC
-UdXfp9E3j9HngXNBUmCbnaEXJnitx7HoJpQytd4zjTov2/KaelpzmKNc6fuKcxtc
-58O/gGzNqfTWK8D3+ZmqY6KxRwIP1ORROhI8bIpaVIRw28HFkM9yRcuoWcDNM50/
-o5brhTMhHD4ePmBudpxnhcXIw2ECAwEAAaNmMGQwEQYJYIZIAYb4QgEBBAQDAgAH
-MA8GA1UdEwEB/wQFMAMBAf8wHwYDVR0jBBgwFoAUvqigdHJQa0S3ySPY+6j/s1dr
-aGwwHQYDVR0OBBYEFL6ooHRyUGtEt8kj2Puo/7NXa2hsMA0GCSqGSIb3DQEBBAUA
-A4GBADDiAVGqx+pf2rnQZQ8w1j7aDRRJbpGTJxQx78T3LUX47Me/okENI7SS+RkA
-Z70Br83gcfxaz2TE4JaY0KNA4gGK7ycH8WUBikQtBmV1UsCGECAhX2xrD2yuCRyv
-8qIYNMR1pHMc8Y3c7635s3a0kr/clRAevsvIO1qEYBlWlKlV
------END CERTIFICATE-----
-"
-;; Equifax Secure eBusiness CA 1
-;; issuer= /C=US/O=Equifax Secure Inc./CN=Equifax Secure eBusiness CA-1
-;; subject= /C=US/O=Equifax Secure Inc./CN=Equifax Secure eBusiness CA-1
-;; serial=04
-;; SHA1 Fingerprint=DA:40:18:8B:91:89:A3:ED:EE:AE:DA:97:FE:2F:9D:F5:B7:D1:8A:41
-;; notBefore=Jun 21 04:00:00 1999 GMT
-;; notAfter=Jun 21 04:00:00 2020 GMT
-"-----BEGIN CERTIFICATE-----
-MIICgjCCAeugAwIBAgIBBDANBgkqhkiG9w0BAQQFADBTMQswCQYDVQQGEwJVUzEc
-MBoGA1UEChMTRXF1aWZheCBTZWN1cmUgSW5jLjEmMCQGA1UEAxMdRXF1aWZheCBT
-ZWN1cmUgZUJ1c2luZXNzIENBLTEwHhcNOTkwNjIxMDQwMDAwWhcNMjAwNjIxMDQw
-MDAwWjBTMQswCQYDVQQGEwJVUzEcMBoGA1UEChMTRXF1aWZheCBTZWN1cmUgSW5j
-LjEmMCQGA1UEAxMdRXF1aWZheCBTZWN1cmUgZUJ1c2luZXNzIENBLTEwgZ8wDQYJ
-KoZIhvcNAQEBBQADgY0AMIGJAoGBAM4vGbwXt3fek6lfWg0XTzQaDJj0ItlZ1MRo
-RvC0NcWFAyDGr0WlIVFFQesWWDYyb+JQYmT5/VGcqiTZ9J2DKocKIdMSODRsjQBu
-WqDZQu4aIZX5UkxVWsUPOE9G+m34LjXWHXzr4vCwdYDIqROsvojvOm6rXyo4YgKw
-Env+j6YDAgMBAAGjZjBkMBEGCWCGSAGG+EIBAQQEAwIABzAPBgNVHRMBAf8EBTAD
-AQH/MB8GA1UdIwQYMBaAFEp4MlIR21kWNl7fwRQ2QGpHfEyhMB0GA1UdDgQWBBRK
-eDJSEdtZFjZe38EUNkBqR3xMoTANBgkqhkiG9w0BAQQFAAOBgQB1W6ibAxHm6VZM
-zfmpTMANmvPMZWnmJXbMWbfWVMMdzZmsGd20hdXgPfxiIKeES1hl8eL5lSE/9dR+
-WB5Hh1Q+WKG1tfgq73HnvMP2sUlG4tega+VWeponmHxGYhTnyfxuAxJ5gDgdSIKN
-/Bf+KpYrtWKmpj29f5JZzVoqgrI3eQ==
+MIIDxTCCAq2gAwIBAgIQAqxcJmoLQJuPC3nyrkYldzANBgkqhkiG9w0BAQUFADBs
+MQswCQYDVQQGEwJVUzEVMBMGA1UEChMMRGlnaUNlcnQgSW5jMRkwFwYDVQQLExB3
+d3cuZGlnaWNlcnQuY29tMSswKQYDVQQDEyJEaWdpQ2VydCBIaWdoIEFzc3VyYW5j
+ZSBFViBSb290IENBMB4XDTA2MTExMDAwMDAwMFoXDTMxMTExMDAwMDAwMFowbDEL
+MAkGA1UEBhMCVVMxFTATBgNVBAoTDERpZ2lDZXJ0IEluYzEZMBcGA1UECxMQd3d3
+LmRpZ2ljZXJ0LmNvbTErMCkGA1UEAxMiRGlnaUNlcnQgSGlnaCBBc3N1cmFuY2Ug
+RVYgUm9vdCBDQTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAMbM5XPm
++9S75S0tMqbf5YE/yc0lSbZxKsPVlDRnogocsF9ppkCxxLeyj9CYpKlBWTrT3JTW
+PNt0OKRKzE0lgvdKpVMSOO7zSW1xkX5jtqumX8OkhPhPYlG++MXs2ziS4wblCJEM
+xChBVfvLWokVfnHoNb9Ncgk9vjo4UFt3MRuNs8ckRZqnrG0AFFoEt7oT61EKmEFB
+Ik5lYYeBQVCmeVyJ3hlKV9Uu5l0cUyx+mM0aBhakaHPQNAQTXKFx01p8VdteZOE3
+hzBWBOURtCmAEvF5OYiiAhF8J2a3iLd48soKqDirCmTCv2ZdlYTBoSUeh10aUAsg
+EsxBu24LUTi4S8sCAwEAAaNjMGEwDgYDVR0PAQH/BAQDAgGGMA8GA1UdEwEB/wQF
+MAMBAf8wHQYDVR0OBBYEFLE+w2kD+L9HAdSYJhoIAu9jZCvDMB8GA1UdIwQYMBaA
+FLE+w2kD+L9HAdSYJhoIAu9jZCvDMA0GCSqGSIb3DQEBBQUAA4IBAQAcGgaX3Nec
+nzyIZgYIVyHbIUf4KmeqvxgydkAQV8GK83rZEWWONfqe/EW1ntlMMUu4kehDLI6z
+eM7b41N5cdblIZQB2lWHmiRk9opmzN6cN82oNLFpmyPInngiK3BD41VHMWEZ71jF
+hS9OMPagMRYjyOfiZRYzy78aG6A9+MpeizGLYAiJLQwGXFK3xPkKmNEVX58Svnw2
+Yzi9RKR/5CYrCsSXaQ3pjOLAEFe4yHYSkVXySGnYvCoCWw9E1CAx2/S6cCZdkGCe
+vEsXCS+0yx5DaMkHJ8HSXPfqIbloEpw8nL+e/IBcm2PN7EeqJSdnoDfzAIJ9VNep
++OkuE6N36B9K
 -----END CERTIFICATE-----
 "
 ;; VeriSign Class 3 Public Primary Certification Authority - G5
@@ -2095,7 +2057,7 @@ The alist consists of pairs of field-name and field-value, such as
 	 (status-line (car lines))
 	 (header-lines (cdr lines)))
     (when (string-match
-	   "^\\(HTTP/1\.[01]\\) \\([0-9][0-9][0-9]\\) \\(.*\\)$"
+	   "^\\(HTTP/[12]\.[01]\\) \\([0-9][0-9][0-9]\\)\\(.*\\)$"
 	   status-line)
       (append `((status-line . ,status-line)
 		(http-version . ,(match-string 1 status-line))
@@ -2489,6 +2451,27 @@ The method to perform the request is determined from
 		  'incapable)))))
     (eq twittering-curl-program-https-capability 'capable)))
 
+(defun twittering-start-http-session-curl-http2-p ()
+  "Return t if the curl support HTTP2, otherwise nil."
+  (when (twittering-start-http-session-curl-p)
+    (unless twittering-curl-program-http2-capability
+      (with-temp-buffer
+	(let ((coding-system-for-read 'iso-safe)
+	      (coding-system-for-write 'iso-safe)
+	      ;; Bind `default-directory' to the temporary directory
+	      ;; because it is possible that the directory pointed by
+	      ;; `default-directory' has been already removed.
+	      (default-directory temporary-file-directory))
+	  (call-process twittering-curl-program
+			nil (current-buffer) nil
+			"--version")
+	  (goto-char (point-min))
+	  (setq twittering-curl-program-http2-capability
+		(if (search-forward-regexp "^Features:.* HTTP2" nil t)
+		    'capable
+		  'incapable)))))
+    (eq twittering-curl-program-http2-capability 'capable)))
+
 (defun twittering-send-http-request-curl (name buffer connection-info sentinel)
   (let* ((request (cdr (assq 'request connection-info)))
 	 (method (cdr (assq 'method request)))
@@ -2501,6 +2484,7 @@ The method to perform the request is determined from
 	 (proxy-user (cdr (assq 'proxy-user connection-info)))
 	 (proxy-password (cdr (assq 'proxy-password connection-info)))
 	 (use-ssl (cdr (assq 'use-ssl connection-info)))
+	 (use-http2 (twittering-start-http-session-curl-http2-p))
 	 (allow-insecure-server-cert
 	  (cdr (assq 'allow-insecure-server-cert connection-info)))
 	 (cacert-file-fullpath
@@ -2522,6 +2506,7 @@ The method to perform the request is determined from
 	    ("Expect" . "")))
 	 (curl-args
 	  `("--include" "--silent" "--compressed"
+	    ,@(when use-http2 `("--http2"))
 	    ,@(apply 'append
 		     (mapcar
 		      (lambda (pair)
@@ -2572,10 +2557,10 @@ The method to perform the request is determined from
 	  (goto-char (point-min))
 	  (let ((first-regexp
 		 ;; successful HTTP response
-		 "\\`HTTP/1\.[01] 2[0-9][0-9] .*?\r?\n")
+		 "\\`HTTP/[12]\.[01] 2[0-9][0-9].*?\r?\n")
 		(next-regexp
 		 ;; following HTTP response
-		 "^\\(\r?\n\\)HTTP/1\.[01] [0-9][0-9][0-9] .*?\r?\n"))
+		 "^\\(\r?\n\\)HTTP/[12]\.[01] [0-9][0-9][0-9].*?\r?\n"))
 	    (when (and (search-forward-regexp first-regexp nil t)
 		       (search-forward-regexp next-regexp nil t))
 	      (let ((beg (point-min))
@@ -3622,7 +3607,7 @@ function."
   (with-current-buffer buffer
     (goto-char (point-min))
     (when (search-forward-regexp
-	   "\\`\\(\\(HTTP/1\.[01]\\) \\([0-9][0-9][0-9]\\) \\(.*?\\)\\)\r?\n"
+	   "\\`\\(\\(HTTP/[12]\.[01]\\) \\([0-9][0-9][0-9]\\)\\(.*?\\)\\)\r?\n"
 	   nil t)
       (let ((status-line (match-string 1))
 	    (http-version (match-string 2))
@@ -6377,7 +6362,7 @@ get-service-configuration -- Get the configuration of the server.
 	    (cond
 	     ((eq spec-type 'user)
 	      (let ((username (elt spec 1)))
-		`("api.twitter.com"
+		`(,twittering-api-host
 		  "1.1/statuses/user_timeline"
 		  ("count" . ,number-str)
 		  ("include_entities" . "true")
@@ -6389,7 +6374,7 @@ get-service-configuration -- Get the configuration of the server.
 	     ((eq spec-type 'list)
 	      (let ((username (elt spec 1))
 		    (list-name (elt spec 2)))
-		`("api.twitter.com"
+		`(,twittering-api-host
 		  "1.1/lists/statuses"
 		  ("count" . ,number-str)
 		  ("include_entities" . "true")
@@ -6399,14 +6384,14 @@ get-service-configuration -- Get the configuration of the server.
 		  ,@(when since_id `(("since_id" . ,since_id)))
 		  ("slug" . ,list-name))))
 	     ((eq spec-type 'direct_messages)
-	      `("api.twitter.com"
+	      `(,twittering-api-host
 		"1.1/direct_messages"
 		("count" . ,number-str)
 		("include_entities" . "true")
 		,@(when max_id `(("max_id" . ,max_id)))
 		,@(when since_id `(("since_id" . ,since_id)))))
 	     ((eq spec-type 'direct_messages_sent)
-	      `("api.twitter.com"
+	      `(,twittering-api-host
 		"1.1/direct_messages/sent"
 		("count" . ,number-str)
 		("include_entities" . "true")
@@ -6414,7 +6399,7 @@ get-service-configuration -- Get the configuration of the server.
 		,@(when since_id `(("since_id" . ,since_id)))))
 	     ((eq spec-type 'favorites)
 	      (let ((user (elt spec 1)))
-		`("api.twitter.com"
+		`(,twittering-api-host
 		  "1.1/favorites/list"
 		  ("count" . ,number-str)
 		  ("include_entities" . "true")
@@ -6422,14 +6407,14 @@ get-service-configuration -- Get the configuration of the server.
 		  ,@(when user `(("screen_name" . ,user)))
 		  ,@(when since_id `(("since_id" . ,since_id))))))
 	     ((eq spec-type 'home)
-	      `("api.twitter.com"
+	      `(,twittering-api-host
 		"1.1/statuses/home_timeline"
 		("count" . ,number-str)
 		("include_entities" . "true")
 		,@(when max_id `(("max_id" . ,max_id)))
 		,@(when since_id `(("since_id" . ,since_id)))))
 	     ((eq spec-type 'mentions)
-	      `("api.twitter.com"
+	      `(,twittering-api-host
 		"1.1/statuses/mentions_timeline"
 		("count" . ,number-str)
 		("include_entities" . "true")
@@ -6449,7 +6434,7 @@ get-service-configuration -- Get the configuration of the server.
 	       spec)
 	      nil)
 	     ((eq spec-type 'retweets_of_me)
-	      `("api.twitter.com"
+	      `(,twittering-api-host
 		"1.1/statuses/retweets_of_me"
 		("count" . ,number-str)
 		("include_entities" . "true")
@@ -6457,13 +6442,13 @@ get-service-configuration -- Get the configuration of the server.
 		,@(when since_id `(("since_id" . ,since_id)))))
 	     ((eq spec-type 'single)
 	      (let ((id (elt spec 1)))
-		`("api.twitter.com"
+		`(,twittering-api-host
 		  "1.1/statuses/show"
 		  ("id" . ,id)
 		  ("include_entities" . "true"))))
 	     ((eq spec-type 'search)
 	      (let ((word (elt spec 1)))
-		`("api.twitter.com"
+		`(,twittering-api-host
 		  "1.1/search/tweets"
 		  ("count" . ,number-str)
 		  ("include_entities" . "true")
@@ -6535,7 +6520,7 @@ get-service-configuration -- Get the configuration of the server.
     ;; Get list names.
     (let* ((username (cdr (assq 'username args-alist)))
 	   (sentinel (cdr (assq 'sentinel args-alist)))
-	   (host "api.twitter.com")
+	   (host twittering-api-host)
 	   (method "1.1/lists/list")
 	   (http-parameters `(("screen_name" . ,username)))
 	   (format-str "json")
@@ -6546,7 +6531,7 @@ get-service-configuration -- Get the configuration of the server.
    ((eq command 'get-list-subscriptions)
     (let* ((username (cdr (assq 'username args-alist)))
 	   (sentinel (cdr (assq 'sentinel args-alist)))
-	   (host "api.twitter.com")
+	   (host twittering-api-host)
 	   (method "1.1/lists/subscriptions")
 	   (http-parameters
 	    `(("count" . "20")
@@ -6559,7 +6544,7 @@ get-service-configuration -- Get the configuration of the server.
    ((eq command 'create-friendships)
     ;; Create a friendship.
     (let* ((username (cdr (assq 'username args-alist)))
-	   (host "api.twitter.com")
+	   (host twittering-api-host)
 	   (method "1.1/friendships/create")
 	   (http-parameters
 	    `(("screen_name" . ,username)))
@@ -6569,7 +6554,7 @@ get-service-configuration -- Get the configuration of the server.
    ((eq command 'destroy-friendships)
     ;; Destroy a friendship
     (let* ((username (cdr (assq 'username args-alist)))
-	   (host "api.twitter.com")
+	   (host twittering-api-host)
 	   (method "1.1/friendships/destroy")
 	   (http-parameters
 	    `(("screen_name" . ,username)))
@@ -6579,7 +6564,7 @@ get-service-configuration -- Get the configuration of the server.
    ((eq command 'create-favorites)
     ;; Create a favorite.
     (let* ((id (cdr (assq 'id args-alist)))
-	   (host "api.twitter.com")
+	   (host twittering-api-host)
 	   (method "1.1/favorites/create")
 	   (http-parameters `(("id" . ,id)))
 	   (format-str "json"))
@@ -6588,7 +6573,7 @@ get-service-configuration -- Get the configuration of the server.
    ((eq command 'destroy-favorites)
     ;; Destroy a favorite.
     (let* ((id (cdr (assq 'id args-alist)))
-	   (host "api.twitter.com")
+	   (host twittering-api-host)
 	   (method "1.1/favorites/destroy")
 	   (http-parameters `(("id" . ,id)))
 	   (format-str "json"))
@@ -6598,7 +6583,7 @@ get-service-configuration -- Get the configuration of the server.
     ;; Post a tweet.
     (let* ((status (cdr (assq 'status args-alist)))
 	   (id (cdr (assq 'in-reply-to-status-id args-alist)))
-	   (host "api.twitter.com")
+	   (host twittering-api-host)
 	   (method "1.1/statuses/update")
 	   (http-parameters
 	    `(("status" . ,status)
@@ -6609,7 +6594,7 @@ get-service-configuration -- Get the configuration of the server.
    ((eq command 'destroy-status)
     ;; Destroy a status.
     (let* ((id (cdr (assq 'id args-alist)))
-	   (host "api.twitter.com")
+	   (host twittering-api-host)
 	   (method (format "1.1/statuses/destroy/%s" id))
 	   (http-parameters nil)
 	   (format-str "json"))
@@ -6619,7 +6604,7 @@ get-service-configuration -- Get the configuration of the server.
    ((eq command 'retweet)
     ;; Post a retweet.
     (let* ((id (cdr (assq 'id args-alist)))
-	   (host "api.twitter.com")
+	   (host twittering-api-host)
 	   (method (format "1.1/statuses/retweet/%s" id))
 	   (http-parameters nil)
 	   (format-str "json"))
@@ -6627,7 +6612,7 @@ get-service-configuration -- Get the configuration of the server.
 			    format-str additional-info)))
    ((eq command 'verify-credentials)
     ;; Verify the account.
-    (let* ((host "api.twitter.com")
+    (let* ((host twittering-api-host)
 	   (method "1.1/account/verify_credentials")
 	   (http-parameters nil)
 	   (format-str "json")
@@ -6638,7 +6623,7 @@ get-service-configuration -- Get the configuration of the server.
 			   sentinel clean-up-sentinel)))
    ((eq command 'send-direct-message)
     ;; Send a direct message.
-    (let* ((host "api.twitter.com")
+    (let* ((host twittering-api-host)
 	   (method "1.1/direct_messages/new")
 	   (http-parameters
 	    `(("screen_name" . ,(cdr (assq 'username args-alist)))
@@ -6650,7 +6635,7 @@ get-service-configuration -- Get the configuration of the server.
     ;; Mute a user.
     (let* ((user-id (cdr (assq 'user-id args-alist)))
 	   (username (cdr (assq 'username args-alist)))
-	   (host "api.twitter.com")
+	   (host twittering-api-host)
 	   (method
 	    (cdr (assq command '((mute . "1.1/mutes/users/create")
 				 (unmute . "1.1/mutes/users/destroy")))))
@@ -6664,7 +6649,7 @@ get-service-configuration -- Get the configuration of the server.
     ;; Block a user.
     (let* ((user-id (cdr (assq 'user-id args-alist)))
 	   (username (cdr (assq 'username args-alist)))
-	   (host "api.twitter.com")
+	   (host twittering-api-host)
 	   (method "1.1/blocks/create")
 	   (http-parameters (if user-id
 				`(("user_id" . ,user-id))
@@ -6676,7 +6661,7 @@ get-service-configuration -- Get the configuration of the server.
     ;; Report a user as a spammer and block him or her.
     (let* ((user-id (cdr (assq 'user-id args-alist)))
 	   (username (cdr (assq 'username args-alist)))
-	   (host "api.twitter.com")
+	   (host twittering-api-host)
 	   (method "1.1/users/report_spam")
 	   (http-parameters (if user-id
 				`(("user_id" . ,user-id))
@@ -6685,7 +6670,7 @@ get-service-configuration -- Get the configuration of the server.
       (twittering-http-post account-info-alist host method http-parameters
 			    format-str additional-info)))
    ((eq command 'get-service-configuration)
-    (let* ((host "api.twitter.com")
+    (let* ((host twittering-api-host)
 	   (method "1.1/help/configuration")
 	   (http-parameters nil)
 	   (format-str "json")
@@ -10370,6 +10355,7 @@ If FORCE is non-nil, all active buffers are updated forcibly."
     (let ((km twittering-mode-map))
       (define-key km (kbd "C-c C-f") 'twittering-friends-timeline)
       (define-key km (kbd "C-c C-r") 'twittering-replies-timeline)
+      (define-key km (kbd "C-c C-n") 'twittering-mentions-timeline)
       (define-key km (kbd "C-c C-u") 'twittering-user-timeline)
       (define-key km (kbd "C-c C-d") 'twittering-direct-messages-timeline)
       (define-key km (kbd "C-c C-s") 'twittering-update-status-interactive)
@@ -10437,6 +10423,7 @@ If FORCE is non-nil, all active buffers are updated forcibly."
   (let ((important-commands
 	 '(("Timeline" . twittering-friends-timeline)
 	   ("Replies" . twittering-replies-timeline)
+	   ("Mentions" . twittering-mentions-timeline)
 	   ("Update status" . twittering-update-status-interactive)
 	   ("Next" . twittering-goto-next-status)
 	   ("Prev" . twittering-goto-previous-status))))
@@ -11489,6 +11476,10 @@ Pairs of a key symbol and an associated value are following:
   (interactive)
   (twittering-visit-timeline '(replies)))
 
+(defun twittering-mentions-timeline ()
+  (interactive)
+  (twittering-visit-timeline '(mentions)))
+
 (defun twittering-public-timeline ()
   (interactive)
   (twittering-visit-timeline '(public)))
@@ -12514,6 +12505,33 @@ Note that the current implementation assumes `revive.el' 2.19 ."
    (t
     (error "`revive' has not been loaded yet")
     nil)))
+
+(easy-menu-define twittering-mode-menu twittering-mode-map
+  "Menu used when Twittering major mode is active."
+  '("Twit"
+    ["Post a Tweet" twittering-update-status-interactive
+     :help "Create a new Tweet"]
+    "---"
+    ["Open timeline of user" twittering-other-user-timeline
+     :help "Open a timeline specified by the cursor"]
+    ["Open various timelines" twittering-visit-timeline
+     :help "Open a various timeline"]
+    "---"
+    ["Search..." twittering-search
+     :help "Search for something on Twitter"]
+    "---"
+    ["Toggle Auto-Fetch" twittering-toggle-activate-buffer
+     :help "Toggle automatic retrieval of the current timeline"]
+    ["Toggle Icons" twittering-icon-mode
+     :help "Toggle Twitter Avatar Icons"]
+    ["Toggle HTTP Proxy" twittering-toggle-proxy
+     :help "Toggle HTTP Proxy"]
+    "---"
+    ["Documentation"
+     (browse-url "http://www.emacswiki.org/emacs-en/TwitteringMode")
+     :help "EmacsWiki help page"]
+    ["Settings" (customize-group 'twittering-mode)
+     :help "Twittering-mode settings"]))
 
 ;;;###autoload
 (defun twit ()
