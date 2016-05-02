@@ -174,7 +174,14 @@
 
 
 ;; http://akisute3.hatenablog.com/entry/20120409/1333899842
-(setq recentf-max-saved-items 100)
+;; (setq recentf-max-saved-items 100)
+(when (require 'recentf nil t)
+  (setq recentf-max-saved-items 2000)
+  (setq recentf-exclude '(".recentf"))
+  (setq recentf-auto-cleanup 10)
+  (setq recentf-auto-save-timer
+	(run-with-idle-timer 30 t 'recentf-save-list))
+  (recentf-mode 1))
 
 ;; -----------------------------------------------------------------------------
 ;; (install-elisp "http://www.emacswiki.org/emacs/download/auto-install.el")
