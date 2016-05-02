@@ -913,7 +913,7 @@
 (defun update-gtags (&optional prefix)
   (interactive "P")
   (let ((rootdir (gtags-get-rootpath))
-        (args (if prefix "-i")))
+        (args (if prefix "-v" "-iv")))
     (when rootdir
       (let* ((default-directory rootdir)
              (buffer (get-buffer-create "*update GTAGS*")))
