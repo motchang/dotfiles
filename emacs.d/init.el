@@ -913,14 +913,14 @@
 (defun update-gtags (&optional prefix)
   (interactive "P")
   (let ((rootdir (gtags-get-rootpath))
-        (args (if prefix "-v" "-iv")))
+        (args (if prefix "-i")))
     (when rootdir
       (let* ((default-directory rootdir)
              (buffer (get-buffer-create "*update GTAGS*")))
         (save-excursion
           (set-buffer buffer)
           (erase-buffer)
-	  (let ((result (start-process "gtags" "*update GTAGS*" "gtags" args "-w" "--gtagsconf" (expand-file-name "~/gtags.conf") "--gtagslabel=pygments" "--debug")))))))))
+	  (let ((result (start-process "gtags" "*update GTAGS*" "gtags" args "-w" "--gtagsconf" (expand-file-name "~/gtags.conf") "--gtagslabel=pygments")))))))))
 (add-hook 'after-save-hook 'update-gtags)
 
 ;; tag jump
