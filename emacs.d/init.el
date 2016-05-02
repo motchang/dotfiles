@@ -174,7 +174,14 @@
 
 
 ;; http://akisute3.hatenablog.com/entry/20120409/1333899842
-(setq recentf-max-saved-items 100)
+;; (setq recentf-max-saved-items 100)
+(when (require 'recentf nil t)
+  (setq recentf-max-saved-items 2000)
+  (setq recentf-exclude '(".recentf"))
+  (setq recentf-auto-cleanup 10)
+  (setq recentf-auto-save-timer
+	(run-with-idle-timer 30 t 'recentf-save-list))
+  (recentf-mode 1))
 
 ;; -----------------------------------------------------------------------------
 ;; (install-elisp "http://www.emacswiki.org/emacs/download/auto-install.el")
@@ -913,7 +920,7 @@
         (save-excursion
           (set-buffer buffer)
           (erase-buffer)
-	  (let ((result (start-process "gtags" "*update GTAGS*" "gtags" args "-w" "--gtagsconf" (expand-file-name "~/gtags.conf") "--gtagslabel=pygments" "--debug")))))))))
+	  (let ((result (start-process "gtags" "*update GTAGS*" "gtags" args "-w" "--gtagsconf" (expand-file-name "~/gtags.conf") "--gtagslabel=pygments")))))))))
 (add-hook 'after-save-hook 'update-gtags)
 
 ;; tag jump
@@ -1134,15 +1141,19 @@
 (when (require 'web-mode nil t)
   (defun my/web-mode-hook ()
     "Hooks for Web mode."
-    (setq web-mode-html-offset          2)
-    (setq web-mode-markup-indent-offset 2)
-    (setq web-mode-css-offset           2)
-    (setq web-mode-script-offset        2)
-    (setq web-mode-php-offset           2)
-    (setq web-mode-java-offset          2)
-    (setq web-mode-asp-offset           2)
-    (setq indent-tabs-mode            nil)
-    (setq tab-width                     2)
+    (setq web-mode-html-offset                  2)
+    (setq web-mode-markup-indent-offset         2)
+    (setq web-mode-css-offset                   2)
+    (setq web-mode-script-offset                2)
+    (setq web-mode-php-offset                   2)
+    (setq web-mode-java-offset                  2)
+    (setq web-mode-asp-offset                   2)
+    (setq indent-tabs-mode                      nil)
+    (setq tab-width                             2)
+    (setq web-mode-enable-auto-pairing          t)
+    (setq web-mode-enable-auto-closing          t)
+    (setq web-mode-enable-auto-quoting          t)
+    (setq web-mode-enable-auto-indentation      t)
     (when (require 'rinari nil t)
       (setq rinari-minor-mode t)))
   (add-hook 'web-mode-hook 'my/web-mode-hook))
