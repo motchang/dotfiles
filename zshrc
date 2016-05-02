@@ -1,3 +1,4 @@
+#!/usr/bin/env zsh
 # Lines configured by zsh-newuser-install
 HISTFILE=~/.zsh_history
 HISTSIZE=1000000
@@ -31,7 +32,7 @@ alias rm='rm -i'
 alias cp='cp -i'
 alias mv='mv -i'
 alias emacs-simple='emacs --no-init-file'
-alias ssh='ssh -o ServerAliveCountMax=5 -o ServerAliveInterval=60'
+# alias ssh='ssh -o ServerAliveCountMax=5 -o ServerAliveInterval=60'
 alias tmux='tmux -2'
 alias history='history -E 1'
 
@@ -137,3 +138,12 @@ export GOPATH=${HOME}/.go
 export PATH=${GOPATH}/bin:${PATH}
 
 export GHQ_ROOT="${HOME}/src/"
+
+# ------------------------------------------------------------------------------
+# tmux
+# ------------------------------------------------------------------------------
+function ssh() {
+    local window_name=$(tmux display -p '#{window_name}')
+    command ssh $@
+    tmux rename-window $window_name
+}
