@@ -183,6 +183,8 @@
 	(run-with-idle-timer 30 t 'recentf-save-list))
   (recentf-mode 1))
 
+(setq install-elisp-repository-directory "~/.emacs.d/elisp")
+
 ;; -----------------------------------------------------------------------------
 ;; (install-elisp "http://www.emacswiki.org/emacs/download/auto-install.el")
 (when (require 'auto-install nil t)
@@ -1386,6 +1388,26 @@
 ;; -----------------------------------------------------------------------------
 (autoload 'csv-mode "csv-mode"
   "Major mode for editing comma-separated value files." t)
+
+;; -----------------------------------------------------------------------------
+;; sql-mode
+;; -----------------------------------------------------------------------------
+;; C-c C-c : 'sql-send-paragraph
+;; C-c C-r : 'sql-send-region
+;; C-c C-s : 'sql-send-string
+;; C-c C-b : 'sql-send-buffer
+(when (require 'sql nil t)
+  (add-hook 'sql-interactive-mode-hook
+	    #'(lambda ()
+		(interactive)
+		(set-buffer-process-coding-system 'utf-8 'utf-8 )
+		              (setq show-trailing-whitespace nil)))
+  ;; starting SQL mode loading sql-indent / sql-complete
+  (eval-after-load "sql"
+    '(progn
+       (load-library "sql-indent")
+       (load-library "sql-complete")
+       (load-library "sql-transform"))))
 
 ;; -----------------------------------------------------------------------------
 ;; 関連付けとか
