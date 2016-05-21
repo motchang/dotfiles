@@ -1334,11 +1334,17 @@
 ;(auto-install-from-url "https://raw.github.com/m2ym/popwin-el/master/popwin.el")
 (when (require 'popwin nil t)
   ;; anything
-  (setq anything-samewindow nil)
-  (push '("*anything imenu*" :height 20) popwin:special-display-config)
-  (push '("*anything gtags*" :height 20) popwin:special-display-config)
-  (setq display-buffer-function 'popwin:display-buffer)
-  (setq popwin:popup-window-height 0.5))
+  (when (require 'anything nil t)
+    (setq anything-samewindow nil)
+    (push '("*anything imenu*" :height 20) popwin:special-display-config)
+    (push '("*anything gtags*" :height 20) popwin:special-display-config)
+    (setq display-buffer-function 'popwin:display-buffer)
+    (setq popwin:popup-window-height 0.5))
+  (when (require 'helm nil t)
+    (setq helm-samewindow nil)
+    (setq display-buffer-function 'popwin:display-buffer)
+    (setq popwin:special-display-config '(("*compilatoin*" :noselect t)
+					  ("helm" :regexp t :height 0.4)))))
 
 ;; -----------------------------------------------------------------------------
 ;; nyan-mode
