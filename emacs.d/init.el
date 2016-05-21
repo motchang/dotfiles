@@ -1,14 +1,14 @@
 ;; (setq debug-on-error t)
 (setq debug-on-error nil)
 (dolist (dir (list
+	      "/usr/local/mysql/bin"
 	      "/usr/local/bin"
 	      "/sbin"
 	      "/usr/sbin"
 	      "/bin"
 	      "/usr/bin"
 	      (expand-file-name "~/bin")
-	      (expand-file-name "~/.emacs.d/bin")
-	      ))
+	      (expand-file-name "~/.emacs.d/bin")))
   (when (and (file-exists-p dir) (not (member dir exec-path)))
     (setenv "PATH" (concat dir ":" (getenv "PATH")))
     (setq exec-path (append (list dir) exec-path))))
@@ -23,14 +23,6 @@
 ;; http://d.hatena.ne.jp/tarao/20150221/1424518030
 (when load-file-name
   (setq user-emacs-directory (file-name-directory load-file-name)))
-
-;; (add-to-list 'load-path (locate-user-emacs-file "el-get/el-get"))
-;; (unless (require 'el-get nil 'noerror)
-;;   (with-current-buffer
-;;       (url-retrieve-synchronously
-;;        "https://raw.githubusercontent.com/dimitri/el-get/master/el-get-install.el")
-;;     (goto-char (point-max))
-;;     (eval-print-last-sexp)))
 
 ;; スタートアップメッセージを非表示
 ;;(setq inhibit-startup-screen t)
@@ -277,7 +269,8 @@
        (set-face-background 'default "black")
        (set-face-foreground 'font-lock-comment-face "#00AA00")
        (set-face-foreground 'font-lock-string-face "#AABBEE")
-       (set-face-foreground 'font-lock-type-face "color-45")
+       ;; (set-face-foreground 'font-lock-type-face "color-45")
+       (set-face-foreground 'font-lock-type-face "cyan1")
        (setq eww-search-prefix "https://www.google.co.jp/search?q="))
       ((when (require 'color-theme nil t)
          ;; カラーテーマの選択
@@ -292,8 +285,8 @@
          ;; Wheat Billw Midnight dark-laptop
         )))
 
-;; (set-face-foreground 'region "black")
-;; (set-face-background 'region "yellow")
+(set-face-foreground 'region "black")
+(set-face-background 'region "yellow")
 
 ;; paren-mode 対応する括弧を強調して表示する
 ;; 表示まての秒数。初期値は0.125
@@ -384,9 +377,6 @@
 ;;; (これは起動時に default-frame-alist に従ったフレームが作成されない現象への対処)
   (set-face-font 'default "fontset-myfonts"))
 
-;; (el-get-bundle zonuexe/emoji-fontset.el
-;;   (emoji-fontset/turn-on "Symbola"))
-
 ;; 　Emacsは23.1から1文字単位てフォントを指定て
 ;; きるようになりました。たたし、そのためのインタ
 ;; フェースはなく、設定は難しいと言われています。
@@ -465,9 +455,10 @@
   (add-to-list 'dmoccur-exclusion-mask "^#.+#$")
   (require 'moccur-edit nil t)
   ;; Migemoを利用てきる環境てあれはMigemoを使う
-  (when (and (executable-find "cmigemo")
-	     (require 'migemo nil t))
-    (setq moccur-use-migemo t)))
+  ;; (when (and (executable-find "cmigemo")
+  ;; 	     (require 'migemo nil t))
+  ;;   (setq moccur-use-migemo t))
+  )
 
 ;; 　M-x moccur RETを実行すると、ミニハッファて
 ;; List lines matching regexp: と聞かれますのて、
@@ -562,7 +553,7 @@
 ;; ートされます。タウンロートか完了すると、インス
 ;; トールするかとうかを聞かれますのてC-c C-cてイ
 ;; ンストールしてきましょう。
-(require 'anything-startup)
+(when (require 'anything-startup nil t))
 
 ;;; anything
 ;; (auto-install-batch "anything")
@@ -610,15 +601,16 @@
 ;; Anythingコマントを作成してみましょう。ますは、
 ;; トキュメント検索に関連するソースのリストを作成
 ;; します。
-(setq anything-for-document-sources
-      (list
-       anything-c-source-man-pages
-       anything-c-source-info-cl
-       anything-c-source-info-pages
-       anything-c-source-info-elisp
-       anything-c-source-apropos-emacs-commands
-       anything-c-source-apropos-emacs-functions
-       anything-c-source-apropos-emacs-variables))
+(when (require 'anything nil t)
+  (setq anything-for-document-sources
+	(list
+	 anything-c-source-man-pages
+	 anything-c-source-info-cl
+	 anything-c-source-info-pages
+	 anything-c-source-info-elisp
+	 anything-c-source-apropos-emacs-commands
+	 anything-c-source-apropos-emacs-functions
+	 anything-c-source-apropos-emacs-variables)))
 
 ;; 　コマントを起動したときにカーソル位置に単語か
 ;; あれは、その単語をすてに絞り込んた状態て表示て
@@ -721,11 +713,51 @@
 
 ;;anything で対象とするkill-ring の要素の長さの最小値.
 ;;デフォルトは 10.
-(setq anything-kill-ring-threshold 10)
-(global-set-key (kbd "M-y") 'anything-show-kill-ring)
+;; (setq anything-kill-ring-threshold 10)
+;; (global-set-key (kbd "M-y") 'anything-show-kill-ring)
 
-(global-set-key (kbd "<f5> a i") 'anything-imenu)
-(global-set-key (kbd "C-x C-f") 'find-file)
+;; (global-set-key (kbd "<f5> a i") 'anything-imenu)
+;; (global-set-key (kbd "C-x C-f") 'find-file)
+
+;; -----------------------------------------------------------------------------
+;; helm-mode
+;; -----------------------------------------------------------------------------
+(when (require 'helm nil t)
+  (require 'helm-config)
+  (helm-mode t)
+  (define-key global-map (kbd "M-x")     'helm-M-x)
+  (define-key global-map (kbd "C-x C-f") 'helm-find-files)
+  (define-key global-map (kbd "M-y")     'helm-show-kill-ring)
+  (define-key global-map (kbd "<f5> a i")'helm-imenu)
+  (define-key global-map (kbd "C-x b")   'helm-mini)
+  (define-key helm-map (kbd "C-h") 'delete-backward-char)
+  (define-key helm-find-files-map (kbd "C-h") 'delete-backward-char)
+  (define-key helm-find-files-map (kbd "TAB") 'helm-execute-persistent-action)
+  (define-key helm-read-file-map (kbd "TAB") 'helm-execute-persistent-action)
+  (custom-set-variables
+   '(helm-truncate-lines t)
+   '(helm-buffer-max-length 35)
+   '(helm-delete-minibuffer-contents-from-point t)
+   '(helm-ff-skip-boring-files t)
+   '(helm-boring-file-regexp-list '("~$" "\\.elc$"))
+   '(helm-ls-git-show-abs-or-relative 'relative)
+   '(helm-mini-default-sources '(helm-source-buffers-list
+                                 helm-source-recentf
+                                 helm-source-buffer-not-found)))
+  (when (require 'helm-gtags nil t)
+    (define-key helm-gtags-mode-map (kbd "M-.") 'helm-gtags-find-tag-from-here)
+    (define-key helm-gtags-mode-map (kbd "C-c s") 'helm-gtags-find-symbol)
+    (define-key helm-gtags-mode-map (kbd "C-c r") 'helm-gtags-find-rtag)
+    (define-key helm-gtags-mode-map (kbd "C-c t") 'helm-gtags-find-tag)
+    (define-key helm-gtags-mode-map (kbd "C-c f") 'helm-gtags-parse-file)
+    (define-key helm-gtags-mode-map (kbd "M-p") 'helm-gtags-pop-stack)
+    (add-hook 'php-mode-hook
+	      (lambda ()
+		(gtags-mode t)))
+    (add-hook 'ruby-mode-hook
+	      (lambda ()
+		(gtags-mode t))))
+  )
 
 ;; -----------------------------------------------------------------------------
 ;; flymake-mode
@@ -891,25 +923,26 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; GNU GLOBAL(gtags)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(require 'gtags)
-(autoload 'gtags-mode "" t)
-(setq gtags-mode-hook
-      '(lambda ()
-	 (define-key gtags-mode-map (kbd "M-.") 'gtags-find-tag-from-here)
-         (define-key gtags-mode-map (kbd "C-c s") 'gtags-find-symbol)
-         (define-key gtags-mode-map (kbd "C-c r") 'gtags-find-rtag)
-         (define-key gtags-mode-map (kbd "C-c t") 'gtags-find-tag)
-         (define-key gtags-mode-map (kbd "C-c f") 'gtags-parse-file)
-         (define-key gtags-mode-map (kbd "M-p") 'gtags-pop-stack)))
+(when (require 'gtags nil t)
+;; (autoload 'gtags-mode "" t)
+;; (setq gtags-mode-hook
+;;       '(lambda ()
+;; 	 (define-key gtags-mode-map (kbd "M-.") 'gtags-find-tag-from-here)
+;;          (define-key gtags-mode-map (kbd "C-c s") 'gtags-find-symbol)
+;;          (define-key gtags-mode-map (kbd "C-c r") 'gtags-find-rtag)
+;;          (define-key gtags-mode-map (kbd "C-c t") 'gtags-find-tag)
+;;          (define-key gtags-mode-map (kbd "C-c f") 'gtags-parse-file)
+;;          (define-key gtags-mode-map (kbd "M-p") 'gtags-pop-stack)))
 
 ;; (global-set-key (kbd "M-p") 'gtags-pop-stack)
-(add-hook 'php-mode-hook
-	  (lambda ()
-	    (gtags-mode t)))
+;; (add-hook 'php-mode-hook
+;; 	  (lambda ()
+;; 	    (gtags-mode t)))
 
-(add-hook 'ruby-mode-hook
-	  (lambda ()
-	    (gtags-mode t)))
+;; (add-hook 'ruby-mode-hook
+;; 	  (lambda ()
+;; 	    (gtags-mode t)))
+  )
 
 ; gtags auto update
 (defun update-gtags (&optional prefix)
@@ -926,7 +959,7 @@
 (add-hook 'after-save-hook 'update-gtags)
 
 ;; tag jump
-(require 'anything-gtags)
+(when (require 'anything-gtags) nil t)
 ;; Test1.ccを開いているときに、M-r (gtags-find-rtag) などで同じディレクトリにある
 ;; Test2.ccに飛びたいのに、src/src/Test2.ccという空のファイルが開く。どうもパス
 ;; 表示がgtagsを実行したディレクトリからになっているみたい。
@@ -1410,6 +1443,19 @@
        (load-library "sql-transform"))))
 
 ;; -----------------------------------------------------------------------------
+;; migemo
+;; -----------------------------------------------------------------------------
+(when (require 'migemo nil t)
+  (setq migemo-dictionary "/usr/local/share/migemo/utf-8/migemo-dict")
+  (setq migemo-command "cmigemo")
+  (setq migemo-options '("-q" "--emacs"))
+  (setq migemo-user-dictionary nil)
+  (setq migemo-coding-system 'utf-8)
+  (setq migemo-regex-dictionary nil)
+  (load-library "migemo")
+  (migemo-init))
+
+;; -----------------------------------------------------------------------------
 ;; 関連付けとか
 ;; -----------------------------------------------------------------------------
 (add-to-list 'auto-mode-alist '("\\.org\\'" .   org-mode))
@@ -1437,6 +1483,7 @@
              '("\\(Capfile\\|Gemfile\\(?:\\.[a-zA-Z0-9._-]+\\)?\\|[rR]akefile\\)\\'" . ruby-mode))
 (add-to-list 'auto-mode-alist '("\\.[rR]\\'" . R-mode))
 (add-to-list 'auto-mode-alist '("\\.[Cc][Ss][Vv]\\'" . csv-mode))
+(add-to-list 'auto-mode-alist '("\\.slim\\'" . slim-mode))
 
 ;; -----------------------------------------------------------------------------
 ;; http://qiita.com/alpha22jp/items/01e614474e7dbfd78305
@@ -1447,6 +1494,7 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(coffee-tab-width 2)
  '(custom-safe-themes
    (quote
     ("e80932ca56b0f109f8545576531d3fc79487ca35a9a9693b62bf30d6d08c9aaf" "4aee8551b53a43a883cb0b7f3255d6859d766b6c5e14bcb01bed572fcbef4328" "211bb9b24001d066a646809727efb9c9a2665c270c753aa125bace5e899cb523" default)))
@@ -1454,7 +1502,8 @@
  '(rspec-use-rake-when-possible nil)
  '(safe-local-variable-values
    (quote
-    ((encoding . utf-8)
+    ((engine . scss)
+     (encoding . utf-8)
      (ruby-compilation-executable . "ruby")
      (ruby-compilation-executable . "ruby1.8")
      (ruby-compilation-executable . "ruby1.9")
