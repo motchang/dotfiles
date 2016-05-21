@@ -923,7 +923,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; GNU GLOBAL(gtags)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; (require 'gtags)
+(when (require 'gtags nil t)
 ;; (autoload 'gtags-mode "" t)
 ;; (setq gtags-mode-hook
 ;;       '(lambda ()
@@ -942,6 +942,7 @@
 ;; (add-hook 'ruby-mode-hook
 ;; 	  (lambda ()
 ;; 	    (gtags-mode t)))
+  )
 
 ; gtags auto update
 (defun update-gtags (&optional prefix)
