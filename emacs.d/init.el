@@ -455,9 +455,10 @@
   (add-to-list 'dmoccur-exclusion-mask "^#.+#$")
   (require 'moccur-edit nil t)
   ;; Migemoを利用てきる環境てあれはMigemoを使う
-  (when (and (executable-find "cmigemo")
-	     (require 'migemo nil t))
-    (setq moccur-use-migemo t)))
+  ;; (when (and (executable-find "cmigemo")
+  ;; 	     (require 'migemo nil t))
+  ;;   (setq moccur-use-migemo t))
+  )
 
 ;; 　M-x moccur RETを実行すると、ミニハッファて
 ;; List lines matching regexp: と聞かれますのて、
@@ -1439,6 +1440,19 @@
        (load-library "sql-indent")
        (load-library "sql-complete")
        (load-library "sql-transform"))))
+
+;; -----------------------------------------------------------------------------
+;; migemo
+;; -----------------------------------------------------------------------------
+(when (require 'migemo nil t)
+  (setq migemo-dictionary "/usr/local/share/migemo/utf-8/migemo-dict")
+  (setq migemo-command "cmigemo")
+  (setq migemo-options '("-q" "--emacs"))
+  (setq migemo-user-dictionary nil)
+  (setq migemo-coding-system 'utf-8)
+  (setq migemo-regex-dictionary nil)
+  (load-library "migemo")
+  (migemo-init))
 
 ;; -----------------------------------------------------------------------------
 ;; 関連付けとか
