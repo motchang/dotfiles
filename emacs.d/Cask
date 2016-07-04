@@ -5,6 +5,7 @@
 (depends-on "cask")
 (depends-on "init-loader")
 (depends-on "helm")
+(depends-on "helm-swoop")
 (depends-on "popwin")
 (depends-on "company")
 (depends-on "magit")
