@@ -1,0 +1,61 @@
+(source gnu)
+(source melpa)
+(source marmalade)
+
+(depends-on "cask")
+(depends-on "init-loader")
+(depends-on "helm")
+(depends-on "popwin")
+(depends-on "company")
+(depends-on "magit")
+(depends-on "auto-async-byte-compile")
+(depends-on "recentf")
+(depends-on "auto-install")
+; (depends-on "ucs-normalize")
+; (depends-on "ls-lisp")
+(depends-on "color-theme")
+(depends-on "string-inflection")
+(depends-on "migemo")
+(depends-on "twittering-mode")
+
+(depends-on "flymake")
+(depends-on "flymake-cursor")
+(depends-on "flycheck")
+(depends-on "flycheck-pos-tip")
+(depends-on "auto-highlight-symbol")
+(depends-on "gtags")
+
+(depends-on "inf-ruby")
+(depends-on "ruby-end")
+(depends-on "rinari")
+(depends-on "ruby-compilation")
+; (depends-on "smartparens-ruby")
+(depends-on "ruby-block")
+(depends-on "rspec-mode")
+
+(depends-on "php-mode")
+(depends-on "smarty-mode")
+
+(depends-on "nodejs-repl")
+(depends-on "js2-mode")
+(depends-on "json-mode")
+(depends-on "sws-mode")
+(depends-on "jade-mode")
+(depends-on "coffee-mode")
+(depends-on "flymake-coffee")
+
+(depends-on "go-mode")
+
+(depends-on "web-mode")
+(depends-on "scss-mode")
+(depends-on "sass-mode")
+(depends-on "rainbow-mode")
+
+(depends-on "yaml-mode")
+
+(depends-on "dockerfile-mode")
+(depends-on "nginx-mode")
+(depends-on "csv-mode")
+; (depends-on "sql-mode")
+
+(depends-on "ess") ;; for R
