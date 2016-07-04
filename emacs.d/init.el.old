@@ -1555,7 +1555,6 @@
 (add-to-list 'auto-mode-alist '("\\.el$". lisp-mode))
 (add-to-list 'auto-mode-alist '("\\.\\(?:yml\\|yaml\\)$". yaml-mode))
 (add-to-list 'auto-mode-alist '("\\.js$". js2-mode))
-;;(add-to-list 'auto-mode-alist '("\\.js$". js-mode))
 (add-to-list 'auto-mode-alist '("\\.json$". json-mode))
 (add-to-list 'auto-mode-alist '("\\.styl$'". sws-mode))
 (add-to-list 'auto-mode-alist '("\\.jade$'". jade-mode))
@@ -1568,9 +1567,9 @@
 (add-to-list 'auto-mode-alist '("\\.scss$". scss-mode))
 (add-to-list 'auto-mode-alist '("\\.sass$". sass-mode))
 (add-to-list 'auto-mode-alist
-             '("\\.\\(?:gemspec\\|irbrc\\|gemrc\\|rake\\|rb\\|ru\\|thor\\)\\'". ruby-mode))
+             '("\\.\\(?:gemspec\\|irbrc\\|gemrc\\|rake\\|rb\\|ru\\|thor\\)\\'" . ruby-mode))
 (add-to-list 'auto-mode-alist
-             '("\\(Capfile\\|[rR]akefile\\)\\'". ruby-mode))
+             '("\\(Capfile\\|Gemfile\\(?:\\.[a-zA-Z0-9._-]+\\)?\\|[rR]akefile\\)\\'" . ruby-mode))
 (add-to-list 'auto-mode-alist '("\\.[rR]\\'". R-mode))
 (add-to-list 'auto-mode-alist '("\\.[Cc][Ss][Vv]\\'". csv-mode))
 (add-to-list 'auto-mode-alist '("\\.slim\\'". slim-mode))
