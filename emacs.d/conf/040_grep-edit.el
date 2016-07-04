@@ -1,1 +1,1 @@
-(require 'grep-edit)
+(when (require 'grep-edit nil t))
