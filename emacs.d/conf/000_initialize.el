@@ -12,13 +12,6 @@
     (setenv "PATH" (concat dir ":" (getenv "PATH")))
     (setq exec-path (append (list dir) exec-path))))
 
-(add-hook 'after-init-hook
-          '(lambda ()
-             (let* ((el (expand-file-name "init.el" user-emacs-directory))
-                    (elc (concat el "c")))
-              (when (file-newer-than-file-p el elc)
-                 (byte-compile-file el)))))
-
 (when load-file-name
   (setq user-emacs-directory (file-name-directory load-file-name)))
 
@@ -44,6 +37,19 @@
 	(if (fboundp 'normal-top-level-add-subdirs-to-load-path)
 	    (normal-top-level-add-subdirs-to-load-path))))))
 
-(add-to-load-path "elisp")
+(add-to-load-path "elisp" "conf")
 
 (setq install-elisp-repository-directory "~/.emacs.d/elisp")
+
+(add-hook 'after-init-hook
+          '(lambda ()
+             (let* ((el (expand-file-name "init.el" user-emacs-directory))
+                    (elc (concat el "c")))
+              (when (file-newer-than-file-p el elc)
+                 (byte-compile-file el)))))
+
+(byte-recompile-directory (expand-file-name "~/.emacs.d") 0)
+
+;; http://d.hatena.ne.jp/rubikitch/20100423/bytecomp
+(when (require 'auto-async-byte-compile)
+  (add-hook 'emacs-lisp-mode-hook 'enable-auto-async-byte-compile-mode))

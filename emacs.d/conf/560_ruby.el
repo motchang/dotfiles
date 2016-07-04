@@ -29,7 +29,29 @@
 	       (setq ruby-deep-indent-paren-style nil)
 	       (setq truncate-lines t)
 	       (electric-pair-mode 0)
-	       (set-face-foreground 'font-lock-type-face "cyan")))
+	       (set-face-foreground 'font-lock-type-face "cyan")
+	       ;; (when (require 'flycheck nil t)
+	       ;; 	 (lambda ()
+	       ;; 	   (flycheck-mode)
+	       ;; 	   (flycheck-select-checker 'ruby-rubocop)
+	       ;; 	   (flycheck-disable-checker 'ruby-rubylint)))
+	       (when (require 'ruby-block nil t)
+		 (ruby-block-mode t)
+		 ;; ミニバッファに表示し, かつ, オーバレイする.
+		 (setq ruby-block-highlight-toggle t))
+	       (when (require 'ruby-end nil t)
+		 (ruby-end-mode t)
+		 (setq ruby-end-insert-newline nil)
+		 (setq ruby-end-check-statement-modifiers nil))
+	       (when (require 'rinari nil t)
+		 (rinari-minor-mode 1))
+	       (when (require 'ruby-compilation nil t)
+		 (define-key ruby-mode-map (kbd "\M-r") 'run-rails-test-or-ruby-buffer))
+	       (when (require 'auto-complete nil t)
+		 ;; http://qiita.com/tadsan/items/ab3c3b594b5bf6203f02
+		 (make-local-variable 'ac-ignore-case)
+		 (setq ac-ignore-case nil)
+		 (abbrev-mode 1))))
   ;; set ruby-mode indent
   (setq ruby-indent-level 2)
   (setq ruby-indent-tabs-mode nil)
@@ -53,6 +75,10 @@
 
 ;; rspec-mode
 (when (require 'rspec-mode nil t)
+  (when (require 'flycheck nil t)
+    (add-hook 'rspec-mode-hook
+	      (lambda ()
+		(flycheck-mode))))
   (custom-set-variables
    ;; custom-set-variables was added by Custom.
    ;; If you edit it by hand, you could mess it up, so be careful.
@@ -70,29 +96,3 @@
 	    (lambda ()
 	      (define-key ruby-mode-map (kbd "C-c r") 'execute-rspec)
 	      (linum-mode))))
-
-(when (require 'ruby-block nil t)
-  (ruby-block-mode t)
-  ;; ミニバッファに表示し, かつ, オーバレイする.
-  (setq ruby-block-highlight-toggle t))
-
-(when (require 'ruby-end nil t)
-  (ruby-end-mode t)
-  (setq ruby-end-insert-newline nil)
-  (setq ruby-end-check-statement-modifiers nil))
-
-(when (require 'rinari nil t)
-  (rinari-minor-mode 1))
-
-(when (require 'ruby-compilation nil t)
-  (define-key ruby-mode-map (kbd "\M-r") 'run-rails-test-or-ruby-buffer))
-
-(when (require 'smartparens-ruby)
-  (set-face-attribute 'sp-show-pair-match-face nil
-		      :background "gray20" :foreground "green"))
-
-(when (require 'auto-complete nil t)
-  ;; http://qiita.com/tadsan/items/ab3c3b594b5bf6203f02
-  (make-local-variable 'ac-ignore-case)
-  (setq ac-ignore-case nil)
-  (abbrev-mode 1))
