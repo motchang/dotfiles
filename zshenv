@@ -4,17 +4,22 @@ then
     # coreutils
     if [ -d /usr/local/opt/coreutils/libexec/gnubin ]
     then
-	PATH=/usr/local/opt/coreutils/libexec/gnubin:${PATH}
+        PATH=/usr/local/opt/coreutils/libexec/gnubin:${PATH}
     fi
     if [ -d /usr/local/opt/coreutils/libexec/gnuman ]
     then
-	MANPATH=/usr/local/opt/coreutils/libexec/gnuman:${MANPATH}
-	export MANPATH
+        MANPATH=/usr/local/opt/coreutils/libexec/gnuman:${MANPATH}
+        export MANPATH
     fi
     # python
-    if [ -d /usr/local/share/python ]
+    if [ -d /usr/local/sbin ]
     then
-	PATH=/usr/local/share/python:$PATH
+        PATH=/usr/local/sbin:${PATH}
+    fi
+    # git diff
+    if [ -d /usr/local/share/git-core/contrib/diff-highlight ]
+    then
+	PATH=${PATH}:/usr/local/share/git-core/contrib/diff-highlight
     fi
 fi
 
@@ -57,11 +62,10 @@ fi
 
 if [ -d /usr/local/heroku/bin ]
 then
-   PATH=${PATH}:/usr/local/heroku/bin
+    PATH=${PATH}:/usr/local/heroku/bin
 fi
 
 export PATH
 
 # git
 unset SSH_ASKPASS
-
