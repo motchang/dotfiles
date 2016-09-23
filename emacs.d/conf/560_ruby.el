@@ -1,4 +1,11 @@
 (when (require 'ruby-mode nil t)
+  (when (require 'robe nil t)
+    (add-hook 'robe-mode-hook
+	      '(lambda ()
+		 (define-key ruby-mode-map (kbd "M-j") 'robe-jump)))
+    (add-hook 'ruby-mode-hook 'robe-mode)
+    (eval-after-load 'company
+      '(push 'company-robe company-backends)))
   (setq interpreter-mode-alist (append '(("ruby" . ruby-mode)) interpreter-mode-alist))
   (add-hook 'ruby-mode-hook
 	    '(lambda ()

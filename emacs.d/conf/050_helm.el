@@ -38,9 +38,15 @@
 
 (when (require 'helm-swoop nil t))
 
+(when (require 'helm-descbinds nil t)
+  (helm-descbinds-mode)
+  (define-key global-map (kbd "C-h C-b")  'helm-descbinds)
+  '(defun describe-bindings ()
+     (helm-descbindings)))
+
 (when (require 'popwin nil t)
   (when (require 'helm nil t)
-    (setq helm-samewindow nil)
+    (setq helm-full-frame nil)
     (setq display-buffer-function 'popwin:display-buffer)
     (setq popwin:special-display-config '(("*compilatoin*" :noselect t)
 					  ("helm" :regexp t :height 0.4)))))
