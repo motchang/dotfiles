@@ -37,7 +37,10 @@
 	(if (fboundp 'normal-top-level-add-subdirs-to-load-path)
 	    (normal-top-level-add-subdirs-to-load-path))))))
 
-(add-to-load-path "elisp" "conf")
+(add-to-load-path "conf")
+
+(byte-recompile-directory (expand-file-name "~/.emacs.d") 0)
+(byte-recompile-directory (expand-file-name "~/.emacs.d/conf") 0)
 
 (setq install-elisp-repository-directory "~/.emacs.d/elisp")
 
@@ -47,9 +50,3 @@
                     (elc (concat el "c")))
               (when (file-newer-than-file-p el elc)
                  (byte-compile-file el)))))
-
-(byte-recompile-directory (expand-file-name "~/.emacs.d") 0)
-
-;; http://d.hatena.ne.jp/rubikitch/20100423/bytecomp
-(when (require 'auto-async-byte-compile)
-  (add-hook 'emacs-lisp-mode-hook 'enable-auto-async-byte-compile-mode))

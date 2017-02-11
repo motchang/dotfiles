@@ -121,7 +121,7 @@ fi
 if [ -d ${HOME}/.nvm ]
 then
     export NVM_DIR=~/.nvm
-    source $(brew --prefix nvm)/nvm.sh
+    # source $(brew --prefix nvm)/nvm.sh
 fi
 
 eval "$(nodenv init -)"
@@ -147,3 +147,7 @@ function ssh() {
     command ssh $@
     tmux rename-window $window_name
 }
+
+#THIS MUST BE AT THE END OF THE FILE FOR SDKMAN TO WORK!!!
+export SDKMAN_DIR="/Users/motchang/.sdkman"
+[[ -s "/Users/motchang/.sdkman/bin/sdkman-init.sh" ]] && source "/Users/motchang/.sdkman/bin/sdkman-init.sh"

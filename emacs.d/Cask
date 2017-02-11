@@ -1,12 +1,10 @@
 (source gnu)
 (source melpa)
 (source marmalade)
+; (source marmalade "https://marmalade-repo.org/packages/")
 
 (depends-on "cask")
 (depends-on "init-loader")
-(depends-on "helm")
-(depends-on "helm-swoop")
-(depends-on "popwin")
 (depends-on "company")
 (depends-on "magit")
 (depends-on "auto-async-byte-compile")
@@ -18,6 +16,12 @@
 (depends-on "string-inflection")
 (depends-on "migemo")
 (depends-on "twittering-mode")
+
+(depends-on "helm")
+(depends-on "helm-gtags")
+(depends-on "helm-swoop")
+(depends-on "helm-descbinds")
+(depends-on "popwin")
 
 (depends-on "flymake")
 (depends-on "flymake-cursor")
@@ -33,6 +37,7 @@
 ; (depends-on "smartparens-ruby")
 (depends-on "ruby-block")
 (depends-on "rspec-mode")
+(depends-on "robe")
 
 (depends-on "php-mode")
 (depends-on "smarty-mode")
@@ -51,12 +56,13 @@
 (depends-on "scss-mode")
 (depends-on "sass-mode")
 (depends-on "rainbow-mode")
+(depends-on "slim-mode")
 
 (depends-on "yaml-mode")
 
 (depends-on "dockerfile-mode")
 (depends-on "nginx-mode")
 (depends-on "csv-mode")
-; (depends-on "sql-mode")
+(depends-on "terraform-mode")
 
 (depends-on "ess") ;; for R
