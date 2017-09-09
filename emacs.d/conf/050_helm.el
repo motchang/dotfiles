@@ -1,3 +1,6 @@
+;;; package --- Summary
+;;; Commentary:
+;;; Code:
 (when (require 'helm nil t)
   (require 'helm-config)
   (helm-mode t)

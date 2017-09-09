@@ -1,3 +1,6 @@
+;;; package --- Summary
+;;; Commentary:
+;;; Code:
 (when (window-system)
 ;;; http://d.hatena.ne.jp/setoryohei/20110117/1295336454
 ;;; フォントセットを作る

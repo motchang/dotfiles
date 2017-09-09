@@ -1,3 +1,6 @@
+;;; package --- Summary
+;;; Commentary:
+;;; Code:
 (when (require 'json-mode nil t)
   (add-hook 'json-mode-hook
 	    (lambda ()

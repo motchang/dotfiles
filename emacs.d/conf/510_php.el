@@ -1,3 +1,6 @@
+;;; package --- Summary
+;;; Commentary:
+;;; Code:
 (require 'php-mode)
 (add-hook 'php-mode-hook
          (lambda ()

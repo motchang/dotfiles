@@ -1,3 +1,6 @@
+;;; package --- Summary
+;;; Commentary:
+;;; Code:
 (when (require 'ruby-mode nil t)
   (when (require 'robe nil t)
     (add-hook 'robe-mode-hook
@@ -37,11 +40,6 @@
 	       (setq truncate-lines t)
 	       (electric-pair-mode 0)
 	       (set-face-foreground 'font-lock-type-face "cyan")
-	       ;; (when (require 'flycheck nil t)
-	       ;; 	 (lambda ()
-	       ;; 	   (flycheck-mode)
-	       ;; 	   (flycheck-select-checker 'ruby-rubocop)
-	       ;; 	   (flycheck-disable-checker 'ruby-rubylint)))
 	       (when (require 'ruby-block nil t)
 		 (ruby-block-mode t)
 		 ;; ミニバッファに表示し, かつ, オーバレイする.
@@ -103,3 +101,4 @@
 	    (lambda ()
 	      (define-key ruby-mode-map (kbd "C-c r") 'execute-rspec)
 	      (linum-mode))))
+;;;
