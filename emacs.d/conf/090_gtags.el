@@ -1,3 +1,6 @@
+;;; package --- Summary
+;;; Commentary:
+;;; Code:
 (when (require 'gtags nil t)
   (setq gtags-mode-hook
 	'(lambda ()

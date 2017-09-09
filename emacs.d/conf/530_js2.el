@@ -1,3 +1,6 @@
+;;; package --- Summary
+;;; Commentary:
+;;; Code:
 (when (require 'js2-mode nil t)
   (add-hook 'js2-mode-hook
 	    (lambda ()
@@ -9,6 +12,7 @@
 	      (setq c-basic-offset 2)
 	      (setq js2-basic-offset 2)
 	      (setq c-hanging-comment-ender-p nil)
+	      (setq js-switch-indent-offset 2)
 	      (c-toggle-hungry-state t)
 	      (c-set-offset 'case-label' 2)
 	      (c-set-offset 'arglist-intro' 2)
@@ -21,8 +25,13 @@
 	      ;; (set-face-foreground 'js2-external-variable "#0000F1")))
 	      ;; Disable auto newline insertion after input semi colon (;) at javascript-mode
 	      ;; http://insnvlovn.blogspot.jp/2010/04/emacs-php-mode.html
-	      (setq-local electric-layout-rules '((?\{ . after) (?\} . before))))))
+	      (setq-local electric-layout-rules '((?\{ . after) (?\} . before)))))
+
+  (flycheck-add-mode 'javascript-eslint 'js2-jsx-mode)
+  (add-hook 'js2-jsx-mode-hook 'flycheck-mode)
+  )
 (when (require 'flycheck nil t)
   (add-hook 'js2-mode-hook
 	    (lambda ()
 	      (flycheck-mode))))
+;;;

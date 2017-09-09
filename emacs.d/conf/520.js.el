@@ -1,3 +1,6 @@
+;;; package --- Summary
+;;; Commentary:
+;;; Code:
 (add-hook 'js-mode-hook
          (lambda ()
              ;; (when (require 'auto-complete nil t)
