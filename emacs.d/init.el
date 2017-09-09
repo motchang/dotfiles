@@ -1,11 +1,10 @@
-
 ;; Added by Package.el.  This must come before configurations of
 ;; installed packages.  Don't delete this line.  If you don't want it,
 ;; just comment it out by adding a semicolon to the start of the line.
 ;; You may delete these explanatory comments.
 (package-initialize)
 
-(setq debug-on-error t)
+(setq debug-on-error nil)
 ;; install cask
 ;;   `curl -fsSkL https://raw.github.com/cask/cask/master/go | python`
 ;; on mac
@@ -40,7 +39,7 @@
  '(helm-truncate-lines t t)
  '(package-selected-packages
    (quote
-    (yaml-mode web-mode twittering-mode sws-mode string-inflection smarty-mode slim-mode scss-mode sass-mode ruby-end ruby-block rspec-mode robe rinari rainbow-mode popwin php-mode nodejs-repl nginx-mode migemo magit json-mode js2-mode jade-mode init-loader helm-swoop helm-gtags helm-descbinds go-mode flymake-cursor flymake-coffee flycheck-pos-tip ess dockerfile-mode csv-mode company color-theme coffee-mode cask auto-install auto-highlight-symbol auto-async-byte-compile)))
+    (yasnippet-bundle yasnippet-snippets find-file-in-repository slack yaml-mode web-mode twittering-mode sws-mode string-inflection smarty-mode slim-mode scss-mode sass-mode ruby-end ruby-block rspec-mode robe rinari rainbow-mode popwin php-mode nodejs-repl nginx-mode migemo magit json-mode js2-mode jade-mode init-loader helm-swoop helm-gtags helm-descbinds go-mode flymake-cursor flymake-coffee flycheck-pos-tip ess dockerfile-mode csv-mode company color-theme coffee-mode cask auto-install auto-highlight-symbol auto-async-byte-compile)))
  '(rspec-use-rake-when-possible nil)
  '(rspec-use-spring-when-possible nil)
  '(safe-local-variable-values
@@ -59,3 +58,6 @@
  ;; If there is more than one, they won't work right.
  '(font-lock-type-face ((t (:foreground "brightcyan" :weight bold))))
  '(my-hl-line-face ((t (:background "dark blue" :underline nil)))))
+
+(provide 'init)
+;;; init.el ends here

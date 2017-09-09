@@ -81,3 +81,6 @@ wget-log*
 
 # skiyaki/skiyaki
 lib/tasks/import/fent_ec/images/products
+
+# hikakaku
+~/src/jiraffeinc/hikakaku-cms/config/databse.yml

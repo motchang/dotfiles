@@ -1,3 +1,6 @@
+;;; package --- Summary
+;;; Commentary:
+;;; Code:
 (when (require 'color-moccur nil t)
   ;; クローハルマッフにoccur-by-moccurを割り当て
   (define-key global-map (kbd "M-o") 'occur-by-moccur)

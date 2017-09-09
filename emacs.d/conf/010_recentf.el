@@ -1,3 +1,6 @@
+;;; package --- Summary
+;;; Commentary:
+;;; Code:
 (when (require 'recentf nil t)
 
   ;; (defmacro with-suppressed-message (&rest body)

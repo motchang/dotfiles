@@ -1,3 +1,6 @@
+;;; package --- Summary
+;;; Commentary:
+;;; Code:
 (add-to-list 'auto-mode-alist '("\\.org\\'". org-mode))
 (add-to-list 'auto-mode-alist '("\\.php$". php-mode))
 (add-to-list 'auto-mode-alist '("\\.sql$". sql-mode))
@@ -5,6 +8,7 @@
 (add-to-list 'auto-mode-alist '("\\.el$". emacs-lisp-mode))
 (add-to-list 'auto-mode-alist '("\\.\\(?:yml\\|yaml\\)$". yaml-mode))
 (add-to-list 'auto-mode-alist '("\\.js$". js2-mode))
+(add-to-list 'auto-mode-alist '("\\.jsx\\'" . js2-jsx-mode))
 (add-to-list 'auto-mode-alist '("\\.json$". json-mode))
 (add-to-list 'auto-mode-alist '("\\.styl$'". sws-mode))
 (add-to-list 'auto-mode-alist '("\\.jade$'". jade-mode))
@@ -23,3 +27,4 @@
 	     '("\\.\\(?:gemspec\\|irbrc\\|gemrc\\|rake\\|rb\\|ru\\|thor\\)\\'" . ruby-mode))
 (add-to-list 'auto-mode-alist
 	     '("\\(Capfile\\|Gemfile\\(?:\\.[a-zA-Z0-9._-]+\\)?\\|[rR]akefile\\)\\'" . ruby-mode))
+(add-to-list 'auto-mode-alist '("\\.cs\\'". csharp-mode))

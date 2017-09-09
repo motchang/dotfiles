@@ -1,3 +1,6 @@
+;;; package --- Summary
+;;; Commentary:
+;;; Code:
 (setq frame-title-format
       (format "%%f - Emacs@%s" (system-name)))
 
@@ -9,7 +12,7 @@
 (setq make-backup-files nil)
 
 (tool-bar-mode 0)
-(scroll-bar-mode 0)
+; (scroll-bar-mode 0)
 (menu-bar-mode 0)
 
 (line-number-mode t)
@@ -22,6 +25,10 @@
 
 (global-set-key (kbd "C-x C-o") 'other-window)
 (setq diff-switches "-w")
+
+;; 165が¥（円マーク） , 92が\（バックスラッシュ）を表す
+(define-key global-map [165] [92])
+
 
 ;; C-c C-l で折り返し表示をトグル
 (defun toggle-truncate-lines ()
@@ -51,3 +58,4 @@
   (setq buffer-offer-save nil))
 ;; C-c t でテンポラリバッファを作成します。
 (global-set-key "\C-ct" 'create-temporary-buffer)
+(exec-path-from-shell-initialize)

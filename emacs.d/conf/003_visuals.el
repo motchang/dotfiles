@@ -1,3 +1,6 @@
+;;; package --- Summary
+;;; Commentary:
+;;; Code:
 (cond ((eq emacs24-p t)
        (add-to-list 'custom-theme-load-path "~/.emacs.d/themes")
        ;; (load-theme 'wombat t)
@@ -17,34 +20,15 @@
          ;; テーマを読み込むための設定
          (color-theme-initialize)
          ;; テーマを変更する
-         (color-theme-dark-laptop)
+         ;; (color-theme-dark-laptop)
+	 ;; (color-theme-xemacs)
+	 (color-theme-robin-hood)
          ;; いい感しの
          ;; Wheat Billw Midnight dark-laptop
         )))
 
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(coffee-tab-width 2)
- '(custom-safe-themes
-   (quote
-    ("e80932ca56b0f109f8545576531d3fc79487ca35a9a9693b62bf30d6d08c9aaf" "4aee8551b53a43a883cb0b7f3255d6859d766b6c5e14bcb01bed572fcbef4328" "211bb9b24001d066a646809727efb9c9a2665c270c753aa125bace5e899cb523" default)))
- '(flycheck-display-errors-function (function flycheck-pos-tip-error-messages))
- '(rspec-use-rake-when-possible nil)
- '(safe-local-variable-values
-   (quote
-    ((engine . scss)
-     (encoding . utf-8)
-     (ruby-compilation-executable . "ruby")
-     (ruby-compilation-executable . "ruby1.8")
-     (ruby-compilation-executable . "ruby1.9")
-     (ruby-compilation-executable . "rbx")
-     (ruby-compilation-executable . "jruby")))))
-
-(set-face-foreground 'region "black")
-(set-face-background 'region "yellow")
+;; (set-face-foreground 'region "black")
+;; (set-face-background 'region "yellow")
 
 ;; paren-mode 対応する括弧を強調して表示する
 ;; 表示まての秒数。初期値は0.125
@@ -86,3 +70,4 @@
   (add-hook 'html-mode-hook 'rainbow-mode)
   (add-hook 'lisp-mode-hook 'rainbow-mode)
   (add-hook 'web-mode-hook 'rainbow-mode))
+;;;

@@ -1,3 +1,6 @@
+;;; package --- Summary
+;;; Commentary:
+;;; Code:
 (dolist (dir (list
 	      "/usr/local/mysql/bin"
 	      "/usr/local/bin"
@@ -50,3 +53,4 @@
                     (elc (concat el "c")))
               (when (file-newer-than-file-p el elc)
                  (byte-compile-file el)))))
+;;;

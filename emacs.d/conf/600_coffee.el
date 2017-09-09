@@ -1,3 +1,6 @@
+;;; package --- Summary
+;;; Commentary:
+;;; Code:
 (when (require 'coffee-mode nil t)
   (setq whitespace-action '(auto-cleanup))
   ;; only show bad whitespace
