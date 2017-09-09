@@ -1,3 +1,6 @@
+;;; package --- Summary
+;;; Commentary:
+;;; Code:
 (when (require 'web-mode nil t)
   (defun my/web-mode-hook ()
     "Hooks for Web mode."

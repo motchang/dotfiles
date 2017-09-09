@@ -1,3 +1,6 @@
+;;; package --- Summary
+;;; Commentary:
+;;; Code:
 (when (require 'magit nil t)
   (add-hook 'magit-mode-hook
 	    '(lambda ()

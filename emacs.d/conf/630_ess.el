@@ -1,3 +1,6 @@
+;;; package --- Summary
+;;; Commentary:
+;;; Code:
 ;; 拡張子が .r, .R の場合に R-mode を起動
 ;; (add-to-list 'auto-mode-alist '("\\.[rR]\\'" . R-mode))
 ;; R-mode は ess-r-d.el に定義されているが全機能をロードするために ess-site をロード

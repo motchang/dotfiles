@@ -1,3 +1,6 @@
+;;; package --- Summary
+;;; Commentary:
+;;; Code:
 (when (require 'flycheck nil t)
   (when (require 'ruby-mode nil t)
     (add-hook 'ruby-mode-hook

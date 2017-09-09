@@ -1,3 +1,6 @@
+;;; package --- Summary
+;;; Commentary:
+;;; Code:
 (when (require 'string-inflection nil t)
   (global-set-key (kbd "C-c i") 'string-inflection-cycle)
   (global-set-key (kbd "C-c C") 'string-inflection-camelcase)		;; Force to CamelCase
