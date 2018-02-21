@@ -4,7 +4,7 @@
 (when (require 'company nil t)
   (global-company-mode t)
   (setq company-idle-delay 0) ; デフォルトは0.5
-  (setq company-minimum-prefix-length 3) ; デフォルトは4
+  (setq company-minimum-prefix-length 4) ; デフォルトは4
   ; (setq company-selection-wrap-around t) ; 候補の一番下でさらに下に行こうとすると一番上に戻る
   (global-set-key (kbd "M-i") 'company-complete)
   (define-key company-active-map (kbd "M-n") nil)
