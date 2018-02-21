@@ -18,6 +18,7 @@
 (require 'init-loader)
 (setq init-loader-show-log-after-init "error-only")
 (init-loader-load "~/.emacs.d/conf")
+
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -57,7 +58,11 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(font-lock-type-face ((t (:foreground "brightcyan" :weight bold))))
- '(my-hl-line-face ((t (:background "dark blue" :underline nil)))))
+ '(my-hl-line-face ((t (:background "yellow" :underline nil)))))
+
+;; (setq hl-line-face 'my-hl-line-face)
+;; 現在行をハイライト表x示
+(global-hl-line-mode t)
 
 (provide 'init)
 ;;; init.el ends here
