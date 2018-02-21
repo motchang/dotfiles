@@ -1,16 +1,19 @@
 
-
 (when (require 'typescript-mode) nil t
-      (add-to-list 'auto-mode-alist '("\\.ts\\'" . typescript-mode)))
+      (add-to-list 'auto-mode-alist '("\\.ts[x]\\'" . typescript-mode)))
 
 (when (require 'tide) nil t
       (add-hook 'typescript-mode-hook
 		(lambda ()
+		  (setq indent-tabs-mode nil)
+		  (setq tab-width 2)
+		  (setq typescript-indent-level 2)
 		  (tide-setup)
 		  (flycheck-mode t)
 		  (setq flycheck-check-syntax-automatically '(save mode-enabled))
 		  (eldoc-mode t)
-		  (company-mode-on))))
+		  (company-mode-on)))
+      )
 
 (require 'company)
 ;;; C-n, C-pで補完候補を選べるように
@@ -47,5 +50,5 @@
                     :foreground "white"
                     :background "steelblue"
                     :underline t)
-(set-face-attribute 'company-tooltip-annotation nil
+(set-face-attribute 'company-tooltip-annotation t
                     :foreground "red")

@@ -1,33 +1,33 @@
 ;;; package --- Summary
 ;;; Commentary:
 ;;; Code:
-(cond ((eq emacs24-p t)
-       (add-to-list 'custom-theme-load-path "~/.emacs.d/themes")
-       ;; (load-theme 'wombat t)
-       ;; (load-theme 'manoj-dark t)
-       (load-theme 'pastels-on-dark t)
-       (set-face-background 'default "black")
-       (set-face-foreground 'font-lock-comment-face "#00AA00")
-       (set-face-foreground 'font-lock-string-face "#AABBEE")
-       ;; (set-face-foreground 'font-lock-type-face "color-45")
-       (set-face-foreground 'font-lock-type-face "cyan1")
-       (setq eww-search-prefix "https://www.google.co.jp/search?q="))
-      ((when (require 'color-theme nil t)
-         ;; カラーテーマの選択
-         ;; M-x color-theme-select
-         ;; カラーテーマの例
-         ;; http://gnuemacscolorthemetest.googlecode.com/svn/html/index-c.html
-         ;; テーマを読み込むための設定
-         (color-theme-initialize)
-         ;; テーマを変更する
-         ;; (color-theme-dark-laptop)
-	 ;; (color-theme-xemacs)
-	 (color-theme-robin-hood)
-         ;; いい感しの
-         ;; Wheat Billw Midnight dark-laptop
-        )))
+(add-to-list 'custom-theme-load-path "~/.emacs.d/themes")
+;; (set-face-background 'default "black")
+(set-face-foreground 'font-lock-comment-face "#00AA00")
+(set-face-foreground 'font-lock-string-face "#AABBEE")
+;; (set-face-foreground 'font-lock-type-face "color-45")
+(set-face-foreground 'font-lock-type-face "cyan1")
+;; (setq eww-search-prefix "https://www.google.co.jp/search?q="))
+(when (require 'color-theme nil t)
+;;   ;; カラーテーマの選択
+;;   ;; M-x color-theme-select
+;;   ;; テーマを読み込むための設定
+  (color-theme-initialize)
+  (color-theme-standard)
+  (color-theme-billw)
+;;   ;; テーマを変更する
+  ;; (color-theme-dark-laptop)
+;;   ;; (color-theme-xemacs)
+;;   ;; (color-theme-sitaramv-solaris)
+;;   (color-theme-deep-blue)
+  ;; (load-theme 'wombat t)
+;;   ;; (load-theme 'manoj-dark t)
+;;   ;; (load-theme 'pastels-on-dark t)
+;;   ;; Wheat Billw Midnight dark-laptop
+  )
 
-;; (set-face-foreground 'region "black")
+
+;;; (set-face-foreground 'region "white")
 ;; (set-face-background 'region "yellow")
 
 ;; paren-mode 対応する括弧を強調して表示する
@@ -45,23 +45,6 @@
 ;;(set-face-underline-p 'show-paren-match-face "yellow")
 ;;(set-face-underline-p 'show-paren-match-face t)
 ;;(setq show-paren-match-face 'underline)
-
-(defface my-hl-line-face
-   ;; 背景が dark なら
-   '((((class color) (background dark))
-      ;; (:background "maroon4" :underline nil))
-      (:background "dark blue" :underline nil))
-     ;; 背景かlightなら
-     (((class color) (background light))
-      (:background "LightGoldenrodYellow" t))
-     ;; (t (:bold t))
-     (t :underline t)
-     )
-   "hl-line's my face")
-(setq hl-line-face 'my-hl-line-face)
-
-;; 現在行をハイライト表示
-(global-hl-line-mode t)
 
 (when (require 'rainbow-mode nil t)
   (add-hook 'css-mode-hook 'rainbow-mode)

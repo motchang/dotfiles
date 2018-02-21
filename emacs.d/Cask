@@ -2,6 +2,7 @@
 (source melpa)
 (source marmalade)
 
+(depends-on "init-loader")
 (depends-on "bind-key")
 (depends-on "cask")
 (depends-on "dash")
