@@ -59,3 +59,7 @@
 ;; C-c t でテンポラリバッファを作成します。
 (global-set-key "\C-ct" 'create-temporary-buffer)
 (exec-path-from-shell-initialize)
+
+(when (require 'multi-term nil t))
+
+;;;
