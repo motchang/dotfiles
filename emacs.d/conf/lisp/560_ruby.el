@@ -6,9 +6,7 @@
     (add-hook 'robe-mode-hook
 	      '(lambda ()
 		 (define-key ruby-mode-map (kbd "M-j") 'robe-jump)))
-    (add-hook 'ruby-mode-hook 'robe-mode)
-    (eval-after-load 'company
-      '(push 'company-robe company-backends)))
+    (add-hook 'ruby-mode-hook 'robe-mode))
   (setq interpreter-mode-alist (append '(("ruby" . ruby-mode)) interpreter-mode-alist))
   (add-hook 'ruby-mode-hook
 	    '(lambda ()
@@ -27,6 +25,7 @@
 		   (when indent
 		     (indent-line-to indent)
 		     (when (> offset 0) (forward-char offset)))))
+	       ;;
 	       (set-default-coding-systems 'utf-8)
 	       (setq c-toggle-hungry-state t)
 	       (setq ruby-insert-encoding-magic-comment nil)
@@ -51,12 +50,8 @@
 	       (when (require 'rinari nil t)
 		 (rinari-minor-mode 1))
 	       (when (require 'ruby-compilation nil t)
-		 (define-key ruby-mode-map (kbd "\M-r") 'run-rails-test-or-ruby-buffer))
-	       (when (require 'auto-complete nil t)
-		 ;; http://qiita.com/tadsan/items/ab3c3b594b5bf6203f02
-		 (make-local-variable 'ac-ignore-case)
-		 (setq ac-ignore-case nil)
-		 (abbrev-mode 1))))
+		 (setq company-minimum-prefix-length 4)
+		 (define-key ruby-mode-map (kbd "\M-r") 'run-rails-test-or-ruby-buffer))))
   ;; set ruby-mode indent
   (setq ruby-indent-level 2)
   (setq ruby-indent-tabs-mode nil)
@@ -101,4 +96,7 @@
 	    (lambda ()
 	      (define-key ruby-mode-map (kbd "C-c r") 'execute-rspec)
 	      (linum-mode))))
+
+;; https://github.com/endofunky/bundler.el
+(when (require 'bundler nil t))
 ;;;

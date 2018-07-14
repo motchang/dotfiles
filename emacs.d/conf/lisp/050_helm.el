@@ -41,6 +41,9 @@
 
 (when (require 'helm-swoop nil t))
 
+(when (require 'helm-ghq nil t)
+  (define-key global-map (kbd "C-]") 'helm-ghq))
+
 (when (require 'helm-descbinds nil t)
   (helm-descbinds-mode)
   (define-key global-map (kbd "C-h C-b")  'helm-descbinds)

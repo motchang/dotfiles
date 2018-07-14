@@ -9,7 +9,12 @@ emacs.d/geben/.storage
 emacs.d/elpa/archives/*
 emacs.d/url/cache/
 emacs.d/recentf
+emacs.d/.cache
 *.elc
 *~
 \#*\#
 .DS_*
+recentf
+*.gpg
+*.kbx
+*.data

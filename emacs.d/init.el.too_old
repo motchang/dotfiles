@@ -69,8 +69,8 @@
 (byte-recompile-directory (expand-file-name "~/.emacs.d") 0)
 
 ;; http://d.hatena.ne.jp/rubikitch/20100423/bytecomp
-(when (require 'auto-async-byte-compile)
-  (add-hook 'emacs-lisp-mode-hook 'enable-auto-async-byte-compile-mode))
+;; (when (require 'auto-async-byte-compile)
+;;   (add-hook 'emacs-lisp-mode-hook 'enable-auto-async-byte-compile-mode))
 
 ;; ---------------------------------------------------------
 ;; 自慢の.emacsを貼り付けるスレ / 本体の根本的な設定
@@ -264,7 +264,7 @@
        (add-to-list 'custom-theme-load-path "~/.emacs.d/themes")
        ;; (load-theme 'wombat t)
        ;; (load-theme 'manoj-dark t)
-       (load-theme 'pastels-on-dark t)
+       ;; (load-theme 'pastels-on-dark t)
        (set-face-background 'default "black")
        (set-face-foreground 'font-lock-comment-face "#00AA00")
        (set-face-foreground 'font-lock-string-face "#AABBEE")
