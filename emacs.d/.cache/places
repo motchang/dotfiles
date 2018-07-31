@@ -1,0 +1,13 @@
+;;; -*- coding: utf-8 -*-
+(("/Users/i.kouji.okamoto/src/dotfiles/emacs.d/Cask.old" . 1789)
+ ("/Users/i.kouji.okamoto/src/dotfiles/emacs.d/Cask" . 2388)
+ ("/Users/i.kouji.okamoto/src/dotfiles/emacs.d/"
+  (dired-filename . "/Users/i.kouji.okamoto/src/dotfiles/emacs.d/.cache"))
+ ("/Users/i.kouji.okamoto/src/dotfiles/emacs.d/conf/lisp/050_helm.el" . 2278)
+ ("/Users/i.kouji.okamoto/.emacs.d/.cache/recentf" . 1053)
+ ("/Users/i.kouji.okamoto/.emacs.d/.cache/layouts/persp-auto-save" . 2207)
+ ("/Users/i.kouji.okamoto/.emacs.d/init.el" . 3261)
+ ("/Users/i.kouji.okamoto/src/github.com/globis-org/hodai/"
+  (dired-filename . "/Users/i.kouji.okamoto/src/github.com/globis-org/hodai/Gemfile"))
+ ("/Users/i.kouji.okamoto/.spacemacs" . 1702)
+ ("/Users/i.kouji.okamoto/src/github.com/globis-org/hodai/.rubocop_glopla.yml" . 637))
