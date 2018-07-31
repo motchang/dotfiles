@@ -31,6 +31,7 @@
 (depends-on "init-loader")
 (depends-on "company")
 (depends-on "magit")
+(depends-on "git-link")
 (depends-on "auto-async-byte-compile")
 (depends-on "recentf")
 (depends-on "string-inflection")
