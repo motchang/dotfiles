@@ -2,7 +2,6 @@
 ;;; Commentary:
 ;;; Code:
 (dolist (dir (list
-	      "/usr/local/mysql/bin"
 	      "/usr/local/bin"
 	      "/sbin"
 	      "/usr/sbin"
@@ -32,25 +31,26 @@
 	(save-buffers-kill-emacs)))
   (global-set-key "\C-x\C-c" 'my-save-buffers-kill-emacs))
 
-(defun add-to-load-path (&rest paths)
- (let (path)
-    (dolist (path paths paths)
-      (let ((default-directory (expand-file-name (concat user-emacs-directory path))))
-	(add-to-list 'load-path default-directory)
-	(if (fboundp 'normal-top-level-add-subdirs-to-load-path)
-	    (normal-top-level-add-subdirs-to-load-path))))))
+;; (defun add-to-load-path (&rest paths)
+;;  (let (path)
+;;     (dolist (path paths paths)
+;;       (let ((default-directory (expand-file-name (concat user-emacs-directory path))))
+;; 	(add-to-list 'load-path default-directory)
+;; 	(if (fboundp 'normal-top-level-add-subdirs-to-load-path)
+	    ;; (normal-top-level-add-subdirs-to-load-path))))))
 
-(add-to-load-path "conf")
+;; (add-to-load-path "conf")
 
-(byte-recompile-directory (expand-file-name "~/.emacs.d") 0)
+;; (byte-recompile-directory (expand-file-name "~/.emacs.d") 0)
 (byte-recompile-directory (expand-file-name "~/.emacs.d/conf") 0)
 
-(setq install-elisp-repository-directory "~/.emacs.d/elisp")
+;; (setq install-elisp-repository-directory "~/.emacs.d/elisp")
 
-(add-hook 'after-init-hook
-          '(lambda ()
-             (let* ((el (expand-file-name "init.el" user-emacs-directory))
-                    (elc (concat el "c")))
-              (when (file-newer-than-file-p el elc)
-                 (byte-compile-file el)))))
+;; (add-hook 'after-init-hook
+;;           '(lambda ()
+;;              (let* ((el (expand-file-name "init.el" user-emacs-directory))
+;;                     (elc (concat el "c")))
+;;               (when (file-newer-than-file-p el elc)
+;; (byte-compile-file el)))))
+
 ;;;

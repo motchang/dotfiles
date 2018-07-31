@@ -90,10 +90,24 @@ zstyle ':vcs_info:*' actionformats '(%b|%a)'
 precmd () { vcs_info }
 
 # PROMPT='[${vcs_info_msg_0_}]:%~/%f '
-PROMPT='%F{cyan}%M%f %D %t job:%F{green}%j%f wd:%~ ${vcs_info_msg_0_}
+#PROMPT='%F{cyan}%M%f %D %t job:%F{green}%j%f wd:%~ ${vcs_info_msg_0_}
+#%n %# '
+PROMPT='%D %t job:%F{green}%j%f wd:%~ ${vcs_info_msg_0_}
 %n %# '
 
 export WORDCHARS='*?_.[]~-=&;!#$%^(){}<>'
+
+# https://qiita.com/strsk/items/9151cef7e68f0746820d
+function peco-src () {
+  local selected_dir=$(ghq list -p | peco --query "$LBUFFER")
+  if [ -n "$selected_dir" ]; then
+    BUFFER="cd ${selected_dir}"
+    zle accept-line
+  fi
+  zle clear-screen
+}
+zle -N peco-src
+bindkey '^]' peco-src
 
 # http://qiita.com/uchiko/items/f6b1528d7362c9310da0
 function peco-select-history() {
@@ -144,10 +158,8 @@ then
     mkdir ${HOME}/.go
 fi
 
-export GOPATH=${HOME}/.go
+export GOPATH=${HOME}
 export PATH=${GOPATH}/bin:${PATH}
-
-export GHQ_ROOT="${HOME}/src/"
 
 # ------------------------------------------------------------------------------
 # tmux
