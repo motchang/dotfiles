@@ -70,4 +70,4 @@ export PATH
 # git
 unset SSH_ASKPASS
 
-export JAVA_HOME=`/usr/libexec/java_home -v 9.0.4`
+export JAVA_HOME=`/usr/libexec/java_home -v 9`
