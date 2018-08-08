@@ -3,7 +3,11 @@
 ;;; Code:
 ;; (load-theme 'tsdh-dark t)
 ;; (load-theme 'wombat t)
-(load-theme 'manoj-dark t)
+;; (load-theme 'manoj-dark t)
+;; (load-theme 'deeper-blue t)
+;; (load-theme 'misterioso t)
+;; (load-theme 'tango t)
+(load-theme 'tango-dark t)
 ;; (color-theme-taylor)
 
 ;; paren-mode 対応する括弧を強調して表示する
