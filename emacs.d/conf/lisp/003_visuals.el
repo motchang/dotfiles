@@ -33,4 +33,8 @@
   (add-hook 'html-mode-hook 'rainbow-mode)
   (add-hook 'lisp-mode-hook 'rainbow-mode)
   (add-hook 'web-mode-hook 'rainbow-mode))
+
+(when (require 'rainbow-delimiters nil t)
+  (rainbow-delimiters-mode t))
+
 ;;;

@@ -40,6 +40,7 @@
 (depends-on "exec-path-from-shell")
 (depends-on "find-file-in-repository")
 (depends-on "multi-term")
+(depends-on "rainbow-delimiters")
 
 (depends-on "helm")
 (depends-on "helm-gtags")
