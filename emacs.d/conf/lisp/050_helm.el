@@ -9,6 +9,7 @@
   (global-set-key (kbd "C-x C-f") #'helm-find-files)
   (global-set-key (kbd "C-x b") #'helm-mini)
   (global-set-key (kbd "C-x C-b") #'helm-buffers-list)
+  (global-set-key (kbd "M-y") #'helm-show-kill-ring)
 
   (helm-autoresize-mode t)
   (setq helm-autoresize-max-height 0)
