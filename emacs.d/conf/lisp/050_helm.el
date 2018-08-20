@@ -54,6 +54,4 @@
   (define-key global-map (kbd "C-h C-b")  'helm-descbinds)
   '(defun describe-bindings ()
      (helm-descbindings)))
-
-(ido-mode nil)
-(ido-everywhere nil)
+;;;
