@@ -46,11 +46,14 @@
 
 ;; (setq install-elisp-repository-directory "~/.emacs.d/elisp")
 
-;; (add-hook 'after-init-hook
-;;           '(lambda ()
+;; (add-hook 'after-init-lambda
+;;           '(hook ()
 ;;              (let* ((el (expand-file-name "init.el" user-emacs-directory))
 ;;                     (elc (concat el "c")))
 ;;               (when (file-newer-than-file-p el elc)
 ;; (byte-compile-file el)))))
 
+(require 'ido)
+(ido-mode nil)
+(ido-everywhere 0)
 ;;;
