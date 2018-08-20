@@ -92,8 +92,10 @@ precmd () { vcs_info }
 # PROMPT='[${vcs_info_msg_0_}]:%~/%f '
 #PROMPT='%F{cyan}%M%f %D %t job:%F{green}%j%f wd:%~ ${vcs_info_msg_0_}
 #%n %# '
+#PROMPT='%D %t job:%F{green}%j%f wd:%~ ${vcs_info_msg_0_}
+#%n %# '
 PROMPT='%D %t job:%F{green}%j%f wd:%~ ${vcs_info_msg_0_}
-%n %# '
+(๑•̀ㅂ•́)و✧ '
 
 export WORDCHARS='*?_.[]~-=&;!#$%^(){}<>'
 
@@ -173,3 +175,9 @@ function ssh() {
 #THIS MUST BE AT THE END OF THE FILE FOR SDKMAN TO WORK!!!
 export SDKMAN_DIR="/Users/motchang/.sdkman"
 [[ -s "/Users/motchang/.sdkman/bin/sdkman-init.sh" ]] && source "/Users/motchang/.sdkman/bin/sdkman-init.sh"
+
+PYENV_ROOT=~/.pyenv
+export PATH=$PATH:$PYENV_ROOT/bin
+eval "$(pyenv init -)"
+eval "$(pyenv virtualenv-init -)"
+
