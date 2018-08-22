@@ -2,7 +2,7 @@
 ;;; Commentary:
 ;;; Code:
 (if (window-system)
-    (load-theme 'tango-dark t)
+    (load-theme 'tango t)
   (load-theme 'tsdh-dark t))
 ;; (load-theme 'wombat t)
 ;; (load-theme 'manoj-dark t)
@@ -23,9 +23,13 @@
 ;; mixed だと画面内に収まらない時にカッコ内も表示する
 ;; (setq show-paren-style 'mixed)
 
-(set-face-attribute 'show-paren-match nil
-                    :background "#444444" :foreground nil
-                    :underline nil :weight 'bold)
+(if (window-system)
+    (set-face-attribute 'show-paren-match nil
+			:background "#dddddd" :foreground nil
+			:underline nil :weight 'bold)
+  (set-face-attribute 'show-paren-match nil
+                      :background "#444444" :foreground nil
+                      :underline nil :weight 'bold))
 
 (when (require 'rainbow-mode nil t)
   (add-hook 'css-mode-hook 'rainbow-mode)
@@ -50,7 +54,10 @@
 
 (set-cursor-color "Green")
 (global-hl-line-mode 1)
-(set-face-background 'hl-line "#444444")
+(if (window-system)
+    (set-face-background 'hl-line "#dddddd")
+  (set-face-background 'hl-line "#444444"))
+
 (set-face-foreground 'hl-line nil)
 (set-face-foreground 'highlight nil)
 ;;;
