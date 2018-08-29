@@ -87,13 +87,6 @@
    ;; If you edit it by hand, you could mess it up, so be careful.
    ;; Your init file should contain only one such instance.
    ;; If there is more than one, they won't work right.
-   '(custom-safe-themes
-     (quote
-      ("e80932ca56b0f109f8545576531d3fc79487ca35a9a9693b62bf30d6d08c9aaf" "4aee8551b53a43a883cb0b7f3255d6859d766b6c5e14bcb01bed572fcbef4328" "211bb9b24001d066a646809727efb9c9a2665c270c753aa125bace5e899cb523" default)))
-   '(flycheck-display-errors-function (function flycheck-pos-tip-error-messages))
-   '(rspec-use-rake-flag nil)
-   '(rspec-use-rake-when-possible nil)
-   '(rspec-use-spring-when-possible nil)
    )
   (add-hook 'rspec-mode-hook
 	    (lambda ()
