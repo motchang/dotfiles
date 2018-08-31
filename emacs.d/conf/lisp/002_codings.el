@@ -1,11 +1,15 @@
 ;;; package --- Summary
 ;;; Commentary:
 ;;; Code:
+(set-locale-environment "utf-8")
+(setenv "LANG" "en_US.UTF-8")
 (set-default-coding-systems 'utf-8)
 (set-keyboard-coding-system 'utf-8)
 (set-terminal-coding-system 'utf-8)
 (set-buffer-file-coding-system 'utf-8)
 (prefer-coding-system 'utf-8)
+
+
 
 (cond ((eq darwin-p t)
        ;; Mac の文字コード

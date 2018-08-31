@@ -64,8 +64,8 @@
    ;; Your init file should contain only one such instance.
    ;; If there is more than one, they won't work right.
    (if (window-system)
-       '(font-lock-type-face ((t (:foreground "#0077ff" :weight bold))))
-     '(font-lock-type-face ((t (:foreground "brightcyan" :weight bold))))
+       '(font-lock-type-face ((t (:foreground "#66ccff" :weight bold))))
+     '(font-lock-type-face ((t (:foreground "#66ccff" :weight bold))))
      )
    ;; '(my-hl-line-face ((t (:background "dark blue" :underline nil))))
    ))
