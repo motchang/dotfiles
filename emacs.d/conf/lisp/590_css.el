@@ -12,7 +12,7 @@
      (set (make-local-variable 'css-indent-offset) 2)
      (set (make-local-variable 'scss-compile-at-save) nil)))
   (add-hook 'scss-mode-hook
-						'(lambda() (scss-custom))))
+	    '(lambda() (scss-custom))))
 
 (when (require 'sass-mode nil t)
   (defun sass-custom ()
