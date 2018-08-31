@@ -12,12 +12,13 @@
 (setq make-backup-files nil)
 
 (tool-bar-mode 0)
-; (scroll-bar-mode 0)
+(scroll-bar-mode 0)
 (menu-bar-mode 0)
 
 (line-number-mode t)
 (column-number-mode t)
 (global-font-lock-mode t)
+(setq ring-bell-function 'ignore)
 
 (setq transient-mark-mode t)
 (setq search-highlight t)

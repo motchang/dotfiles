@@ -50,15 +50,15 @@ then
     PATH=${PATH}:${HOME}/bin/android-sdks/platform-tools
 fi
 
-if [ -d /usr/local/mysql/bin ]
-then
-    PATH=${PATH}:/usr/local/mysql/bin
-fi
+# if [ -d /usr/local/mysql/bin ]
+# then
+#     PATH=${PATH}:/usr/local/mysql/bin
+# fi
 
-if [ -d /usr/local/mysql/lib ]
-then
-    export DYLD_LIBRARY_PATH=/usr/local/mysql/lib:${DYLD_LIBRARY_PATH}
-fi
+# if [ -d /usr/local/mysql/lib ]
+# then
+#     export DYLD_LIBRARY_PATH=/usr/local/mysql/lib:${DYLD_LIBRARY_PATH}
+# fi
 
 if [ -d /usr/local/heroku/bin ]
 then
@@ -70,4 +70,4 @@ export PATH
 # git
 unset SSH_ASKPASS
 
-export JAVA_HOME=`/usr/libexec/java_home -v 9`
+# export JAVA_HOME=`/usr/libexec/java_home -v 9`

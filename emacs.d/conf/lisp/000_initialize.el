@@ -54,6 +54,6 @@
 ;; (byte-compile-file el)))))
 
 (require 'ido)
-(ido-mode nil)
+(ido-mode 0)
 (ido-everywhere 0)
 ;;;
