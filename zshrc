@@ -44,6 +44,7 @@ alias emacs-simple='emacs --no-init-file'
 # alias ssh='ssh -o ServerAliveCountMax=5 -o ServerAliveInterval=60'
 alias tmux='tmux -2'
 alias history='history -E 1'
+alias ocaml='rlwrap ocaml'
 
 if [ `uname` = "Darwin" ]
 then
@@ -63,6 +64,8 @@ if [ ! -z "$SSH_AUTH_SOCK" -a "$SSH_AUTH_SOCK" != "$HOME/.ssh/agent_sock" ] ; th
     unlink "$HOME/.ssh/agent_sock" 2>/dev/null
     ln -s "$SSH_AUTH_SOCK" "$HOME/.ssh/agent_sock"
     export SSH_AUTH_SOCK="$HOME/.ssh/agent_sock"
+	eval `ssh-agent`
+	ssh-add
 fi
 
 export EDITOR='emacsclient -nw'
@@ -181,3 +184,16 @@ export PATH=$PATH:$PYENV_ROOT/bin
 eval "$(pyenv init -)"
 eval "$(pyenv virtualenv-init -)"
 
+export PATH="${PATH}:/usr/local/opt/qt/bin"
+
+# opam configuration
+test -r /Users/motchang/.opam/opam-init/init.zsh && . /Users/motchang/.opam/opam-init/init.zsh > /dev/null 2> /dev/null || true
+
+export PATH="${HOME}/Qt5.5.0/5.5/clang_64/bin:$PATH"
+
+
+# The next line updates PATH for the Google Cloud SDK.
+if [ -f '/Users/motchang/src/google-cloud-sdk/path.zsh.inc' ]; then . '/Users/motchang/src/google-cloud-sdk/path.zsh.inc'; fi
+
+# The next line enables shell command completion for gcloud.
+if [ -f '/Users/motchang/src/google-cloud-sdk/completion.zsh.inc' ]; then . '/Users/motchang/src/google-cloud-sdk/completion.zsh.inc'; fi
