@@ -16,7 +16,10 @@
     (setq web-mode-enable-auto-pairing          t)
     (setq web-mode-enable-auto-closing          t)
     (setq web-mode-enable-auto-quoting          t)
-    (setq web-mode-enable-auto-indentation      t))
+    (setq web-mode-enable-auto-indentation      t)
+    (if (window-system)
+	'(web-mode-type-face ((t (:foreground "#66ccfff" :weight bold))))
+      ))
   (add-hook 'web-mode-hook 'my/web-mode-hook))
 
 (when (require 'rinari nil t)

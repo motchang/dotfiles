@@ -13,7 +13,9 @@
 	    #'(lambda ()
 		(interactive)
 		(set-buffer-process-coding-system 'utf-8 'utf-8 )
-		              (setq show-trailing-whitespace nil)))
+		(setq show-trailing-whitespace nil)))
+  (setq sql-mysql-login-params (append sql-mysql-login-params '(port)))
+  (setq sql-port 3306)
   ;; starting SQL mode loading sql-indent / sql-complete
   (eval-after-load "sql"
     '(progn

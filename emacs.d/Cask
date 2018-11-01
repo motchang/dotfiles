@@ -1,3 +1,4 @@
+;; -*- mode: emacs-lisp -*-
 (source gnu)
 (source melpa)
 
@@ -41,6 +42,7 @@
 (depends-on "find-file-in-repository")
 (depends-on "multi-term")
 (depends-on "rainbow-delimiters")
+(depends-on "atom-dark-theme")
 
 (depends-on "helm")
 (depends-on "helm-gtags")
@@ -59,6 +61,7 @@
 
 (depends-on "inf-ruby")
 (depends-on "company-inf-ruby")
+;; (depends-on "ruby-block" :git "https://github.com/juszczakn/ruby-block.git")
 (depends-on "ruby-end")
 (depends-on "rinari")
 (depends-on "ruby-compilation")
@@ -106,3 +109,6 @@
 
 (depends-on "ess") ;; for R
 (depends-on "slack")
+
+(depends-on "caml")
+(depends-on "tuareg")

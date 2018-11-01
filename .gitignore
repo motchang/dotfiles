@@ -14,3 +14,9 @@ recentf
 \#*\#
 .DS_*
 ido.last
+trustdb.gpg
+pubring.kbx
+eshell/history
+eshell/lastdir
+url/cookies
+
