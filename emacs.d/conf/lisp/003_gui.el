@@ -7,7 +7,7 @@
   ;; 1. M-x menu-set-font
   ;; 2. M-x describe-font
   ;; 3. copy and paste "name"
-  (set-frame-font "-*-Source Code Pro-normal-normal-normal-*-13-*-*-*-m-0-iso10646-1"))
+  (set-frame-font "-*-Source Code Pro-normal-normal-normal-*-12-*-*-*-m-0-iso10646-1"))
   ;; (set-frame-font "-*-Fira Code-normal-normal-normal-*-14-*-*-*-m-0-iso10646-1"))
 
 ;; Ligature
@@ -43,4 +43,4 @@
 
 (when (window-system)
   (when (require 'nyan-mode nil t)
-    (nyan-mode 1)))
+    (nyan-mode 0)))

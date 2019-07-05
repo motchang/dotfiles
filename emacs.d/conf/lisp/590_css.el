@@ -4,6 +4,7 @@
 (when (require 'scss-mode nil t)
   ;; インデント幅を2にする
   ;; SASSの自動コンパイルをオフ
+  (setq css-indent-offset 2)
   (defun scss-custom ()
     "scss-mode-hook"
     (and

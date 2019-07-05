@@ -17,3 +17,9 @@
 ;; git-link
 (when (require 'git-link nil t)
   (setq git-link-open-in-browser t))
+
+(when (require 'git-gutter nil t)
+    (setq git-gutter:modified-sign "~")
+    (setq git-gutter:added-sign    "+")
+    (setq git-gutter:deleted-sign  "-")
+    (global-git-gutter-mode 1))

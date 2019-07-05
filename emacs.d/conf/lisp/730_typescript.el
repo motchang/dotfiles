@@ -3,17 +3,38 @@
       (add-to-list 'auto-mode-alist '("\\.ts[x]\\'" . typescript-mode)))
 
 (when (require 'tide) nil t
-      (add-hook 'typescript-mode-hook
-		(lambda ()
-		  (setq indent-tabs-mode nil)
-		  (setq tab-width 2)
-		  (setq typescript-indent-level 2)
-		  (tide-setup)
-		  (flycheck-mode t)
-		  (setq flycheck-check-syntax-automatically '(save mode-enabled))
-		  (eldoc-mode t)
-		  (company-mode-on)))
+      (defun setup-tide-mode ()
+				(interactive)
+				(tide-setup)
+				(flycheck-mode +1)
+				(setq flycheck-check-syntax-automatically '(save mode-enabled))
+				(eldoc-mode +1)
+				(tide-hl-identifier-mode +1)
+				;; company is an optional dependency. You have to
+				;; install it separately via package-install
+				;; `M-x package-install [ret] company`
+				(company-mode +1))
+
+      ;; aligns annotation to the right hand side
+      (setq company-tooltip-align-annotations t)
+      (setq tide-format-options '(:indentSize 2 :tabSize 2 :insertSpaceAfterFunctionKeywordForAnonymousFunctions t :placeOpenBraceOnNewLineForFunctions nil))
+
+      ;; formats the buffer before saving
+      (add-hook 'before-save-hook 'tide-format-before-save)
       )
+
+(when (require 'web-mode nil t)
+  (add-to-list 'auto-mode-alist '("\\.tsx\\'" . web-mode))
+  (add-hook 'web-mode-hook
+            (lambda ()
+						  (setq-default tab-width 2)
+						  (setq tab-width 2)
+						  (setq indent-tabs-mode nil)
+              (when (string-equal "tsx" (file-name-extension buffer-file-name))
+								(setup-tide-mode))))
+  ;; enable typescript-tslint checker
+  (flycheck-add-mode 'typescript-tslint 'web-mode)
+	)
 
 (require 'company)
 ;;; C-n, C-pで補完候補を選べるように
@@ -28,7 +49,7 @@
 ;;; ドキュメント表示
 (define-key company-active-map (kbd "M-d") 'company-show-doc-buffer)
 
-(setq company-minimum-prefix-length 1) ;; 1文字入力で補完されるように
+(setq company-minimum-prefix-length 3) ;; 1文字入力で補完されるように
  ;;; 候補の一番上でselect-previousしたら一番下に、一番下でselect-nextしたら一番上に行くように
 (setq company-selection-wrap-around t)
 

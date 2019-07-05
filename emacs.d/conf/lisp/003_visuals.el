@@ -3,8 +3,11 @@
 ;;; Code:
 (if (window-system)
     (progn
-      (load-theme 'atom-dark t)
-      (setq atom-dark-theme-force-faces-for-mode nil))
+      ;; (set-face-foreground 'font-lock-comment-face "#8C9C8C")
+      ;; (set-face-foreground 'font-lock-comment-face "#8C9C8C")
+      (load-theme 'dracula t)
+      ;; (setq atom-dark-theme-force-faces-for-mode nil))
+      )
   (load-theme 'wombat t))
 ;; (load-theme 'wombat t)
 ;; (load-theme 'manoj-dark t)
@@ -21,7 +24,7 @@
 (show-paren-mode t)
 
 ;; parenのスタイル: expression は括弧内も強調表示
-(setq show-paren-style 'expression)
+(setq show-paren-style 'mixed)
 ;; mixed だと画面内に収まらない時にカッコ内も表示する
 ;; (setq show-paren-style 'mixed)
 
@@ -62,4 +65,14 @@
 
 (set-face-foreground 'hl-line nil)
 (set-face-foreground 'highlight nil)
+
+(when (require 'all-the-icons nil t))
+
+(when (require 'doom-modeline nil t)
+  (doom-modeline-mode t)
+  (setq doom-modeline-buffer-file-name-style 'truncate-with-project)
+  (setq doom-modeline-icon t)
+  (setq doom-modeline-major-mode-icon nil)
+  (setq doom-modeline-minor-modes nil))
+
 ;;;
