@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# -*- mode: shell-script -*-
 setopt EXTENDED_HISTORY
 setopt HIST_EXPIRE_DUPS_FIRST
 setopt HIST_IGNORE_DUPS
@@ -30,7 +31,6 @@ bindkey    "^[3;5~"         delete-char
 
 setopt HIST_IGNORE_DUPS
 setopt SHARE_HISTORY
-autoload colors
 
 if [ ! -f /usr/bin/vim ]
 then
@@ -55,6 +55,11 @@ fi
 if [ `uname` = "Linux" ]
 then
     alias ls='ls --color'
+fi
+
+if [ -x /usr/local/bin/hub ]
+then
+    alias git='hub'
 fi
 
 #
@@ -93,10 +98,13 @@ zstyle ':vcs_info:*' actionformats '(%b|%a)'
 precmd () { vcs_info }
 
 # PROMPT='[${vcs_info_msg_0_}]:%~/%f '
+
 #PROMPT='%F{cyan}%M%f %D %t job:%F{green}%j%f wd:%~ ${vcs_info_msg_0_}
 #%n %# '
+
 #PROMPT='%D %t job:%F{green}%j%f wd:%~ ${vcs_info_msg_0_}
 #%n %# '
+
 PROMPT='%D %t job:%F{green}%j%f wd:%~ ${vcs_info_msg_0_}
 (๑•̀ㅂ•́)و✧ '
 
@@ -131,6 +139,17 @@ function peco-select-history() {
 zle -N peco-select-history
 bindkey '^r' peco-select-history
 
+# https://qiita.com/ymm1x/items/a735e82244a877ac4d23
+co() {
+  git branch -a --sort=-authordate |
+    grep -v -e '->' -e '*' |
+    perl -pe 's/^\h+//g' |
+    perl -pe 's#^remotes/origin/###' |
+    perl -nle 'print if !$c{$_}++' |
+    peco |
+    xargs git checkout
+}
+
 # https://github.com/rhysd/zsh-bundle-exec
 #. ~/src/dotfiles/zsh-bundle-exec/zsh-bundle-exec.zsh
 
@@ -142,6 +161,7 @@ if [ $? -eq 0 ]
 then
     eval "$(rbenv init -)"
 fi
+export DISABLE_SPRING="true"
 
 # ------------------------------------------------------------------------------
 # node
@@ -197,3 +217,9 @@ if [ -f '/Users/motchang/src/google-cloud-sdk/path.zsh.inc' ]; then . '/Users/mo
 
 # The next line enables shell command completion for gcloud.
 if [ -f '/Users/motchang/src/google-cloud-sdk/completion.zsh.inc' ]; then . '/Users/motchang/src/google-cloud-sdk/completion.zsh.inc'; fi
+
+# for signed commit
+export GPG_TTY=$(tty)
+
+test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
+

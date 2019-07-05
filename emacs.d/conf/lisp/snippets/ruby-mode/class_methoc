@@ -1,0 +1,6 @@
+# -*- mode: snippet -*-
+# name:
+# key: class
+# --
+class << self
+end

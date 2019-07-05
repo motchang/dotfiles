@@ -11,7 +11,7 @@
   (global-set-key (kbd "C-x C-b") #'helm-buffers-list)
   (global-set-key (kbd "M-y") #'helm-show-kill-ring)
 
-  (helm-autoresize-mode t)
+  (helm-autoresize-mode 1)
   (setq helm-autoresize-max-height 0)
   (setq helm-autoresize-min-height 40)
 
