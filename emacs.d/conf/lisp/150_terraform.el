@@ -1,3 +1,0 @@
-;;; package --- Summary
-;;; Commentary:
-;;; Code:

@@ -1,6 +1,0 @@
-cd 
-bash
-man chsh
-chsh -s /bin/bash
-ls
-df -h

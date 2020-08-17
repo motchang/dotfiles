@@ -1,6 +1,7 @@
 ;; -*- mode: emacs-lisp -*-
 (source gnu)
 (source melpa)
+(source marmalade)
 
 (depends-on "bind-key")
 (depends-on "cask")
@@ -32,12 +33,9 @@
 (depends-on "init-loader")
 (depends-on "company")
 (depends-on "company-box")
-(depends-on "company-inf-ruby")
-(depends-on "company-quickhelp")
 (depends-on "git-complete" :git "https://github.com/zk-phi/git-complete")
-(depends-on "magit")
-(depends-on "git-link")
 (depends-on "git-gutter")
+(depends-on "git-link")
 (depends-on "auto-async-byte-compile")
 (depends-on "recentf")
 (depends-on "string-inflection")
@@ -49,12 +47,17 @@
 (depends-on "rainbow-delimiters")
 (depends-on "atom-dark-theme")
 (depends-on "dracula-theme")
-(depends-on "transpose-frame")
+(depends-on "doom-themes")
 (depends-on "doom-modeline")
-(depends-on "all-the-icons")
-
-(depends-on "direx")
-(depends-on "dired-k")
+(depends-on "eyebrowse")
+(depends-on "which-key")
+(depends-on "amx")
+(depends-on "posframe")
+(depends-on "flymake-posframe" :git "https://github.com/Ladicle/flymake-posframe")
+(depends-on "transpose-frame")
+(depends-on "yasnippet-snippets")
+(depends-on "color-identifiers-mode")
+(depends-on "quickrun")
 
 (depends-on "helm")
 (depends-on "helm-gtags")
@@ -63,21 +66,32 @@
 (depends-on "helm-ghq")
 (depends-on "helm-ls-git")
 (depends-on "helm-open-github")
-(depends-on "popwin")
-(depends-on "git-link")
-(depends-on "hydra")
+
+(depends-on "counsel")
+(depends-on "ivy-ghq" :git "https://github.com/analyticd/ivy-ghq")
 (depends-on "ace-window")
+
+(depends-on "ag")
+(depends-on "wgrep")
+(depends-on "wgrep-ag")
+
+(depends-on "popwin")
+
+(depends-on "lsp-mode")
+(depends-on "lsp-ui")
+(depends-on "company-lsp")
 
 (depends-on "flymake")
 (depends-on "flymake-cursor")
+(depends-on "flycheck")
 (depends-on "flycheck-pos-tip")
 (depends-on "auto-highlight-symbol")
 (depends-on "ggtags")
-(depends-on "yasnippet-snippets")
 
 (depends-on "inf-ruby")
-;; (depends-on "ruby-block" :git "https://github.com/juszczakn/ruby-block.git")
-(depends-on "enh-ruby-mode")
+(depends-on "company-inf-ruby")
+(depends-on "ruby-block" :git "https://github.com/motchang/ruby-block.git")
+;; (depends-on "ruby-block")
 (depends-on "ruby-end")
 (depends-on "rinari")
 (depends-on "ruby-compilation")
@@ -99,10 +113,15 @@
 (depends-on "flymake-coffee")
 (depends-on "typescript-mode")
 (depends-on "tide")
+(depends-on "prettier-js")
 
 (depends-on "go-mode")
 (depends-on "go-complete")
 (depends-on "flymake-go")
+
+(depends-on "sql-indent")
+;; (depends-on "sql-complete")
+;; (depends-on "sql-transform")
 
 (depends-on "web-mode")
 (depends-on "scss-mode")
@@ -131,4 +150,6 @@
 (depends-on "caml")
 (depends-on "tuareg")
 
-(depends-on "plantuml-mode")
+;; Rust
+(depends-on "cargo")
+(depends-on "rustic")
