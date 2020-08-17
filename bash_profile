@@ -118,3 +118,5 @@ export SDKMAN_DIR="/Users/motchang/.sdkman"
 
 
 export JAVA_HOME=`/usr/libexec/java_home -v 1.6`
+
+export PATH="$HOME/.cargo/bin:$PATH"
