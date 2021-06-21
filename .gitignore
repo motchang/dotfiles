@@ -8,6 +8,7 @@ emacs.d/url/cookies
 emacs.d/geben/.storage
 emacs.d/elpa/archives/*
 emacs.d/url/cache/
+emacs.d/conf/lisp/emojis/
 recentf
 *.elc
 *~
