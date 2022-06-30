@@ -156,24 +156,28 @@ co() {
 # ------------------------------------------------------------------------------
 # ruby
 # ------------------------------------------------------------------------------
-which rbenv >> /dev/null 2>&1
-if [ $? -eq 0 ]
-then
-    eval "$(rbenv init -)"
-fi
+# which rbenv >> /dev/null 2>&1
+# if [ $? -eq 0 ]
+# then
+#     eval "$(rbenv init -)"
+# fi
 export DISABLE_SPRING="true"
 
 # ------------------------------------------------------------------------------
 # node
 # ------------------------------------------------------------------------------
-if [ -d ${HOME}/.nvm ]
-then
-    export NVM_DIR=~/.nvm
-    # source $(brew --prefix nvm)/nvm.sh
-fi
-
-eval "$(nodenv init -)"
-export PATH="$PATH:`yarn global bin`"
+# if [ -d ${HOME}/.nvm ]
+# then
+#     export NVM_DIR=~/.nvm
+#     # source $(brew --prefix nvm)/nvm.sh
+# fi
+# 
+# which nodenv >> /dev/null 2>&1
+# if [ $? -eq 0 ]
+# then
+#     eval "$(nodenv init -)"
+#     export PATH="$PATH:`yarn global bin`"
+# fi
 
 # ------------------------------------------------------------------------------
 # golang
@@ -195,34 +199,25 @@ function ssh() {
     tmux rename-window $window_name
 }
 
-#THIS MUST BE AT THE END OF THE FILE FOR SDKMAN TO WORK!!!
-export SDKMAN_DIR="/Users/motchang/.sdkman"
-[[ -s "/Users/motchang/.sdkman/bin/sdkman-init.sh" ]] && source "/Users/motchang/.sdkman/bin/sdkman-init.sh"
+# ------------------------------------------------------------------------------
+# PHP
+# ------------------------------------------------------------------------------
+# if [ -d ${HOME}/.phpenv ]
+# then
+#     export PATH="$HOME/.phpenv/bin:$HOME/.phpenv/bin:$PATH"
+#     eval "$(phpenv init -)"
+# fi
 
-export PYENV_ROOT="$HOME/.pyenv"
-export PATH="$PYENV_ROOT/bin:$PATH"
-eval "$(pyenv init --path)"
-
-export PATH="${PATH}:/usr/local/opt/qt/bin"
-
-# opam configuration
-test -r /Users/motchang/.opam/opam-init/init.zsh && . /Users/motchang/.opam/opam-init/init.zsh > /dev/null 2> /dev/null || true
-
-export PATH="${HOME}/Qt5.5.0/5.5/clang_64/bin:$PATH"
-
-
-# The next line updates PATH for the Google Cloud SDK.
-if [ -f '/Users/motchang/src/google-cloud-sdk/path.zsh.inc' ]; then . '/Users/motchang/src/google-cloud-sdk/path.zsh.inc'; fi
-
-# The next line enables shell command completion for gcloud.
-if [ -f '/Users/motchang/src/google-cloud-sdk/completion.zsh.inc' ]; then . '/Users/motchang/src/google-cloud-sdk/completion.zsh.inc'; fi
+# export PYENV_ROOT="$HOME/.pyenv"
+# export PATH="$PYENV_ROOT/bin:$PATH"
+# eval "$(pyenv init --path)"
 
 # for signed commit
 export GPG_TTY=$(tty)
 
 test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
 
-
-export PATH="$HOME/.yarn/bin:$HOME/.config/yarn/global/node_modules/.bin:$PATH"
-
 . ${HOME}/.cargo/env
+eval "$(anyenv init -)"
+
+export PATH=${PATH}:/usr/local/share/git-core/contrib/diff-highlight
