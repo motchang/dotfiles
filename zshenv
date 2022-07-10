@@ -72,3 +72,4 @@ unset SSH_ASKPASS
 
 # export JAVA_HOME=`/usr/libexec/java_home -v 9`
 source "$HOME/.cargo/env"
+. "$HOME/.cargo/env"
