@@ -90,3 +90,4 @@ bind '"\C-r":"peco-history\n"'
 
 
 export PATH="$(brew --prefix qt@5.5)/bin:$PATH"
+. "$HOME/.cargo/env"

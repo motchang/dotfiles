@@ -46,6 +46,8 @@ alias tmux='tmux -2'
 alias history='history -E 1'
 alias ocaml='rlwrap ocaml'
 
+eval "$(/opt/homebrew/bin/brew shellenv)"
+
 if [ `uname` = "Darwin" ]
 then
     alias ls='gls -G --color'
@@ -139,41 +141,13 @@ function peco-select-history() {
 zle -N peco-select-history
 bindkey '^r' peco-select-history
 
-# https://qiita.com/ymm1x/items/a735e82244a877ac4d23
-co() {
-  git branch -a --sort=-authordate |
-    grep -v -e '->' -e '*' |
-    perl -pe 's/^\h+//g' |
-    perl -pe 's#^remotes/origin/###' |
-    perl -nle 'print if !$c{$_}++' |
-    peco |
-    xargs git checkout
-}
-
 # https://github.com/rhysd/zsh-bundle-exec
 #. ~/src/dotfiles/zsh-bundle-exec/zsh-bundle-exec.zsh
 
 # ------------------------------------------------------------------------------
-# ruby
+# anyenv
 # ------------------------------------------------------------------------------
-which rbenv >> /dev/null 2>&1
-if [ $? -eq 0 ]
-then
-    eval "$(rbenv init -)"
-fi
-export DISABLE_SPRING="true"
-
-# ------------------------------------------------------------------------------
-# node
-# ------------------------------------------------------------------------------
-if [ -d ${HOME}/.nvm ]
-then
-    export NVM_DIR=~/.nvm
-    # source $(brew --prefix nvm)/nvm.sh
-fi
-
-eval "$(nodenv init -)"
-export PATH="$PATH:`yarn global bin`"
+eval "$(anyenv init -)"
 
 # ------------------------------------------------------------------------------
 # golang
@@ -182,34 +156,8 @@ if [ ! -d ${HOME}/.go ]
 then
     mkdir ${HOME}/.go
 fi
-
 export GOPATH=${HOME}
 export PATH=${GOPATH}/bin:${PATH}
-
-# ------------------------------------------------------------------------------
-# tmux
-# ------------------------------------------------------------------------------
-function ssh() {
-    local window_name=$(tmux display -p '#{window_name}')
-    command ssh $@
-    tmux rename-window $window_name
-}
-
-#THIS MUST BE AT THE END OF THE FILE FOR SDKMAN TO WORK!!!
-export SDKMAN_DIR="/Users/motchang/.sdkman"
-[[ -s "/Users/motchang/.sdkman/bin/sdkman-init.sh" ]] && source "/Users/motchang/.sdkman/bin/sdkman-init.sh"
-
-export PYENV_ROOT="$HOME/.pyenv"
-export PATH="$PYENV_ROOT/bin:$PATH"
-eval "$(pyenv init --path)"
-
-export PATH="${PATH}:/usr/local/opt/qt/bin"
-
-# opam configuration
-test -r /Users/motchang/.opam/opam-init/init.zsh && . /Users/motchang/.opam/opam-init/init.zsh > /dev/null 2> /dev/null || true
-
-export PATH="${HOME}/Qt5.5.0/5.5/clang_64/bin:$PATH"
-
 
 # The next line updates PATH for the Google Cloud SDK.
 if [ -f '/Users/motchang/src/google-cloud-sdk/path.zsh.inc' ]; then . '/Users/motchang/src/google-cloud-sdk/path.zsh.inc'; fi
@@ -222,7 +170,9 @@ export GPG_TTY=$(tty)
 
 test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
 
-
-export PATH="$HOME/.yarn/bin:$HOME/.config/yarn/global/node_modules/.bin:$PATH"
-
 . ${HOME}/.cargo/env
+
+# heroku autocomplete setup
+HEROKU_AC_ZSH_SETUP_PATH=/Users/motchang/Library/Caches/heroku/autocomplete/zsh_setup && test -f $HEROKU_AC_ZSH_SETUP_PATH && source $HEROKU_AC_ZSH_SETUP_PATH;
+
+
