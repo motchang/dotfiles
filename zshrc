@@ -144,10 +144,16 @@ bindkey '^r' peco-select-history
 # https://github.com/rhysd/zsh-bundle-exec
 #. ~/src/dotfiles/zsh-bundle-exec/zsh-bundle-exec.zsh
 
+
 # ------------------------------------------------------------------------------
 # anyenv
 # ------------------------------------------------------------------------------
 eval "$(anyenv init -)"
+
+# ------------------------------------------------------------------------------
+# direnv
+# ------------------------------------------------------------------------------
+eval "$(direnv hook zsh)"
 
 # ------------------------------------------------------------------------------
 # golang
@@ -173,6 +179,4 @@ test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell
 . ${HOME}/.cargo/env
 
 # heroku autocomplete setup
-HEROKU_AC_ZSH_SETUP_PATH=/Users/motchang/Library/Caches/heroku/autocomplete/zsh_setup && test -f $HEROKU_AC_ZSH_SETUP_PATH && source $HEROKU_AC_ZSH_SETUP_PATH;
-
-
+# HEROKU_AC_ZSH_SETUP_PATH=/Users/motchang/Library/Caches/heroku/autocomplete/zsh_setup && test -f $HEROKU_AC_ZSH_SETUP_PATH && source $HEROKU_AC_ZSH_SETUP_PATH;
