@@ -77,6 +77,7 @@ brew "libiconv"
 brew "vulkan-loader"
 brew "libxml2"
 brew "libzip"
+brew "mas"
 brew "mkvtoolnix"
 brew "molten-vk"
 brew "mpv"
@@ -117,6 +118,36 @@ cask "amethyst"
 cask "chromedriver"
 cask "google-cloud-sdk"
 cask "orbstack"
+mas "1Focus", id: 969210610
+mas "Accelerate", id: 1459809092
+mas "AdBlock Pro", id: 1018301773
+mas "Be Focused Pro", id: 961632517
+mas "BetterSnapTool", id: 417375580
+mas "Chrono Plus", id: 946047238
+mas "Control Panel for Twitter", id: 1668516167
+mas "Developer", id: 640199958
+mas "Disk Speed Test", id: 425264550
+mas "GarageBand", id: 682658836
+mas "Goodnotes", id: 1444383602
+mas "iMovie", id: 408981434
+mas "Keynote", id: 409183694
+mas "Kindle", id: 302584613
+mas "LINE", id: 539883307
+mas "MARKETSPEED", id: 946680495
+mas "Microsoft Remote Desktop", id: 1295203466
+mas "miniVideo", id: 1483114619
+mas "Numbers", id: 409203825
+mas "Pages", id: 409201541
+mas "PiPifier", id: 1160374471
+mas "Playgrounds", id: 1496833156
+mas "Prime Video", id: 545519333
+mas "RunCat", id: 1429033973
+mas "Skitch", id: 425955336
+mas "Speedtest", id: 1153157709
+mas "Take A Break, Please", id: 843150501
+mas "The Unarchiver", id: 425424353
+mas "White Noise", id: 415139197
+mas "Xcode", id: 497799835
 vscode "1yib.rust-bundle"
 vscode "aki77.rubocop-quick-fix"
 vscode "bajdzis.vscode-database"
