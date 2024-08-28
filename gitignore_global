@@ -191,3 +191,5 @@ fabric.properties
 .generators
 .rakeTasks
 .node-version
+
+/tmp/
