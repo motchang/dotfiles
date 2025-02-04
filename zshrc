@@ -13,6 +13,30 @@ setopt HIST_BEEP
 HISTFILE=~/.zsh_history
 HISTSIZE=1000000
 SAVEHIST=1000000
+
+### Added by Zinit's installer
+if [[ ! -f $HOME/.local/share/zinit/zinit.git/zinit.zsh ]]; then
+    print -P "%F{33} %F{220}Installing %F{33}ZDHARMA-CONTINUUM%F{220} Initiative Plugin Manager (%F{33}zdharma-continuum/zinit%F{220})…%f"
+    command mkdir -p "$HOME/.local/share/zinit" && command chmod g-rwX "$HOME/.local/share/zinit"
+    command git clone https://github.com/zdharma-continuum/zinit "$HOME/.local/share/zinit/zinit.git" && \
+        print -P "%F{33} %F{34}Installation successful.%f%b" || \
+        print -P "%F{160} The clone has failed.%f%b"
+fi
+
+source "$HOME/.local/share/zinit/zinit.git/zinit.zsh"
+autoload -Uz _zinit
+(( ${+_comps} )) && _comps[zinit]=_zinit
+
+# Load a few important annexes, without Turbo
+# (this is currently required for annexes)
+zinit light-mode for \
+    zdharma-continuum/zinit-annex-as-monitor \
+    zdharma-continuum/zinit-annex-bin-gem-node \
+    zdharma-continuum/zinit-annex-patch-dl \
+    zdharma-continuum/zinit-annex-rust
+
+### End of Zinit's installer chunk
+
 setopt appendhistory autocd extendedglob nomatch notify
 bindkey -e
 # End of lines configured by zsh-newuser-install
@@ -45,6 +69,9 @@ alias emacs-simple='emacs --no-init-file'
 alias tmux='tmux -2'
 alias history='history -E 1'
 alias ocaml='rlwrap ocaml'
+# alias git='gh'
+# alias cleanupbranches='git branch --format "%(refname:short) %(upstream:track)" | grep "\[gone\]" | awk "{print $1}" | xargs -I{} git branch -D {}'
+alias cleanupbranches='git branch --format "%(refname:short) %(upstream:track)" | grep "\[gone\]" | awk "{print $1}" | xargs -I{} git branch -D {}'
 
 eval "$(/opt/homebrew/bin/brew shellenv)"
 
@@ -59,7 +86,7 @@ then
     alias ls='ls --color'
 fi
 
-if [ -x /usr/local/bin/hub ]
+if [ -x $(brew --prefix)/bin/hub ]
 then
     alias git='hub'
 fi
@@ -75,7 +102,7 @@ if [ ! -z "$SSH_AUTH_SOCK" -a "$SSH_AUTH_SOCK" != "$HOME/.ssh/agent_sock" ] ; th
 	ssh-add
 fi
 
-export EDITOR='emacsclient -nw'
+export EDITOR='emacsclient'
 
 # TAB 補完時に大文字小文字無視
 compctl -M 'm:{a-z}={A-Z}'
@@ -86,29 +113,67 @@ setopt IGNOREEOF
 #
 # prompting
 #
+zinit light mafredri/zsh-async
+
 autoload -Uz colors
 colors
 
-# http://tkengo.github.io/blog/2013/05/12/zsh-vcs-info/
-autoload -Uz vcs_info
+autoload -Uz add-zsh-hook
 setopt prompt_subst
-zstyle ':vcs_info:git:*' check-for-changes true
-zstyle ':vcs_info:git:*' stagedstr "%F{yellow}!"
-zstyle ':vcs_info:git:*' unstagedstr "%F{red}+"
-zstyle ':vcs_info:*' formats "%F{green}%c%u(%b)%f"
-zstyle ':vcs_info:*' actionformats '(%b|%a)'
-precmd () { vcs_info }
 
-# PROMPT='[${vcs_info_msg_0_}]:%~/%f '
+# Git情報を取得する関数
+function async_git_info() {
+    cd -q "$1"
+    if ! git rev-parse --git-dir &>/dev/null; then
+        echo ""
+        return
+    fi
 
-#PROMPT='%F{cyan}%M%f %D %t job:%F{green}%j%f wd:%~ ${vcs_info_msg_0_}
-#%n %# '
+    local git_status="$(git status --porcelain 2>/dev/null)"
+    local branch="$(git symbolic-ref --short HEAD 2>/dev/null || git rev-parse --short HEAD 2>/dev/null)"
+    local result=""
 
-#PROMPT='%D %t job:%F{green}%j%f wd:%~ ${vcs_info_msg_0_}
-#%n %# '
+    if [[ -n "$branch" ]]; then
+        result="%F{green}"
+        if [[ -n "$(echo "$git_status" | grep '^[MADRCU]')" ]]; then
+            result+="%F{yellow}!"
+        fi
+        if [[ -n "$(echo "$git_status" | grep '^.[MADRCU]')" ]]; then
+            result+="%F{red}+"
+        fi
+        result+="($branch)%f"
+    fi
 
-PROMPT='%D %t job:%F{green}%j%f wd:%~ ${vcs_info_msg_0_}
-(๑•̀ㅂ•́)و✧ '
+    echo "$result"
+}
+
+# 非同期ワーカーの初期化
+async_init
+
+# グローバル変数の初期化
+typeset -g ASYNC_PROMPT_INFO=""
+
+# コールバック関数
+function prompt_callback() {
+    ASYNC_PROMPT_INFO="$3"
+    zle reset-prompt
+}
+
+# 非同期ワーカーの設定
+async_start_worker prompt_worker -n
+async_register_callback prompt_worker prompt_callback
+
+# プロンプト更新関数
+function precmd() {
+    async_job prompt_worker async_git_info "$PWD"
+}
+
+# プロンプトの設定
+PROMPT='%D %t job:%F{green}%j%f wd:%~ ${ASYNC_PROMPT_INFO}
+%n %# '
+
+# PROMPT='%D %t job:%F{green}%j%f wd:%~ ${ASYNC_PROMPT_INFO}
+# (๑•̀ㅂ•́)و✧ '
 
 export WORDCHARS='*?_.[]~-=&;!#$%^(){}<>'
 
@@ -144,11 +209,35 @@ bindkey '^r' peco-select-history
 # https://github.com/rhysd/zsh-bundle-exec
 #. ~/src/dotfiles/zsh-bundle-exec/zsh-bundle-exec.zsh
 
+function peco-git-branch () {
+    local selected_branch=$(git branch -a | sed 's/^\*\s*//' | sort | uniq | \
+                          peco --prompt="Switch branch > " | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+    if [ -n "$selected_branch" ]; then
+        # remotes/origin/プレフィックスを削除
+        local branch_name=$(echo $selected_branch | sed 's|^remotes/origin/||')
+        BUFFER="git switch $branch_name"
+        CURSOR=$#BUFFER
+    fi
+    zle reset-prompt
+}
+
+zle -N peco-git-branch
+bindkey '^xb' peco-git-branch
 
 # ------------------------------------------------------------------------------
 # anyenv
 # ------------------------------------------------------------------------------
-eval "$(anyenv init -)"
+# eval "$(anyenv init -)"
+
+# ------------------------------------------------------------------------------
+# mise
+# ------------------------------------------------------------------------------
+eval "$(${HOME}/.local/bin/mise activate zsh)"
+
+# ------------------------------------------------------------------------------
+# python
+# ------------------------------------------------------------------------------
+export PATH="${HOME}/.local/bin:$PATH"
 
 # ------------------------------------------------------------------------------
 # direnv
@@ -165,6 +254,19 @@ fi
 export GOPATH=${HOME}
 export PATH=${GOPATH}/bin:${PATH}
 
+# ------------------------------------------------------------------------------
+# Java
+# ------------------------------------------------------------------------------
+export PATH="/opt/homebrew/opt/openjdk/bin:$PATH"
+export CPPFLAGS="-I/opt/homebrew/opt/openjdk/include"
+export ES_JAVA_HOME="$(brew --prefix openjdk)/libexec/openjdk.jdk/Contents/Home"
+
+# ------------------------------------------------------------------------------
+# Rust
+# ------------------------------------------------------------------------------
+. ${HOME}/.cargo/env
+
+
 # The next line updates PATH for the Google Cloud SDK.
 if [ -f '/Users/motchang/src/google-cloud-sdk/path.zsh.inc' ]; then . '/Users/motchang/src/google-cloud-sdk/path.zsh.inc'; fi
 
@@ -175,8 +277,3 @@ if [ -f '/Users/motchang/src/google-cloud-sdk/completion.zsh.inc' ]; then . '/Us
 export GPG_TTY=$(tty)
 
 test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
-
-. ${HOME}/.cargo/env
-
-# heroku autocomplete setup
-# HEROKU_AC_ZSH_SETUP_PATH=/Users/motchang/Library/Caches/heroku/autocomplete/zsh_setup && test -f $HEROKU_AC_ZSH_SETUP_PATH && source $HEROKU_AC_ZSH_SETUP_PATH;
