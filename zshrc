@@ -56,11 +56,6 @@ bindkey    "^[3;5~"         delete-char
 setopt HIST_IGNORE_DUPS
 setopt SHARE_HISTORY
 
-if [ ! -f /usr/bin/vim ]
-then
-    alias vim='vi'
-fi
-
 alias rm='rm -i'
 alias cp='cp -i'
 alias mv='mv -i'
@@ -78,7 +73,8 @@ eval "$(/opt/homebrew/bin/brew shellenv)"
 if [ `uname` = "Darwin" ]
 then
     alias ls='gls -G --color'
-    alias emacs='emacsclient -nw'
+    # alias emacs='emacsclient -nw'
+    alias emacs='/Applications/Emacs.app/Contents/MacOS/bin/emacsclient -nw'
 fi
 
 if [ `uname` = "Linux" ]
@@ -86,21 +82,16 @@ then
     alias ls='ls --color'
 fi
 
-if [ -x $(brew --prefix)/bin/hub ]
-then
-    alias git='hub'
-fi
-
 #
-# use single socket file in ssh agent forwarding
-#
-if [ ! -z "$SSH_AUTH_SOCK" -a "$SSH_AUTH_SOCK" != "$HOME/.ssh/agent_sock" ] ; then
-    unlink "$HOME/.ssh/agent_sock" 2>/dev/null
-    ln -s "$SSH_AUTH_SOCK" "$HOME/.ssh/agent_sock"
-    export SSH_AUTH_SOCK="$HOME/.ssh/agent_sock"
-	eval `ssh-agent`
-	ssh-add
-fi
+# Use single socket file in ssh agent forwarding
+# ------------------------------------------------------------------------------
+# if [ ! -z "$SSH_AUTH_SOCK" -a "$SSH_AUTH_SOCK" != "$HOME/.ssh/agent_sock" ] ; then
+#     unlink "$HOME/.ssh/agent_sock" 2>/dev/null
+#     ln -s "$SSH_AUTH_SOCK" "$HOME/.ssh/agent_sock"
+#     export SSH_AUTH_SOCK="$HOME/.ssh/agent_sock"
+# 	eval `ssh-agent`
+# 	ssh-add
+# fi
 
 export EDITOR='emacsclient'
 
@@ -270,8 +261,31 @@ export ES_JAVA_HOME="$(brew --prefix openjdk)/libexec/openjdk.jdk/Contents/Home"
 # The next line updates PATH for the Google Cloud SDK.
 if [ -f '/Users/motchang/src/google-cloud-sdk/path.zsh.inc' ]; then . '/Users/motchang/src/google-cloud-sdk/path.zsh.inc'; fi
 
-# The next line enables shell command completion for gcloud.
-if [ -f '/Users/motchang/src/google-cloud-sdk/completion.zsh.inc' ]; then . '/Users/motchang/src/google-cloud-sdk/completion.zsh.inc'; fi
+if [ -d "$(brew --prefix)/share/google-cloud-sdk/" ]
+then
+    source "$(brew --prefix)/share/google-cloud-sdk/path.zsh.inc"
+    source "$(brew --prefix)/share/google-cloud-sdk/completion.zsh.inc"
+fi
+
+# ------------------------------------------------------------------------------
+# Rust
+# ------------------------------------------------------------------------------
+. ${HOME}/.cargo/env
+
+export WASMTIME_HOME="$HOME/.wasmtime"
+export PATH="$WASMTIME_HOME/bin:$PATH"
+
+# ------------------------------------------------------------------------------
+# drienv
+# ------------------------------------------------------------------------------
+eval "$(direnv hook zsh)"
+
+# ------------------------------------------------------------------------------
+# terraform
+# ------------------------------------------------------------------------------
+autoload -U +X bashcompinit && bashcompinit
+complete -o nospace -C /opt/homebrew/bin/terraform terraform
+
 
 # for signed commit
 export GPG_TTY=$(tty)
