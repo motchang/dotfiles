@@ -1,155 +1,193 @@
-tap "crazymykl/custom"
-tap "creasty/tools"
-tap "d12frosted/emacs-plus"
-tap "hashicorp/tap"
-tap "heroku/brew"
-tap "homebrew/bundle"
-tap "homebrew/cask"
-tap "homebrew/core"
+tap "aws/tap"
+tap "elastic/tap"
+tap "fujiwara/tap"
+tap "git-duet/tap"
 tap "homebrew/services"
-tap "iina/mpv-iina"
-tap "ynqa/tap"
+tap "k1low/tap", "https://github.com/k1LoW/homebrew-tap"
+tap "modem-dev/tap"
+tap "steipete/tap"
+tap "yonaskolb/xcodegen", "https://github.com/yonaskolb/XcodeGen.git"
+tap "yukihirop/tap"
+# Run your GitHub Actions locally
 brew "act"
-brew "libpng"
-brew "openssl@3"
-brew "pcre2"
-brew "glib"
-brew "harfbuzz"
-brew "zstd"
-brew "openjdk"
-brew "activemq"
+# All in one for **env
 brew "anyenv"
-brew "m4"
+# Cryptography and SSL/TLS Toolkit
+brew "openssl@3"
+# Automatic configure script builder
 brew "autoconf"
-brew "automake"
+# YAML Parser
+brew "libyaml"
+# CLI tool to build, test, debug, and deploy Serverless applications using AWS SAM
+brew "aws-sam-cli"
+# Official Amazon AWS command-line interface
+brew "awscli"
+# Curl like simplicity to access AWS resources
+brew "awscurl"
+# Parser generator
 brew "bison"
-brew "bzip2"
-brew "certbot"
+# Get/set bluetooth power and discoverable state
+brew "blueutil"
+# Decentralized dependency manager for Cocoa
+brew "carthage"
+# Enables you to reproduce the CircleCI environment locally
+brew "circleci"
+# Cross-platform make
+brew "cmake"
+# Migemo is a tool that supports Japanese incremental search with Romaji
 brew "cmigemo"
-brew "ocaml"
-brew "coq"
+# Container runtimes on MacOS (and Linux) with minimal setup
+brew "colima"
+# GNU File, Shell, and Text utilities
 brew "coreutils"
-brew "cpanminus"
-brew "czmq"
-brew "dbus"
+# C library implementing the SSH2 protocol
+brew "libssh2"
+# Get a file from an HTTP, HTTPS or FTP server
+brew "curl"
+# Diff that understands syntax
 brew "difftastic"
+# Load/unload environment variables based on $PWD
 brew "direnv"
-brew "erlang"
-brew "elixir"
-brew "unbound"
-brew "gnutls"
-brew "libass"
-brew "libbluray"
-brew "pango"
-brew "srt"
+# Pack, ship and run any application as a lightweight container
+brew "docker"
+# Docker CLI plugin for extended build capabilities with BuildKit
+brew "docker-buildx"
+# Isolated development environments using Docker
+brew "docker-compose"
+# Text processing system for reStructuredText
+brew "docutils"
+# Play, record, convert, and stream select audio and video codecs
 brew "ffmpeg"
+# GNU awk utility
 brew "gawk"
+# GNU compiler collection
 brew "gcc"
+# Graphics library to dynamically manipulate images
+brew "gd"
+# GitHub command-line tool
 brew "gh"
+# OCR (Optical Character Recognition) engine
+brew "tesseract"
+# Interpreter for PostScript and PDF
 brew "ghostscript"
+# Remote repository management made easy
 brew "ghq"
+# Access GitHub's .gitignore boilerplates
+brew "gibo"
+# Distributed revision control system
 brew "git"
+# Syntax-highlighting pager for git and diff output
 brew "git-delta"
+# Git extension for versioning large files
 brew "git-lfs"
-brew "global"
+# GNU Transport Layer Security (TLS) Library
+brew "gnutls"
+# GNU Privacy Guard (OpenPGP)
 brew "gnupg"
+# Open source programming language to build simple/reliable/efficient software
 brew "go"
-brew "pkg-config"
-brew "gobject-introspection"
-brew "golangci-lint"
-brew "netpbm"
-brew "librsvg"
+# Google Suite CLI
+brew "gogcli"
+# Graph visualization software from AT&T and Bell Labs
 brew "graphviz"
-brew "gzip"
+# Java-based scripting language
+brew "groovy"
+# Agent multiplexer that lives in your terminal
+brew "herdr"
+# Improved top (interactive process viewer)
 brew "htop"
-brew "hub"
+# User-friendly cURL replacement (command-line HTTP client)
+brew "httpie"
+# Interactive jq
+brew "ijq"
+# ISO/IEC 23008-12:2017 HEIF file format decoder and encoder
 brew "libheif"
-brew "python@3.9"
+# Tools and libraries to manipulate images in select formats
 brew "imagemagick"
-brew "ispell"
-brew "jpeg"
+# Lightweight and flexible command-line JSON processor
 brew "jq"
-brew "libdvdcss"
-brew "libedit"
-brew "libfido2"
+# Anti-bikeshedding Kotlin linter with built-in formatter
+brew "ktlint"
+# JIT library for the GNU compiler collection
 brew "libgccjit"
+# C library of Git core methods that is re-entrant and linkable
+brew "libgit2@1.7"
+# Conversion library
 brew "libiconv"
-brew "vulkan-loader"
+# Postgres C API library
+brew "libpq"
+# GNOME XML library
 brew "libxml2"
+# C library for reading, creating, and modifying zip archives
 brew "libzip"
-brew "mas"
-brew "mkvtoolnix"
-brew "molten-vk"
-brew "mpv"
-brew "mysql"
-brew "mysql-client"
-brew "mysql-client@5.7"
-brew "neo4j"
-brew "nghttp2"
+# Text-to-HTML conversion tool
+brew "markdown"
+# High performance, distributed memory object caching system
+brew "memcached", restart_service: :changed
+# Dependency manager that installs and runs Swift command-line tool packages
+brew "mint"
+# Open source relational database management system
+brew "mysql@8.4", restart_service: :changed, link: true
+# Network Kanji code conversion Filter (NKF)
 brew "nkf"
-brew "opam"
-brew "parallel"
+# Okta federated identity for AWS CLI
+brew "okta-aws-cli"
+# Simplistic interactive filtering tool
 brew "peco"
-brew "percona-toolkit"
-brew "tidy-html5"
+# General-purpose scripting language
 brew "php"
+# Package compiler and linker metadata toolkit
+brew "pkgconf"
+# Draw UML diagrams
 brew "plantuml"
-brew "postgresql@14"
-brew "python@3.10"
-brew "pssh"
-brew "pv"
+# Generate C-based recognizers from regular expressions
 brew "re2c"
-brew "redis", restart_service: true
-brew "rust-analyzer"
+# Persistent key-value database, with built-in net interface
+brew "redis", restart_service: :changed
+# Small man page generator
+brew "scdoc"
+# Database of common MIME types
+brew "shared-mime-info"
+# User interface to the TELNET protocol
+brew "telnet"
+# Send macOS User Notifications from the command-line
+brew "terminal-notifier"
+# Tool to build, change, and version infrastructure
 brew "terraform"
+# Official documentation format of the GNU project
 brew "texinfo"
-brew "tmux"
-brew "tor"
-brew "translate-shell"
+# Display directories as trees (with optional color/HTML output)
 brew "tree"
+# Extremely fast Python package installer and resolver, written in Rust
+brew "uv"
+# Internet file retriever
 brew "wget"
-brew "youtube-dl"
+# Process YAML, JSON, XML, CSV and properties documents from the CLI
+brew "yq"
+# General-purpose lossless data-compression library
+brew "zlib"
+# UNIX shell (command interpreter)
 brew "zsh"
-brew "zsh-completions"
-brew "heroku/brew/heroku"
-brew "iina/mpv-iina/mpv-iina", args: ["HEAD"]
-brew "ynqa/tap/jnv"
-cask "amethyst"
+# Desktop-inspired terminal diff viewer for agent-authored changesets
+brew "modem-dev/tap/hunk", trusted: true
+# Automated testing of webapps for Google Chrome
 cask "chromedriver"
-cask "google-cloud-sdk"
-cask "orbstack"
-mas "1Focus", id: 969210610
-mas "Accelerate", id: 1459809092
-mas "AdBlock Pro", id: 1018301773
-mas "Be Focused Pro", id: 961632517
-mas "BetterSnapTool", id: 417375580
-mas "Chrono Plus", id: 946047238
-mas "Control Panel for Twitter", id: 1668516167
-mas "Developer", id: 640199958
-mas "Disk Speed Test", id: 425264550
-mas "GarageBand", id: 682658836
-mas "Goodnotes", id: 1444383602
-mas "iMovie", id: 408981434
-mas "Keynote", id: 409183694
-mas "Kindle", id: 302584613
-mas "LINE", id: 539883307
-mas "MARKETSPEED", id: 946680495
-mas "Microsoft Remote Desktop", id: 1295203466
-mas "miniVideo", id: 1483114619
-mas "Numbers", id: 409203825
-mas "Pages", id: 409201541
-mas "PiPifier", id: 1160374471
-mas "Playgrounds", id: 1496833156
-mas "Prime Video", id: 545519333
-mas "RunCat", id: 1429033973
-mas "Skitch", id: 425955336
-mas "Speedtest", id: 1153157709
-mas "Take A Break, Please", id: 843150501
-mas "The Unarchiver", id: 425424353
-mas "White Noise", id: 415139197
-mas "Xcode", id: 497799835
+# Text editor
+cask "emacs-app"
+# Terminal emulator that uses platform-native UI and GPU acceleration
+cask "ghostty"
+# Cross-platform Git credential storage for multiple hosting providers
+cask "git-credential-manager"
+# Plugin for AWS CLI to start and end sessions that connect to managed instances
+cask "session-manager-plugin"
+# GPU-accelerated cross-platform terminal emulator and multiplexer
+cask "wezterm"
 vscode "1yib.rust-bundle"
+vscode "42crunch.vscode-openapi"
 vscode "aki77.rubocop-quick-fix"
+vscode "amazonwebservices.codewhisperer-for-command-line-companion"
+vscode "anthropic.claude-code"
+vscode "arjun.swagger-viewer"
 vscode "bajdzis.vscode-database"
 vscode "bierner.markdown-mermaid"
 vscode "bpruitt-goddard.mermaid-markdown-syntax-highlighting"
@@ -159,16 +197,19 @@ vscode "connorshea.vscode-ruby-test-adapter"
 vscode "davidanson.vscode-markdownlint"
 vscode "dbaeumer.vscode-eslint"
 vscode "dbankier.vscode-instant-markdown"
+vscode "docker.docker"
 vscode "dracula-theme.theme-dracula"
 vscode "dustypomerleau.rust-syntax"
 vscode "eamodio.gitlens"
 vscode "ecmel.vscode-html-css"
+vscode "editorconfig.editorconfig"
 vscode "esbenp.prettier-vscode"
-vscode "github.copilot"
-vscode "github.copilot-chat"
+vscode "fill-labs.dependi"
 vscode "github.vscode-pull-request-github"
 vscode "golang.go"
+vscode "google.geminicodeassist"
 vscode "googlecloudtools.cloudcode"
+vscode "googlecloudtools.datacloud"
 vscode "harryhopkinson.vs-code-runner"
 vscode "hashicorp.terraform"
 vscode "hbenl.vscode-test-explorer"
@@ -177,10 +218,10 @@ vscode "hnw.vscode-auto-open-markdown-preview"
 vscode "jebbs.plantuml"
 vscode "jrieken.md-navigate"
 vscode "koichisasada.vscode-rdbg"
-vscode "lanza.lldb-vscode"
-vscode "lfs.vscode-emacs-friendly"
 vscode "lorankloeze.ruby-rubocop-revived"
+vscode "mermaidchart.vscode-mermaid-chart"
 vscode "mindaro-dev.file-downloader"
+vscode "ms-azuretools.vscode-containers"
 vscode "ms-azuretools.vscode-docker"
 vscode "ms-ceintl.vscode-language-pack-ja"
 vscode "ms-dotnettools.csharp"
@@ -190,6 +231,7 @@ vscode "ms-python.debugpy"
 vscode "ms-python.isort"
 vscode "ms-python.python"
 vscode "ms-python.vscode-pylance"
+vscode "ms-python.vscode-python-envs"
 vscode "ms-toolsai.jupyter"
 vscode "ms-toolsai.jupyter-keymap"
 vscode "ms-toolsai.jupyter-renderers"
@@ -206,15 +248,19 @@ vscode "ms-vscode.remote-explorer"
 vscode "ms-vscode.remote-server"
 vscode "ms-vscode.test-adapter-converter"
 vscode "ms-vsliveshare.vsliveshare"
-vscode "ms-vsliveshare.vsliveshare-pack"
 vscode "octref.vetur"
 vscode "redhat.vscode-yaml"
 vscode "rust-lang.rust-analyzer"
 vscode "rvest.vs-code-prettier-eslint"
-vscode "serayuzgur.crates"
 vscode "shopify.ruby-extensions-pack"
 vscode "shopify.ruby-lsp"
 vscode "sorbet.sorbet-vscode-extension"
+vscode "streetsidesoftware.code-spell-checker"
 vscode "tomoyukim.vscode-mermaid-editor"
+vscode "tuttieee.emacs-mcx"
 vscode "vadimcn.vscode-lldb"
+vscode "vstirbu.vscode-mermaid-preview"
 vscode "wakatime.vscode-wakatime"
+vscode "wayou.vscode-todo-highlight"
+go "cmd/go"
+go "cmd/gofmt"
