@@ -1,13 +1,8 @@
-tap "aws/tap"
-tap "elastic/tap"
 tap "fujiwara/tap"
 tap "git-duet/tap"
 tap "homebrew/services"
-tap "k1low/tap", "https://github.com/k1LoW/homebrew-tap"
 tap "modem-dev/tap"
-tap "steipete/tap"
-tap "yonaskolb/xcodegen", "https://github.com/yonaskolb/XcodeGen.git"
-tap "yukihirop/tap"
+tap "yukihirop/tap", trusted: { formulae: ["ultramana"] }
 # Run your GitHub Actions locally
 brew "act"
 # All in one for **env
@@ -148,6 +143,8 @@ brew "redis", restart_service: :changed
 brew "scdoc"
 # Database of common MIME types
 brew "shared-mime-info"
+# CI-Friendly tool to document a database
+brew "tbls"
 # User interface to the TELNET protocol
 brew "telnet"
 # Send macOS User Notifications from the command-line
@@ -168,6 +165,10 @@ brew "yq"
 brew "zlib"
 # UNIX shell (command interpreter)
 brew "zsh"
+# lambroll is a minimal deployment tool for AWS Lambda.
+brew "fujiwara/tap/lambroll", trusted: true
+# Pairing tool for Git
+brew "git-duet/tap/git-duet", trusted: true
 # Desktop-inspired terminal diff viewer for agent-authored changesets
 brew "modem-dev/tap/hunk", trusted: true
 # Automated testing of webapps for Google Chrome
