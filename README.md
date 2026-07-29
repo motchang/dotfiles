@@ -14,3 +14,5 @@
 	ln -sf src/github.com/motchang/dotfiles/.config/zsh/local/00-claude-multirepo.zsh ~/.config/zsh/local/00-claude-multirepo.zsh
 	mkdir -p ~/.config/herdr
 	ln -sf src/github.com/motchang/dotfiles/.config/herdr/config.toml ~/.config/herdr/config.toml
+	mkdir -p ~/.config/hunk
+	ln -sf src/github.com/motchang/dotfiles/.config/hunk/config.toml ~/.config/hunk/config.toml
