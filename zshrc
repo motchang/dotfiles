@@ -95,7 +95,7 @@ fi
 export EDITOR='emacsclient'
 
 # TAB 補完時に大文字小文字無視
-compctl -M 'm:{a-z}={A-Z}'
+zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}'
 
 # ignore C-d
 setopt IGNOREEOF
