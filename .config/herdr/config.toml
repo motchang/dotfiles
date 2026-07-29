@@ -65,7 +65,7 @@ default_shell = "/bin/zsh"
 # Most reliable direct bindings are ctrl+letter, function keys, and explicit modified chords.
 # alt+..., cmd/super, and punctuation-with-modifiers may depend on your terminal/tmux setup.
 # prefix = "ctrl+b"
-prefix = "ctrl+b"
+prefix = "ctrl+t"
 
 # Prefix-mode actions
 # help = "prefix+?"
@@ -74,7 +74,11 @@ prefix = "ctrl+b"
 # reload_config = "prefix+shift+r"
 # open_notification_target = "prefix+o"
 # workspace_picker = "prefix+w"
-# goto = "prefix+g"
+# Emacs C-x b (switch-to-buffer) is the canonical "pick from a list" key;
+# goto's session navigator is the closest built-in equivalent. tmux.conf's
+# own peco-based window picker on `b` is the same instinct, ported to tmux.
+# Kept alongside the default `g`.
+goto = ["prefix+g", "prefix+b"]
 # new_workspace = "prefix+shift+n"
 # new_worktree = "prefix+shift+g"
 # open_worktree = ""    # optional, unset by default
@@ -91,6 +95,11 @@ prefix = "ctrl+b"
 # rename_tab = "prefix+shift+t"
 # previous_tab = "prefix+p"
 # next_tab = "prefix+n"
+# Emacs C-n/C-p (next-line/previous-line), repurposed for tab cycling here
+# since pane movement stayed at the hjkl default. tmux.conf's own C-n/C-p
+# window-cycling binding happens to match, but Emacs is the actual reason.
+previous_tab = "prefix+ctrl+p"
+next_tab = "prefix+ctrl+n"
 # switch_tab = "prefix+1..9"
 # switch_workspace = ""   # optional indexed binding, e.g. "prefix+shift+1..9"
 # close_tab = "prefix+shift+x"
@@ -105,10 +114,21 @@ prefix = "ctrl+b"
 # last_pane = ""          # optional, unset by default; bind e.g. "prefix+tab" for global back-and-forth
 # split_vertical = "prefix+v"
 # split_horizontal = "prefix+minus"
-# close_pane = "prefix+x"
+# Emacs C-x 2 (split-window-below, stacked) / C-x 3 (split-window-right,
+# side-by-side) are the origin of these numbers; tmux.conf's `2`=split -v
+# (stacked) / `3`=split -h (side-by-side) just ports the same scheme to its
+# own prefix. herdr names these by divider orientation, which is the reverse
+# of tmux's stacking-direction naming, so the numbers map to the "other" name.
+split_vertical = "prefix+3"   # side-by-side, like Emacs/tmux's `3`
+split_horizontal = "prefix+2" # stacked, like Emacs/tmux's `2`
+# Emacs C-x 0 (delete-window) is the origin of this number; tmux.conf's bare
+# `0`=kill-pane (aliased to C-k there too) ports the same digit. herdr actions
+# take one key each, so we pick this one — it also lines up with 2/3 above.
+close_pane = "prefix+0"
 # zoom = "prefix+z"       # legacy alias: fullscreen
 # resize_mode = "prefix+r"
 # toggle_sidebar = "prefix+b"
+toggle_sidebar = ""  # disabled: prefix+b now goes to goto instead
 
 # Navigate-mode movement. These local shortcuts win while navigate mode is open.
 # They are independent from focus_pane_*. Do not include prefix+, esc, enter, tab, or 1..9 here.
