@@ -92,7 +92,7 @@ fi
 # 	ssh-add
 # fi
 
-export EDITOR='emacsclient'
+export EDITOR='emacsclient -nw'
 
 # TAB 補完時に大文字小文字無視
 zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}'
