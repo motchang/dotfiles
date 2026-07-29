@@ -41,7 +41,7 @@ setopt appendhistory autocd extendedglob nomatch notify
 bindkey -e
 # End of lines configured by zsh-newuser-install
 # The following lines were added by compinstall
-zstyle :compinstall filename "${PATH}/.zshrc"
+zstyle :compinstall filename "${HOME}/.zshrc"
 
 autoload -Uz compinit
 compinit
@@ -53,7 +53,6 @@ compinit
 bindkey    "^[[3~"          delete-char
 bindkey    "^[3;5~"         delete-char
 
-setopt HIST_IGNORE_DUPS
 setopt SHARE_HISTORY
 
 alias rm='rm -i'
@@ -93,10 +92,10 @@ fi
 # 	ssh-add
 # fi
 
-export EDITOR='emacsclient'
+export EDITOR='emacsclient -nw'
 
 # TAB 補完時に大文字小文字無視
-compctl -M 'm:{a-z}={A-Z}'
+zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}'
 
 # ignore C-d
 setopt IGNOREEOF
@@ -258,27 +257,14 @@ export ES_JAVA_HOME="$(brew --prefix openjdk)/libexec/openjdk.jdk/Contents/Home"
 . ${HOME}/.cargo/env
 
 
-# The next line updates PATH for the Google Cloud SDK.
-if [ -f '/Users/motchang/src/google-cloud-sdk/path.zsh.inc' ]; then . '/Users/motchang/src/google-cloud-sdk/path.zsh.inc'; fi
-
 if [ -d "$(brew --prefix)/share/google-cloud-sdk/" ]
 then
     source "$(brew --prefix)/share/google-cloud-sdk/path.zsh.inc"
     source "$(brew --prefix)/share/google-cloud-sdk/completion.zsh.inc"
 fi
 
-# ------------------------------------------------------------------------------
-# Rust
-# ------------------------------------------------------------------------------
-. ${HOME}/.cargo/env
-
 export WASMTIME_HOME="$HOME/.wasmtime"
 export PATH="$WASMTIME_HOME/bin:$PATH"
-
-# ------------------------------------------------------------------------------
-# drienv
-# ------------------------------------------------------------------------------
-eval "$(direnv hook zsh)"
 
 # ------------------------------------------------------------------------------
 # terraform
@@ -291,3 +277,9 @@ complete -o nospace -C /opt/homebrew/bin/terraform terraform
 export GPG_TTY=$(tty)
 
 test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
+
+# machine-local configuration (untracked)
+for _f in "${XDG_CONFIG_HOME:-$HOME/.config}"/zsh/local/*.zsh(N); do
+  source "$_f"
+done
+unset _f
