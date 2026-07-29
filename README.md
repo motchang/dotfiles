@@ -6,9 +6,6 @@
 	ln -sf src/github.com/motchang/dotfiles/bashrc ~/.bashrc
 	ln -sf src/github.com/motchang/dotfiles/bash_profile ~/.bash_profile
 
-	rm -f ./.emacs
-	ln -sf src/github.com/motchang/dotfiles/emacs.d ~/.emacs.d
-
 	ln -sf src/github.com/motchang/dotfiles/tmux.conf ~/.tmux.conf
 	ln -sf src/github.com/motchang/dotfiles/gitignore_global ~/.gitignore_global
 
