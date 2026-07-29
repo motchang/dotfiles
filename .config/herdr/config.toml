@@ -87,19 +87,17 @@ goto = ["prefix+g", "prefix+b"]
 # close_workspace = "prefix+shift+d"
 # previous_workspace = "" # optional, unset by default
 # next_workspace = ""     # optional, unset by default
-# previous_agent = ""     # optional, unset by default
-# next_agent = ""         # optional, unset by default
+# Emacs C-n/C-p (next-line/previous-line) for moving through the agent panel.
+previous_agent = "prefix+ctrl+p"
+next_agent = "prefix+ctrl+n"
 # focus_agent = ""        # optional indexed binding, e.g. "prefix+alt+1..9"
 # remote_image_paste = "ctrl+v" # only active in herdr --remote; empty disables raw-key image paste
 # new_tab = "prefix+c"
 # rename_tab = "prefix+shift+t"
-# previous_tab = "prefix+p"
-# next_tab = "prefix+n"
-# Emacs C-n/C-p (next-line/previous-line), repurposed for tab cycling here
-# since pane movement stayed at the hjkl default. tmux.conf's own C-n/C-p
-# window-cycling binding happens to match, but Emacs is the actual reason.
-previous_tab = "prefix+ctrl+p"
-next_tab = "prefix+ctrl+n"
+previous_tab = "prefix+p"
+# next_tab kept at its default (`prefix+n`, bare) since `prefix+tab` is
+# already cycle_pane_next and Ctrl+n went to next_agent instead.
+next_tab = "prefix+n"
 # switch_tab = "prefix+1..9"
 # switch_workspace = ""   # optional indexed binding, e.g. "prefix+shift+1..9"
 # close_tab = "prefix+shift+x"
@@ -157,7 +155,7 @@ type = "pane"
 command = "lazygit"
 
 [[keys.command]]
-key = "prefix+p"
+key = "prefix+alt+p" # moved off prefix+p so previous_tab can use it
 type = "plugin_action"
 command = "hunk.gh-diff.pr-split"
 
