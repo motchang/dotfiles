@@ -264,11 +264,6 @@ then
     source "$(brew --prefix)/share/google-cloud-sdk/completion.zsh.inc"
 fi
 
-# ------------------------------------------------------------------------------
-# Rust
-# ------------------------------------------------------------------------------
-. ${HOME}/.cargo/env
-
 export WASMTIME_HOME="$HOME/.wasmtime"
 export PATH="$WASMTIME_HOME/bin:$PATH"
 
