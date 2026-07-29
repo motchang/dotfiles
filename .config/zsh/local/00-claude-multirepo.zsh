@@ -41,16 +41,38 @@ _cw_list() {
   print -r -- "usage: cw [-n|--dry-run] [-l|--local] [-b|--background] <preset> [claude args...]"
   print -r -- "  herdr が動いていれば workspace 連携、なければ現シェルで起動"
   print -r --
-  local p w=0 pw=0
+  local p pw=0
   typeset -A col
   for p in ${(ok)CLAUDE_MR_PRESETS}; do
     local repos=(${=CLAUDE_MR_PRESETS[$p]})
     col[$p]="${repos[1]} ← ${(j:, :)repos[2,-1]}"
-    (( ${#col[$p]} > w )) && w=${#col[$p]}
     (( ${#p} > pw )) && pw=${#p}
   done
+  local indent_n=$(( pw + 3 ))
+  local avail=$(( ${COLUMNS:-100} - indent_n ))
+  (( avail < 20 )) && avail=20
+  local indent
+  indent="$(printf '%*s' "$indent_n" '')"
+
   for p in ${(ok)CLAUDE_MR_PRESETS}; do
-    printf "  %-*s %-*s  %s\n" "$pw" "$p" "$w" "${col[$p]}" "${CLAUDE_MR_DESC[$p]}"
+    printf "  %-*s %s\n" "$pw" "$p" "${col[$p]}"
+
+    local rest="${CLAUDE_MR_DESC[$p]}"
+    if [[ -n "$rest" ]]; then
+      local -a lines=()
+      while (( ${#rest} > avail )); do
+        lines+=("${rest[1,avail]}")
+        rest="${rest[avail+1,-1]}"
+      done
+      lines+=("$rest")
+
+      local i=1
+      while (( i <= ${#lines} )); do
+        printf "%s%s\n" "$indent" "${lines[$i]}"
+        (( i++ ))
+      done
+    fi
+    print -r --
   done
 }
 
