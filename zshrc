@@ -53,7 +53,6 @@ compinit
 bindkey    "^[[3~"          delete-char
 bindkey    "^[3;5~"         delete-char
 
-setopt HIST_IGNORE_DUPS
 setopt SHARE_HISTORY
 
 alias rm='rm -i'
