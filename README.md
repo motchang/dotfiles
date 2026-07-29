@@ -7,7 +7,9 @@
 	ln -sf src/github.com/motchang/dotfiles/bash_profile ~/.bash_profile
 
 	ln -sf src/github.com/motchang/dotfiles/tmux.conf ~/.tmux.conf
-	ln -sf src/github.com/motchang/dotfiles/gitignore_global ~/.gitignore_global
+
+	mkdir -p ~/.config/git
+	gibo dump macOS Emacs JetBrains > ~/.config/git/ignore
 
 	ln -sf src/github.com/motchang/dotfiles/zshrc ~/.zshrc
 	ln -sf src/github.com/motchang/dotfiles/zshenv ~/.zshenv
