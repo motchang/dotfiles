@@ -177,7 +177,12 @@ cw() {
   # 新規ペインは .zshrc 起動処理(zinit/mise/direnv等)が終わるまで
   # herdr agent start を受け付けない(agent_pane_busy)。準備完了までポーリングする。
   # agent 名は英小文字/数字/-/_ のみ・32文字以内。pane_id は大文字と ':' を含むため使えない。
-  local name="cw-${preset}-$$-${RANDOM}" start_resp waited=0
+  # preset はユーザー定義の連想配列キーなので同じ制約が無く、そのまま埋め込むと
+  # 大文字/記号や長い名前で herdr agent start が失敗しうる。サニタイズして詰める。
+  local preset_safe="${(L)preset}"
+  preset_safe="${preset_safe//[^a-z0-9_-]/}"
+  preset_safe="${preset_safe[1,15]}"
+  local name="cw-${preset_safe}-$$-${RANDOM}" start_resp waited=0
   while true; do
     start_resp=$(herdr agent start "$name" --kind claude --pane "$pane_id" -- "${args[@]}" "$@" 2>&1)
     jq -e '.result.type=="agent_started"' >/dev/null 2>&1 <<<"$start_resp" && break
