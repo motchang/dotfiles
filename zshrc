@@ -291,3 +291,9 @@ complete -o nospace -C /opt/homebrew/bin/terraform terraform
 export GPG_TTY=$(tty)
 
 test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
+
+# machine-local configuration (untracked)
+for _f in "${XDG_CONFIG_HOME:-$HOME/.config}"/zsh/local/*.zsh(N); do
+  source "$_f"
+done
+unset _f

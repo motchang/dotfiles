@@ -8,5 +8,7 @@
 	ln -sf src/github.com/motchang/dotfiles/emacs.d ~/.emacs.d
 	ln -sf src/github.com/motchang/dotfiles/tmux.conf ~/.tmux.conf
 	ln -sf src/github.com/motchang/dotfiles/gitignore_global ~/.gitignore_global
-	ln -sf ~/src/github.com/motchang/dotfiles/zshrc ~/.zshrc
-	ln -sf ~/src/github.com/motchang/dotfiles/zshenv ~/.zshenv
+	ln -sf src/github.com/motchang/dotfiles/zshrc ~/.zshrc
+	ln -sf src/github.com/motchang/dotfiles/zshenv ~/.zshenv
+	mkdir -p ~/.config/zsh/local
+	ln -sf src/github.com/motchang/dotfiles/.config/zsh/local/00-claude-multirepo.zsh ~/.config/zsh/local/00-claude-multirepo.zsh
