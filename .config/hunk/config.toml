@@ -1,0 +1,11 @@
+theme = "github-dark-default" # any built-in theme id, auto, or custom
+mode = "auto"        # auto, split, stack
+vcs = "git"          # git, jj, sl
+watch = true
+exclude_untracked = false
+line_numbers = true
+wrap_lines = false
+menu_bar = true
+agent_notes = true
+prompt_save_view_preferences = true
+transparent_background = false

@@ -103,6 +103,8 @@ brew "imagemagick"
 brew "jq"
 # Anti-bikeshedding Kotlin linter with built-in formatter
 brew "ktlint"
+# Simple terminal UI for git commands
+brew "lazygit"
 # JIT library for the GNU compiler collection
 brew "libgccjit"
 # C library of Git core methods that is re-entrant and linkable
@@ -173,7 +175,7 @@ brew "git-duet/tap/git-duet", trusted: true
 brew "modem-dev/tap/hunk", trusted: true
 # Automated testing of webapps for Google Chrome
 cask "chromedriver"
-# Text editor
+# GNU Emacs text editor
 cask "emacs-app"
 # Terminal emulator that uses platform-native UI and GPU acceleration
 cask "ghostty"
