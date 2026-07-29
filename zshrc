@@ -258,9 +258,6 @@ export ES_JAVA_HOME="$(brew --prefix openjdk)/libexec/openjdk.jdk/Contents/Home"
 . ${HOME}/.cargo/env
 
 
-# The next line updates PATH for the Google Cloud SDK.
-if [ -f '/Users/motchang/src/google-cloud-sdk/path.zsh.inc' ]; then . '/Users/motchang/src/google-cloud-sdk/path.zsh.inc'; fi
-
 if [ -d "$(brew --prefix)/share/google-cloud-sdk/" ]
 then
     source "$(brew --prefix)/share/google-cloud-sdk/path.zsh.inc"
