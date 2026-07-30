@@ -23,5 +23,6 @@
 	mkdir -p ~/.config/hunk
 	ln -sf ~/src/github.com/motchang/dotfiles/.config/hunk/config.toml ~/.config/hunk/config.toml
 
-	herdr plugin install edmundmiller/herdr-plugin-hunk -y
-	herdr plugin install Allianaab2m/herdr-hunk-gh-diff -y
+	herdr plugin link ~/src/github.com/motchang/dotfiles/.config/herdr/plugins/claude-fork
+	herdr plugin link ~/src/github.com/motchang/dotfiles/.config/herdr/plugins/hunk-diff
+	herdr plugin link ~/src/github.com/motchang/dotfiles/.config/herdr/plugins/hunk-gh-diff
