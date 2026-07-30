@@ -164,6 +164,16 @@ key = "prefix+|"
 type = "plugin_action"
 command = "hunk.diff.branch-split"
 
+[[keys.command]]
+key = "prefix+ctrl+right"
+type = "plugin_action"
+command = "local.claude-fork.right"
+
+[[keys.command]]
+key = "prefix+ctrl+down"
+type = "plugin_action"
+command = "local.claude-fork.down"
+
 
 # Legacy indexed shortcut config is still parsed for compatibility.
 # Prefer switch_tab, switch_workspace, and focus_agent for new configs.
