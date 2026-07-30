@@ -38,7 +38,7 @@ case "$mode" in
       fi
     done
     base="${base:-origin/main}"
-    diff_args=(diff "${base}..${branch}")
+    diff_args=(diff "${base}...${branch}")
     ;;
   *)
     diff_args=(diff)
