@@ -1,0 +1,42 @@
+id = "local.hunk-diff"
+name = "Hunk Diff"
+version = "0.1.0"
+min_herdr_version = "0.7.0"
+description = "Open Hunk diffs from Herdr in a split pane or tab, execing directly into the target pane"
+platforms = ["macos", "linux"]
+
+[[actions]]
+id = "worktree-split"
+title = "Hunk worktree diff in split"
+contexts = ["pane", "workspace"]
+command = ["bash", "hunk-launch.sh", "worktree", "split"]
+
+[[actions]]
+id = "worktree-tab"
+title = "Hunk worktree diff in tab"
+contexts = ["pane", "workspace"]
+command = ["bash", "hunk-launch.sh", "worktree", "tab"]
+
+[[actions]]
+id = "staged-split"
+title = "Hunk staged diff in split"
+contexts = ["pane", "workspace"]
+command = ["bash", "hunk-launch.sh", "staged", "split"]
+
+[[actions]]
+id = "staged-tab"
+title = "Hunk staged diff in tab"
+contexts = ["pane", "workspace"]
+command = ["bash", "hunk-launch.sh", "staged", "tab"]
+
+[[actions]]
+id = "branch-split"
+title = "Hunk branch diff in split"
+contexts = ["pane", "workspace"]
+command = ["bash", "hunk-launch.sh", "branch", "split"]
+
+[[actions]]
+id = "branch-tab"
+title = "Hunk branch diff in tab"
+contexts = ["pane", "workspace"]
+command = ["bash", "hunk-launch.sh", "branch", "tab"]

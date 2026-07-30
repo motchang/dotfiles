@@ -157,12 +157,22 @@ command = "lazygit"
 [[keys.command]]
 key = "prefix+alt+p" # moved off prefix+p so previous_tab can use it
 type = "plugin_action"
-command = "hunk.gh-diff.pr-split"
+command = "local.hunk-gh-diff.pr-split"
 
 [[keys.command]]
-key = "prefix+|"
+key = "prefix+alt+d"
 type = "plugin_action"
-command = "hunk.diff.branch-split"
+command = "local.hunk-diff.branch-split"
+
+[[keys.command]]
+key = "prefix+ctrl+right"
+type = "plugin_action"
+command = "local.claude-fork.right"
+
+[[keys.command]]
+key = "prefix+ctrl+down"
+type = "plugin_action"
+command = "local.claude-fork.down"
 
 
 # Legacy indexed shortcut config is still parsed for compatibility.

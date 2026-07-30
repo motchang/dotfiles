@@ -1,0 +1,18 @@
+id = "local.claude-fork"
+name = "Claude Fork"
+version = "0.1.0"
+min_herdr_version = "0.7.0"
+description = "Fork the current Claude Code session's conversation history into a new pane"
+platforms = ["macos", "linux"]
+
+[[actions]]
+id = "right"
+title = "Fork Claude session (right)"
+contexts = ["pane"]
+command = ["bash", "fork.sh", "right"]
+
+[[actions]]
+id = "down"
+title = "Fork Claude session (down)"
+contexts = ["pane"]
+command = ["bash", "fork.sh", "down"]

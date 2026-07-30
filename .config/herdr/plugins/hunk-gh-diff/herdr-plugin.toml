@@ -1,0 +1,18 @@
+id = "local.hunk-gh-diff"
+name = "Hunk GitHub PR Diff"
+version = "0.1.0"
+min_herdr_version = "0.7.0"
+description = "Open a Hunk diff between the current branch and its GitHub PR's base branch, execing directly into the target pane"
+platforms = ["macos", "linux"]
+
+[[actions]]
+id = "pr-split"
+title = "Hunk PR diff in split"
+contexts = ["pane", "workspace"]
+command = ["bash", "gh-diff-launch.sh", "split"]
+
+[[actions]]
+id = "pr-tab"
+title = "Hunk PR diff in tab"
+contexts = ["pane", "workspace"]
+command = ["bash", "gh-diff-launch.sh", "tab"]
