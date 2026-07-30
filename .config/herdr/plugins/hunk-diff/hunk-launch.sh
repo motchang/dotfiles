@@ -2,7 +2,8 @@
 # Local exec-based replacement for edmundmiller/herdr-plugin-hunk: launches
 # `hunk` directly in the target pane (via `exec`) instead of leaving a shell
 # wrapping it, same trick as ../claude-fork/fork.sh.
-# Original approach: https://github.com/edmundmiller/herdr-plugin-hunk
+# Credit to edmundmiller for the original approach:
+# https://github.com/edmundmiller/herdr-plugin-hunk
 set -euo pipefail
 
 mode="${1:?usage: hunk-launch.sh <worktree|staged|branch> <split|tab>}"

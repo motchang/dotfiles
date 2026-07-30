@@ -2,7 +2,8 @@
 # Local exec-based replacement for Allianaab2m/herdr-hunk-gh-diff: launches
 # `hunk` directly in the target pane (via `exec`) instead of leaving a shell
 # wrapping it, same trick as ../claude-fork/fork.sh.
-# Original approach: https://github.com/Allianaab2m/herdr-hunk-gh-diff
+# Credit to Allianaab2m for the original approach:
+# https://github.com/Allianaab2m/herdr-hunk-gh-diff
 set -euo pipefail
 
 target="${1:?usage: gh-diff-launch.sh <split|tab>}"
