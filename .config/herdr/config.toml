@@ -160,7 +160,7 @@ type = "plugin_action"
 command = "local.hunk-gh-diff.pr-split"
 
 [[keys.command]]
-key = "prefix+|"
+key = "prefix+alt+d"
 type = "plugin_action"
 command = "local.hunk-diff.branch-split"
 
