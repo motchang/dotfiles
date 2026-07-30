@@ -10,7 +10,8 @@ target="${2:?usage: hunk-launch.sh <worktree|staged|branch> <split|tab>}"
 case "$mode" in worktree|staged|branch) ;; *) echo "invalid mode: $mode" >&2; exit 1 ;; esac
 case "$target" in split|tab) ;; *) echo "invalid target: $target" >&2; exit 1 ;; esac
 
-ctx="${HERDR_PLUGIN_CONTEXT_JSON:-{}}"
+ctx="${HERDR_PLUGIN_CONTEXT_JSON:-}"
+[ -n "$ctx" ] || ctx='{}'
 workspace_id=$(jq -r '.workspace_id // empty' <<<"$ctx")
 workspace_id="${workspace_id:-${HERDR_WORKSPACE_ID:?missing Herdr workspace id}}"
 pane_id=$(jq -r '.focused_pane_id // empty' <<<"$ctx")
