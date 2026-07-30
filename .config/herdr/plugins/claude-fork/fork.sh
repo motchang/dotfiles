@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Fork the Claude Code session running in the current pane into a new split
 # pane, carrying over its conversation history via `claude --fork-session`.
-# Approach adapted from https://gist.github.com/miyagawa/cb1a9f6c8695d1219efba0c66d5f78f7
+# Original approach: https://gist.github.com/miyagawa/cb1a9f6c8695d1219efba0c66d5f78f7
 set -euo pipefail
 
 direction="${1:-right}"
