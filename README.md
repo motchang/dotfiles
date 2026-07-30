@@ -25,3 +25,4 @@
 
 	herdr plugin install edmundmiller/herdr-plugin-hunk -y
 	herdr plugin install Allianaab2m/herdr-hunk-gh-diff -y
+	herdr plugin link ~/src/github.com/motchang/dotfiles/.config/herdr/plugins/claude-fork
