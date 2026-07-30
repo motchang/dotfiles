@@ -9,7 +9,8 @@ case "$target" in split|tab) ;; *) echo "invalid target: $target" >&2; exit 1 ;;
 
 command -v gh >/dev/null 2>&1 || { echo "gh (GitHub CLI) is required but was not found on PATH." >&2; exit 1; }
 
-ctx="${HERDR_PLUGIN_CONTEXT_JSON:-{}}"
+ctx="${HERDR_PLUGIN_CONTEXT_JSON:-}"
+[ -n "$ctx" ] || ctx='{}'
 workspace_id=$(jq -r '.workspace_id // empty' <<<"$ctx")
 workspace_id="${workspace_id:-${HERDR_WORKSPACE_ID:?missing Herdr workspace id}}"
 pane_id=$(jq -r '.focused_pane_id // empty' <<<"$ctx")
