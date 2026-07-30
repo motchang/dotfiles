@@ -23,9 +23,9 @@ cwd="${cwd:-$PWD}"
 branch=$(git -C "$cwd" branch --show-current || true)
 
 if [ -n "$branch" ]; then
-  pr_json=$(gh pr view "$branch" --json baseRefName,number,url 2>/dev/null) || pr_json=""
+  pr_json=$(cd "$cwd" && gh pr view "$branch" --json baseRefName,number,url 2>/dev/null) || pr_json=""
 else
-  pr_json=$(gh pr view --json baseRefName,number,url 2>/dev/null) || pr_json=""
+  pr_json=$(cd "$cwd" && gh pr view --json baseRefName,number,url 2>/dev/null) || pr_json=""
 fi
 if [ -z "$pr_json" ]; then
   echo "No GitHub PR found${branch:+ for branch '$branch'}." >&2

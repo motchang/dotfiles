@@ -28,17 +28,17 @@ case "$mode" in
   branch)
     branch=$(git -C "$cwd" branch --show-current || true)
     branch="${branch:-HEAD}"
-    upstream=$(git -C "$cwd" rev-parse --abbrev-ref --symbolic-full-name '@{upstream}' 2>/dev/null || true)
-    if [ -z "$upstream" ]; then
-      for candidate in origin/main origin/master main master; do
-        if git -C "$cwd" rev-parse --verify "$candidate" >/dev/null 2>&1; then
-          upstream="$candidate"
-          break
-        fi
-      done
-      upstream="${upstream:-origin/main}"
-    fi
-    diff_args=(diff "${upstream}..${branch}")
+    remote_head=$(git -C "$cwd" symbolic-ref -q --short refs/remotes/origin/HEAD 2>/dev/null || true)
+    base=""
+    for candidate in "$remote_head" origin/main origin/master main master; do
+      [ -n "$candidate" ] || continue
+      if git -C "$cwd" rev-parse --verify "$candidate" >/dev/null 2>&1; then
+        base="$candidate"
+        break
+      fi
+    done
+    base="${base:-origin/main}"
+    diff_args=(diff "${base}...${branch}")
     ;;
   *)
     diff_args=(diff)
