@@ -59,12 +59,16 @@ let watchedState = "";
 let reloadTimer: ReturnType<typeof setTimeout> | null = null;
 const clients = new Set<ReadableStreamDefaultController<Uint8Array>>();
 
+// Callers drop the result into text nodes and double-quoted attributes, so &#39;
+// buys nothing today -- it is there so a future single-quoted attribute cannot
+// be broken out of. & stays first or it would re-escape the entities below it.
 function escapeHtml(value: string): string {
   return value
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;");
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
 }
 
 function broadcastReload(): void {
