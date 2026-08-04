@@ -1,0 +1,64 @@
+#!/bin/sh
+# Preview a markdown file (mermaid included) in a herdr-browser pane.
+#   mdpreview README.md
+#   mdpreview --stop
+#
+# Starts a local render server on first use and reuses it afterwards; the page
+# live-reloads when the file changes.
+set -e
+
+port=${MDPREVIEW_PORT:-43128}
+base="http://127.0.0.1:${port}"
+
+self=$0
+# Follow the ~/bin symlink back to the copy inside the dotfiles repo.
+if command -v readlink >/dev/null 2>&1 && readlink -f "$self" >/dev/null 2>&1; then
+  self=$(readlink -f "$self")
+fi
+root=$(CDPATH= cd -- "$(dirname -- "$self")/../mdpreview" && pwd)
+
+if [ "$1" = "--stop" ]; then
+  pkill -f "bun run ${root}/server.ts" 2>/dev/null || true
+  pkill -f "bun ${root}/server.ts" 2>/dev/null || true
+  echo "mdpreview: stopped"
+  exit 0
+fi
+
+if [ -z "$1" ]; then
+  echo "usage: mdpreview <file.md> | --stop" >&2
+  exit 1
+fi
+
+if [ ! -d "${root}/node_modules" ]; then
+  echo "mdpreview: dependencies missing - run 'bun install' in ${root}" >&2
+  exit 1
+fi
+
+file=$(CDPATH= cd -- "$(dirname -- "$1")" && pwd)/$(basename -- "$1")
+if [ ! -f "$file" ]; then
+  echo "mdpreview: no such file: $file" >&2
+  exit 1
+fi
+
+if ! curl -fsS -m 1 "${base}/health" >/dev/null 2>&1; then
+  # --retry-connrefused lets the first request wait out the server's startup.
+  nohup bun run "${root}/server.ts" >>"${TMPDIR:-/tmp}/mdpreview.log" 2>&1 &
+  # Each connection-refused retry would otherwise print its own error.
+  curl -fsS --retry 30 --retry-delay 0 --retry-connrefused -m 10 \
+    "${base}/health" >/dev/null 2>/dev/null
+fi
+
+jq -n --arg path "$file" '{path: $path}' \
+  | curl -fsS -X POST -H 'content-type: application/json' --data @- "${base}/open" \
+  >/dev/null
+
+# A view with no pane behind it renders into a Chrome nobody can see, so open a
+# pane when there is none instead of navigating a headless view.
+if [ "$(herdr-browser views | jq '.views | length')" -eq 0 ]; then
+  exec herdr plugin pane open \
+    --plugin official.browser --entrypoint browser \
+    --placement split --direction right \
+    --env "HERDR_BROWSER_INITIAL_URL=${base}/" --focus
+fi
+
+exec herdr-browser open "${base}/"

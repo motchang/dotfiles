@@ -2,3 +2,5 @@
 *~
 \#*\#
 .DS_*
+node_modules/
+dist/
