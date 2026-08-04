@@ -58,7 +58,24 @@ jq -n --arg path "$file" '{path: $path}' \
 
 # A view with no pane behind it renders into a Chrome nobody can see, so open a
 # pane when there is none instead of navigating a headless view.
-if [ "$(herdr-browser views | jq '.views | length')" -eq 0 ]; then
+# The count has to be a real number before it reaches `-eq`: an empty or
+# non-numeric value makes that test a shell error, and since it sits in an `if`
+# condition `set -e` lets it through as merely false - which takes the
+# headless-navigate path this check exists to avoid. Report it instead.
+# The `type == "array"` guard is what makes that work: `null | length` is 0, so
+# any shape without a top-level .views array (a wrapped {result: {views: ...}},
+# an error object) would otherwise read as "no views" and stack up a fresh pane
+# on every run. Emitting nothing turns an unrecognized shape into "unknown".
+views=$(herdr-browser views \
+  | jq '.views | if type == "array" then length else empty end' 2>/dev/null) || views=
+case "$views" in
+  '' | *[!0-9]*)
+    echo "mdpreview: could not read the herdr-browser view count - is herdr-browser on PATH and working?" >&2
+    exit 1
+    ;;
+esac
+
+if [ "$views" -eq 0 ]; then
   exec herdr plugin pane open \
     --plugin official.browser --entrypoint browser \
     --placement split --direction right \
