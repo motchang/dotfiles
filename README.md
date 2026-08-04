@@ -26,3 +26,24 @@
 	herdr plugin link ~/src/github.com/motchang/dotfiles/.config/herdr/plugins/claude-fork
 	herdr plugin link ~/src/github.com/motchang/dotfiles/.config/herdr/plugins/hunk-diff
 	herdr plugin link ~/src/github.com/motchang/dotfiles/.config/herdr/plugins/hunk-gh-diff
+
+#herdr-browser
+
+Chromium をペインに埋め込むプラグイン。Kitty graphics 対応ターミナル (Ghostty など)、
+Chrome/Chromium、bun が必要。config.toml の `[experimental] kitty_graphics = true`
+と `prefix+alt+b` のキーバインドは追跡済み。
+
+	herdr plugin install ogulcancelik/herdr-browser --yes
+
+	mise use -g bun@latest
+
+bun は `mise activate` 経由なので対話 zsh にしか PATH が通らない。herdr サーバーが
+プラグインペインを spawn するときに見つけられるよう、シムを ~/bin (zshenv で PATH に
+入る) に置く。
+
+	ln -sfn ~/.local/share/mise/shims/bun ~/bin/bun
+
+CLI ラッパー (`herdr-browser open <url>`, `text`, `selector-click`, `console` など。
+Claude Code から Bash で叩く用):
+
+	ln -sf ~/src/github.com/motchang/dotfiles/.config/herdr/bin/herdr-browser ~/bin/herdr-browser
