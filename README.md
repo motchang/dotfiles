@@ -1,4 +1,4 @@
-#install
+# install
 
 	mkdir -p src/github.com/motchang/dotfiles
 	git clone https://github.com/motchang/dotfiles.git src/github.com/motchang/dotfiles/
@@ -27,7 +27,7 @@
 	herdr plugin link ~/src/github.com/motchang/dotfiles/.config/herdr/plugins/hunk-diff
 	herdr plugin link ~/src/github.com/motchang/dotfiles/.config/herdr/plugins/hunk-gh-diff
 
-#herdr-browser
+# herdr-browser
 
 Chromium をペインに埋め込むプラグイン。Kitty graphics 対応ターミナル (Ghostty など)、
 Chrome/Chromium、bun が必要。config.toml の `[experimental] kitty_graphics = true`
