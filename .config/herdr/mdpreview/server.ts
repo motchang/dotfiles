@@ -5,15 +5,18 @@
 // fences are passed through as <pre class="mermaid"> and drawn by mermaid.js
 // in the browser that displays the page.
 
-import { watch, type FSWatcher } from "node:fs";
+import { statSync, watch, type FSWatcher } from "node:fs";
 import { basename, dirname, extname, resolve } from "node:path";
 
 import hljs from "highlight.js";
 import { Marked } from "marked";
 import markedAlert from "marked-alert";
-import { getHeadingList, gfmHeadingId, resetHeadings } from "marked-gfm-heading-id";
+import { getHeadingList, gfmHeadingId } from "marked-gfm-heading-id";
 
-const PORT = Number(process.env.MDPREVIEW_PORT ?? 43128);
+// Coerce with || rather than ??: an exported-but-empty MDPREVIEW_PORT would
+// otherwise become Number("") === 0 and make Bun listen on a random port, while
+// bin/mdpreview's ${MDPREVIEW_PORT:-43128} still talks to 43128.
+const PORT = Number(process.env.MDPREVIEW_PORT) || 43128;
 const MARKDOWN_EXTENSIONS = new Set([".md", ".markdown"]);
 
 const ASSETS: Record<string, string> = {
@@ -48,6 +51,7 @@ const marked = new Marked(
 
 let currentFile: string | null = null;
 let watcher: FSWatcher | null = null;
+let watchedState = "";
 let reloadTimer: ReturnType<typeof setTimeout> | null = null;
 const clients = new Set<ReadableStreamDefaultController<Uint8Array>>();
 
@@ -70,15 +74,33 @@ function broadcastReload(): void {
   }
 }
 
+// A stat fingerprint of the watched file. The inode changes when an editor
+// renames a freshly written file over the original, and "missing" covers the
+// window while the file is gone.
+function fileState(file: string): string {
+  try {
+    const info = statSync(file);
+    return `${info.ino}:${info.size}:${info.mtimeMs}`;
+  } catch {
+    return "missing";
+  }
+}
+
 // Watch the containing directory rather than the file: editors that save by
 // writing a temp file and renaming it over the original break a file watch.
+// macOS reports only the source name for that rename, so the watched file's own
+// name may never show up in an event. Fall back to comparing the fingerprint,
+// which also keeps unrelated saves in the same directory from reloading.
 function watchFile(file: string): void {
   watcher?.close();
   const name = basename(file);
+  watchedState = fileState(file);
   watcher = watch(dirname(file), (_event, changed) => {
-    if (changed !== name) {
+    const state = fileState(file);
+    if (changed !== name && state === watchedState) {
       return;
     }
+    watchedState = state;
     if (reloadTimer) {
       clearTimeout(reloadTimer);
     }
@@ -119,8 +141,20 @@ async function renderPage(): Promise<Response> {
       headers: { "content-type": "text/html; charset=utf-8" },
     });
   }
-  const source = await Bun.file(currentFile).text();
-  resetHeadings();
+  let source: string;
+  try {
+    source = await Bun.file(currentFile).text();
+  } catch (error) {
+    // An editor or `git checkout` can leave the file missing for a moment. Serve
+    // the shell anyway so the page keeps its /events listener and recovers on the
+    // next change, instead of turning into Bun's 500 page and going deaf.
+    const message = error instanceof Error ? error.message : String(error);
+    return new Response(
+      shell(basename(currentFile), currentFile, `<p>${escapeHtml(message)}</p>`),
+      { headers: { "content-type": "text/html; charset=utf-8" } },
+    );
+  }
+  // gfmHeadingId's preprocess hook clears the heading list on every parse.
   const body = await marked.parse(source);
   return new Response(shell(basename(currentFile), currentFile, body, renderToc()), {
     headers: { "content-type": "text/html; charset=utf-8" },
@@ -225,13 +259,19 @@ const server = Bun.serve({
     }
 
     if (pathname === "/events") {
+      // cancel() is handed the cancellation reason, not the controller, so hold
+      // our own reference to drop the client when the page goes away.
+      let client: ReadableStreamDefaultController<Uint8Array> | null = null;
       return new Response(
         new ReadableStream({
           start(controller) {
+            client = controller;
             clients.add(controller);
           },
-          cancel(controller) {
-            clients.delete(controller);
+          cancel() {
+            if (client) {
+              clients.delete(client);
+            }
           },
         }),
         {
