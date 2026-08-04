@@ -64,4 +64,27 @@ DOM を必要とする mermaid だけをブラウザ側で描画する。
 使い方 (ポートは MDPREVIEW_PORT で変更可、既定 43128):
 
 	mdpreview README.md
+	mdpreview --view
 	mdpreview --stop
+
+ペインは同じタブ内の herdr-browser ペインを再利用し、そのタブに無ければ右に分割して
+開く (フォーカスは移さない)。他のタブのビューはここからは見えないので再利用対象には
+しない。herdr の外 (HERDR_TAB_ID / HERDR_PANE_ID が無い) ではスコープするタブが無い
+ので、ビューがあればそれを使い、無ければフォーカス中のペインを分割する。
+
+`--view` はこのタブのビュー ID を出す。ブラウザペインが 2 つ以上あると herdr-browser
+は対象を自分では決められない (409) ので、読み戻しはこれで指定する。
+
+	export HERDR_BROWSER_VIEW_ID=$(mdpreview --view)
+	herdr-browser text
+
+# Claude Code スキル
+
+`~/.claude/skills` 配下は実ディレクトリにして SKILL.md だけを symlink する。スキルの
+探索はディレクトリを readdir して回るので、ディレクトリごと symlink にすると拾われない
+可能性がある。
+
+mdpreview スキル (Claude Code に markdown をプレビューさせる):
+
+	mkdir -p ~/.claude/skills/mdpreview
+	ln -sfn ~/src/github.com/motchang/dotfiles/.claude/skills/mdpreview/SKILL.md ~/.claude/skills/mdpreview/SKILL.md

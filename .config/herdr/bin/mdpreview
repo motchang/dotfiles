@@ -1,6 +1,7 @@
 #!/bin/sh
 # Preview a markdown file (mermaid included) in a herdr-browser pane.
 #   mdpreview README.md
+#   mdpreview --view
 #   mdpreview --stop
 #
 # Starts a local render server on first use and reuses it afterwards; the page
@@ -24,8 +25,131 @@ if [ "$1" = "--stop" ]; then
   exit 0
 fi
 
+# The preview belongs in the tab it was asked for from, so which pane to reuse is
+# a per-tab question: a view whose pane sits in another tab is a Chrome nobody
+# here can see, and navigating it looks exactly like nothing happening.
+# `herdr-browser views` is daemon-wide and cannot answer that on its own.
+#
+# Both ids are required together. Scoping reuse to a tab while opening panes
+# wherever the focus happens to be would find nothing next run and open another,
+# every run.
+scoped=0
+if [ -n "${HERDR_TAB_ID:-}" ] && [ -n "${HERDR_PANE_ID:-}" ]; then
+  scoped=1
+fi
+
+die_panes() {
+  echo "mdpreview: could not read the herdr pane list - is herdr working?" >&2
+  exit 1
+}
+
+die_views() {
+  echo "mdpreview: could not read the herdr-browser view list - is herdr-browser on PATH and working?" >&2
+  exit 1
+}
+
+# Browser-plugin panes in this tab, one pane id per line; empty when it has none.
+#
+# Existence is decided here rather than from the view list because a view is
+# registered with a null pane id and only learns its pane on the first heartbeat
+# after Chromium starts. Asking the view list would make two runs in a row both
+# conclude "nothing in this tab" and each open a pane. A new pane shows up in the
+# pane list immediately.
+#
+# The plugin's panes run with the plugin root as their cwd, which `herdr pane
+# rename` leaves alone; the label is matched too in case a later herdr starts
+# them somewhere else. A shape this does not recognize has to fail rather than
+# read as "no panes": `null | length` is 0, so a quiet mismatch would stack up a
+# fresh pane on every run.
+#
+# `-s` is what makes that guard cover a silent herdr as well. Given no input at
+# all, jq never runs the program and exits 0 - so a `herdr` that dies without
+# printing would otherwise reach the guard as an empty pane list and read as a
+# tab with no preview in it. Slurped, no input is `[]` and `.[0]` is null, which
+# the guard rejects like any other shape it does not know.
+browser_panes() {
+  herdr pane list | jq -rs --arg tab "$HERDR_TAB_ID" '
+    .[0].result.panes
+    | if type == "array" then . else error("unexpected herdr pane list shape") end
+    | .[]
+    | select(.tab_id == $tab and .pane_id != null)
+    | select((.cwd // "" | contains("official.browser")) or .label == "Browser")
+    | .pane_id
+  '
+}
+
+# The view id belonging to one of those panes, waited for: a pane opened moments
+# ago has no view to name yet, and leaving it unnamed hands the choice back to a
+# CLI that is not tab-aware. Prints nothing if the wait runs out. Any of them is
+# on screen in this tab, so which one comes first does not matter.
+view_for_panes() {
+  attempt=0
+  while [ "$attempt" -lt 50 ]; do
+    view=$(herdr-browser views | jq -rs --arg panes "$1" '
+      ($panes | split("\n")) as $here
+      | .[0].views
+      | if type == "array" then . else error("unexpected herdr-browser views shape") end
+      | map(select(.view_id != null and .pane_id != null and (.pane_id | IN($here[]))))
+      | .[0].view_id // empty
+    ')
+    if [ -n "$view" ]; then
+      printf '%s\n' "$view"
+      return 0
+    fi
+    sleep 0.2
+    attempt=$((attempt + 1))
+  done
+}
+
+# Any view at all, for the no-tab case.
+any_view() {
+  herdr-browser views | jq -rs '
+    .[0].views
+    | if type == "array" then . else error("unexpected herdr-browser views shape") end
+    | map(select(.view_id != null))
+    | .[0].view_id // empty
+  '
+}
+
+# Sets `target` to the view id to navigate, or to `open` when this tab needs a
+# preview pane of its own. View ids are UUIDs, so `open` cannot collide with one.
+resolve_target() {
+  if [ "$scoped" = 1 ]; then
+    panes=$(browser_panes) || die_panes
+    if [ -z "$panes" ]; then
+      target=open
+      return 0
+    fi
+    target=$(view_for_panes "$panes") || die_views
+    if [ -z "$target" ]; then
+      echo "mdpreview: the herdr-browser pane in this tab has not registered a view - is Chrome starting or stuck?" >&2
+      exit 1
+    fi
+  else
+    # Outside herdr there is no tab to scope to and no pane to split from, so any
+    # view counts and a new pane lands next to whatever pane has focus.
+    target=$(any_view) || die_views
+    if [ -z "$target" ]; then
+      target=open
+    fi
+  fi
+}
+
+if [ "$1" = "--view" ]; then
+  # Names this tab's preview for follow-up herdr-browser commands: the CLI's own
+  # pick is not tab-aware, and it refuses to choose at all once a second view is
+  # open anywhere.
+  resolve_target
+  if [ "$target" = open ]; then
+    echo "mdpreview: no herdr-browser pane in this tab - run 'mdpreview <file.md>' first" >&2
+    exit 1
+  fi
+  printf '%s\n' "$target"
+  exit 0
+fi
+
 if [ -z "$1" ]; then
-  echo "usage: mdpreview <file.md> | --stop" >&2
+  echo "usage: mdpreview <file.md> | --view | --stop" >&2
   exit 1
 fi
 
@@ -52,34 +176,39 @@ if ! curl -fsS -m 1 "${base}/health" >/dev/null 2>&1; then
   fi
 fi
 
-jq -n --arg path "$file" '{path: $path}' \
-  | curl -fsS -X POST -H 'content-type: application/json' --data @- "${base}/open" \
-  >/dev/null
+# Handing the file over reloads a preview that is already up, so it waits until
+# every check that could still fail has passed: an error that leaves the pane
+# showing the new file would be reporting a failure it did not have.
+set_file() {
+  jq -n --arg path "$file" '{path: $path}' \
+    | curl -fsS -X POST -H 'content-type: application/json' --data @- "${base}/open" \
+    >/dev/null
+}
 
-# A view with no pane behind it renders into a Chrome nobody can see, so open a
-# pane when there is none instead of navigating a headless view.
-# The count has to be a real number before it reaches `-eq`: an empty or
-# non-numeric value makes that test a shell error, and since it sits in an `if`
-# condition `set -e` lets it through as merely false - which takes the
-# headless-navigate path this check exists to avoid. Report it instead.
-# The `type == "array"` guard is what makes that work: `null | length` is 0, so
-# any shape without a top-level .views array (a wrapped {result: {views: ...}},
-# an error object) would otherwise read as "no views" and stack up a fresh pane
-# on every run. Emitting nothing turns an unrecognized shape into "unknown".
-views=$(herdr-browser views \
-  | jq '.views | if type == "array" then length else empty end' 2>/dev/null) || views=
-case "$views" in
-  '' | *[!0-9]*)
-    echo "mdpreview: could not read the herdr-browser view count - is herdr-browser on PATH and working?" >&2
-    exit 1
-    ;;
-esac
+resolve_target
 
-if [ "$views" -eq 0 ]; then
+if [ "$target" = open ]; then
+  set_file
+  # --target-pane keeps the split in this tab; without it the pane lands next to
+  # whichever pane happens to be focused, which need not be this one.
+  #
+  # --no-focus because the pane is visible either way: the preview is something to
+  # glance at, and taking the keyboard would interrupt whoever asked for it - an
+  # agent previewing mid-task would pull the caller out of their own shell.
   exec herdr plugin pane open \
     --plugin official.browser --entrypoint browser \
     --placement split --direction right \
-    --env "HERDR_BROWSER_INITIAL_URL=${base}/" --focus
+    ${HERDR_PANE_ID:+--target-pane "$HERDR_PANE_ID"} \
+    --env "HERDR_BROWSER_INITIAL_URL=${base}/" --no-focus
 fi
 
+set_file
+# Names the view to navigate. Left to itself the CLI picks one without regard to
+# which tab it is in, and silently makes a pane-less view when it finds none.
+#
+# Naming it is a request, not a guarantee: the CLI drops the name if that view's
+# heartbeat fails (daemonClient.ts ensureView) and falls back to its own pick,
+# still exiting 0. Closing the pane in the moment between the check above and
+# this line is enough to hit it, and it is silent when it happens.
+export HERDR_BROWSER_VIEW_ID=$target
 exec herdr-browser open "${base}/"
