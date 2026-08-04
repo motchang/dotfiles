@@ -5,7 +5,7 @@
 // fences are passed through as <pre class="mermaid"> and drawn by mermaid.js
 // in the browser that displays the page.
 
-import { statSync, watch, type FSWatcher } from "node:fs";
+import { realpathSync, statSync, watch, type FSWatcher } from "node:fs";
 import { basename, dirname, extname, resolve } from "node:path";
 
 import hljs from "highlight.js";
@@ -54,7 +54,7 @@ const marked = new Marked(
 );
 
 let currentFile: string | null = null;
-let watcher: FSWatcher | null = null;
+let watchers: FSWatcher[] = [];
 let watchedState = "";
 let reloadTimer: ReturnType<typeof setTimeout> | null = null;
 const clients = new Set<ReadableStreamDefaultController<Uint8Array>>();
@@ -94,26 +94,62 @@ function fileState(file: string): string {
   }
 }
 
+// The literal path with every symlink -- the file itself and any parent
+// directory -- resolved away. Falls back to the path as given, which is what a
+// broken link or a file that vanished mid-save leaves us with.
+function realPath(path: string): string {
+  try {
+    return realpathSync(path);
+  } catch {
+    return path;
+  }
+}
+
 // Watch the containing directory rather than the file: editors that save by
 // writing a temp file and renaming it over the original break a file watch.
 // macOS reports only the source name for that rename, so the watched file's own
 // name may never show up in an event. Fall back to comparing the fingerprint,
 // which also keeps unrelated saves in the same directory from reloading.
+//
+// A symlinked target needs the real file's directory watched as well: writes
+// land over there and the link's own directory never hears about them, so no
+// event arrives and the fingerprint -- which statSync already reads through the
+// link -- never gets an occasion to be compared. The link's directory stays
+// watched too, so repointing or replacing the link itself still reloads.
+// Directories are keyed by their resolved path, so the ordinary case where the
+// two differ only in a parent symlink (/tmp vs /private/tmp) collapses back to
+// the single watch it has always been.
 function watchFile(file: string): void {
-  watcher?.close();
-  const name = basename(file);
+  for (const open of watchers) {
+    open.close();
+  }
+  watchers = [];
   watchedState = fileState(file);
-  watcher = watch(dirname(file), (_event, changed) => {
-    const state = fileState(file);
-    if (changed !== name && state === watchedState) {
-      return;
-    }
-    watchedState = state;
-    if (reloadTimer) {
-      clearTimeout(reloadTimer);
-    }
-    reloadTimer = setTimeout(broadcastReload, 50);
-  });
+  const names = new Map<string, Set<string>>();
+  for (const path of [file, realPath(file)]) {
+    const dir = realPath(dirname(path));
+    const known = names.get(dir) ?? new Set<string>();
+    known.add(basename(path));
+    names.set(dir, known);
+  }
+  for (const [dir, known] of names) {
+    watchers.push(
+      watch(dir, (_event, changed) => {
+        // Fingerprint the path as opened, not the resolved one: statSync follows
+        // the link, so one comparison covers both an edit to the real file and a
+        // link repointed at a different file.
+        const state = fileState(file);
+        if (!known.has(changed ?? "") && state === watchedState) {
+          return;
+        }
+        watchedState = state;
+        if (reloadTimer) {
+          clearTimeout(reloadTimer);
+        }
+        reloadTimer = setTimeout(broadcastReload, 50);
+      }),
+    );
+  }
 }
 
 async function setCurrentFile(rawPath: string): Promise<string> {
