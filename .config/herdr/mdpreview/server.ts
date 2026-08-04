@@ -18,6 +18,10 @@ import { getHeadingList, gfmHeadingId } from "marked-gfm-heading-id";
 // bin/mdpreview's ${MDPREVIEW_PORT:-43128} still talks to 43128.
 const PORT = Number(process.env.MDPREVIEW_PORT) || 43128;
 const MARKDOWN_EXTENSIONS = new Set([".md", ".markdown"]);
+// The names the page is ever legitimately reached under. A DNS rebinding attack
+// resolves the attacker's own hostname to 127.0.0.1, and the Host header is what
+// gives that away.
+const ALLOWED_HOSTS = new Set([`127.0.0.1:${PORT}`, `localhost:${PORT}`]);
 
 const ASSETS: Record<string, string> = {
   "/assets/github-markdown.css": "github-markdown-css/github-markdown.css",
@@ -135,11 +139,50 @@ function renderToc(): string {
   return `<nav class="toc"><div class="toc-title">Contents</div><ul>${items}</ul></nav>`;
 }
 
+function newNonce(): string {
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  return btoa(String.fromCharCode(...bytes));
+}
+
+// The page's own two scripts carry this request's nonce, and script-src trusts
+// nothing else -- no host source, no 'unsafe-inline'. That is what makes the raw
+// HTML marked passes through inert: an injected <script> has no nonce, and an
+// onerror= attribute cannot be nonced at all, so both are refused.
+function contentSecurityPolicy(nonce: string): string {
+  return [
+    "default-src 'none'",
+    `script-src 'nonce-${nonce}'`,
+    // The two stylesheet links are 'self'; mermaid injects <style> at runtime.
+    "style-src 'self' 'unsafe-inline'",
+    // README badges are remote, and github-markdown-css inlines data: SVGs.
+    "img-src 'self' data: https:",
+    // new EventSource("/events").
+    "connect-src 'self'",
+    "object-src 'none'",
+    "base-uri 'none'",
+  ].join("; ");
+}
+
+function htmlResponse(
+  nonce: string,
+  title: string,
+  path: string,
+  body: string,
+  toc = "",
+): Response {
+  return new Response(shell(nonce, title, path, body, toc), {
+    headers: {
+      "content-type": "text/html; charset=utf-8",
+      "content-security-policy": contentSecurityPolicy(nonce),
+    },
+  });
+}
+
 async function renderPage(): Promise<Response> {
+  const nonce = newNonce();
   if (!currentFile) {
-    return new Response(shell("mdpreview", "", "<p>No file selected.</p>"), {
-      headers: { "content-type": "text/html; charset=utf-8" },
-    });
+    return htmlResponse(nonce, "mdpreview", "", "<p>No file selected.</p>");
   }
   let source: string;
   try {
@@ -149,19 +192,19 @@ async function renderPage(): Promise<Response> {
     // the shell anyway so the page keeps its /events listener and recovers on the
     // next change, instead of turning into Bun's 500 page and going deaf.
     const message = error instanceof Error ? error.message : String(error);
-    return new Response(
-      shell(basename(currentFile), currentFile, `<p>${escapeHtml(message)}</p>`),
-      { headers: { "content-type": "text/html; charset=utf-8" } },
+    return htmlResponse(
+      nonce,
+      basename(currentFile),
+      currentFile,
+      `<p>${escapeHtml(message)}</p>`,
     );
   }
   // gfmHeadingId's preprocess hook clears the heading list on every parse.
   const body = await marked.parse(source);
-  return new Response(shell(basename(currentFile), currentFile, body, renderToc()), {
-    headers: { "content-type": "text/html; charset=utf-8" },
-  });
+  return htmlResponse(nonce, basename(currentFile), currentFile, body, renderToc());
 }
 
-function shell(title: string, path: string, body: string, toc = ""): string {
+function shell(nonce: string, title: string, path: string, body: string, toc = ""): string {
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -203,8 +246,8 @@ function shell(title: string, path: string, body: string, toc = ""): string {
   </div>
   ${toc}
 </div>
-<script src="/assets/mermaid.min.js"></script>
-<script>
+<script src="/assets/mermaid.min.js" nonce="${nonce}"></script>
+<script nonce="${nonce}">
   const dark = window.matchMedia("(prefers-color-scheme: dark)").matches;
   mermaid.initialize({ startOnLoad: false, theme: dark ? "dark" : "default" });
   mermaid.run({ querySelector: "pre.mermaid" });
@@ -239,11 +282,20 @@ const server = Bun.serve({
   async fetch(request) {
     const { pathname } = new URL(request.url);
 
+    if (!ALLOWED_HOSTS.has(request.headers.get("host") ?? "")) {
+      return new Response("forbidden", { status: 403 });
+    }
+
     if (pathname === "/health") {
       return Response.json({ ok: true, file: currentFile });
     }
 
     if (pathname === "/open" && request.method === "POST") {
+      // Only local tooling posts here. A page in a browser always attaches an
+      // Origin, so its presence means the request came from somewhere else.
+      if (request.headers.get("origin") !== null) {
+        return new Response("forbidden", { status: 403 });
+      }
       const { path } = (await request.json()) as { path?: string };
       if (!path) {
         return Response.json({ ok: false, error: "missing path" }, { status: 400 });
