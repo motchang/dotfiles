@@ -1,0 +1,18 @@
+#!/bin/sh
+# herdr-browser plugin CLI wrapper.
+# Resolves the installed plugin root, then forwards args to its cli.ts.
+#   herdr-browser open http://localhost:3000
+#   herdr-browser text
+#   herdr-browser selector-click 'button[type=submit]'
+#   herdr-browser help
+set -e
+
+root=$(herdr plugin list --plugin official.browser --json \
+  | jq -r '.result.plugins[0].plugin_root // empty')
+
+if [ -z "$root" ]; then
+  echo "herdr-browser: official.browser plugin not found (herdr plugin install ogulcancelik/herdr-browser)" >&2
+  exit 1
+fi
+
+exec bun run "$root/src/cli.ts" "$@"

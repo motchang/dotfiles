@@ -165,6 +165,14 @@ type = "plugin_action"
 command = "local.hunk-diff.branch-split"
 
 [[keys.command]]
+# prefix+b is already goto (see the goto binding above), so the browser pane
+# takes prefix+alt+b, matching the other prefix+alt+* plugin bindings here.
+key = "prefix+alt+b"
+type = "shell"
+command = '"${HERDR_BIN_PATH}" plugin pane open --plugin official.browser --entrypoint browser --placement split --direction right --focus'
+description = "open herdr-browser in right split"
+
+[[keys.command]]
 key = "prefix+ctrl+right"
 type = "plugin_action"
 command = "local.claude-fork.right"
@@ -335,7 +343,7 @@ agent_panel_sort = "spaces"
 # allow_nested = false
 # Experimental local Kitty graphics rendering for attached clients.
 # Requires a Kitty graphics-compatible outer terminal.
-# kitty_graphics = false
+kitty_graphics = true
 # Save recent pane screen history across full server restarts.
 pane_history = false
 # While prefix mode is active, temporarily switch the macOS host input
