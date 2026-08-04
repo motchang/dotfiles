@@ -47,3 +47,21 @@ CLI ラッパー (`herdr-browser open <url>`, `text`, `selector-click`, `console
 Claude Code から Bash で叩く用):
 
 	ln -sf ~/src/github.com/motchang/dotfiles/.config/herdr/bin/herdr-browser ~/bin/herdr-browser
+
+# mdpreview
+
+Markdown を herdr-browser のペインでプレビューする。埋め込み mermaid も描画され、
+ファイルを保存すると自動でリロードされる。ネットワークには出ない (mermaid.js も
+highlight.js もローカル配信)。
+
+markdown・シンタックスハイライト・GitHub alerts・目次は Bun 側でレンダリングし、
+DOM を必要とする mermaid だけをブラウザ側で描画する。
+
+	cd ~/src/github.com/motchang/dotfiles/.config/herdr/mdpreview && bun install
+
+	ln -sf ~/src/github.com/motchang/dotfiles/.config/herdr/bin/mdpreview ~/bin/mdpreview
+
+使い方 (ポートは MDPREVIEW_PORT で変更可、既定 43128):
+
+	mdpreview README.md
+	mdpreview --stop
