@@ -28,21 +28,57 @@ if command -v readlink >/dev/null 2>&1 && readlink -f "$self" >/dev/null 2>&1; t
 fi
 root=$(CDPATH= cd -- "$(dirname -- "$self")/../mdpreview-server" && pwd)
 
-# Any render server, whatever directory it was started from, rather than only the
-# one in ${root}. A server started before this directory was renamed - or one from
-# a second checkout - answers /health on the same port and is indistinguishable
-# from ours there, so matching ${root} alone let `--stop` report success while
-# that process kept the port. Not anchored on `bun run`, so the bare `bun` form
-# matches too.
-server_pattern='mdpreview(-server)?/server\.ts'
+# The render servers listening on ${port}, whatever directory they were started
+# from. Both halves of that matter. Matching only the directory reaches servers
+# this command was not asked about - a second checkout, or this one under another
+# MDPREVIEW_PORT, which the port is a knob precisely so you can run. Matching only
+# the port reaches whatever unrelated program happens to be holding it. Neither is
+# ours to kill; the one on this port that is a render server is.
+#
+# Not anchored on `bun run`, so the bare `bun` form matches too, and not anchored
+# on ${root} either: a server started before this directory was renamed, or from
+# another checkout, answers /health here indistinguishably from ours and has to be
+# reachable to be retired.
+server_pids() {
+  for pid in $(lsof -ti "tcp:${port}" -sTCP:LISTEN 2>/dev/null); do
+    if ps -o command= -p "$pid" 2>/dev/null | grep -qE 'mdpreview(-server)?/server\.ts'; then
+      printf '%s\n' "$pid"
+    fi
+  done
+}
+
+# Whether that server is the copy in ${root} rather than one from somewhere else.
+server_is_ours() {
+  ps -o command= -p "$1" 2>/dev/null | grep -qF "${root}/server.ts"
+}
 
 stop_server() {
-  pkill -f "$server_pattern" 2>/dev/null || true
+  pids=$(server_pids)
+  if [ -n "$pids" ]; then
+    kill $pids 2>/dev/null || true
+  fi
+  # The port has to come free before a replacement can bind it.
+  attempt=0
+  while [ -n "$(server_pids)" ] && [ "$attempt" -lt 25 ]; do
+    sleep 0.2
+    attempt=$((attempt + 1))
+  done
+  [ -n "$pids" ]
 }
 
 if [ "$1" = "--stop" ]; then
-  stop_server
-  echo "mdpreview: stopped"
+  # Without lsof there is no way to tell which server belongs to this port, and
+  # killing by directory alone is what this exists to avoid. Saying so beats
+  # reporting a stop that did not happen.
+  if ! command -v lsof >/dev/null 2>&1; then
+    echo "mdpreview: lsof is needed to find the server on ${port}" >&2
+    exit 1
+  fi
+  if stop_server; then
+    echo "mdpreview: stopped the server on ${port}"
+  else
+    echo "mdpreview: no server on ${port}"
+  fi
   exit 0
 fi
 
@@ -185,14 +221,20 @@ resolve_file() {
 }
 
 ensure_server() {
-  # Whoever holds the port has to be the server in ${root}. /health cannot tell
-  # one server from another, so on its own it would hand back a server from
-  # another directory for as long as that process lived - rendering with code this
-  # copy does not have, silently. Retiring it here is what keeps the health check
-  # below meaning "our server is up" rather than "something answers".
-  if ! pgrep -f "${root}/server\.ts" >/dev/null 2>&1; then
-    stop_server
-  fi
+  # Whoever holds ${port} has to be the server in ${root}. /health cannot tell one
+  # server from another, so on its own it would hand back a server from another
+  # directory for as long as that process lived - rendering with code this copy
+  # does not have, silently. Retiring it here is what keeps the health check below
+  # meaning "our server is up" rather than "something answers".
+  #
+  # Scoped to this port: our own copy serving another MDPREVIEW_PORT is a separate
+  # preview, not a stale one, and has no bearing on who should hold this one.
+  for pid in $(server_pids); do
+    if ! server_is_ours "$pid"; then
+      stop_server
+      break
+    fi
+  done
   if ! curl -fsS -m 1 "${base}/health" >/dev/null 2>&1; then
     # --retry-connrefused lets the first request wait out the server's startup.
     nohup bun run "${root}/server.ts" >>"${TMPDIR:-/tmp}/mdpreview-server.log" 2>&1 &
