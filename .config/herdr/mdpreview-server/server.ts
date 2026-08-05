@@ -393,4 +393,4 @@ if (initial) {
   await setCurrentFile(initial);
 }
 
-console.log(`mdpreview listening on http://127.0.0.1:${server.port}`);
+console.log(`mdpreview-server listening on http://127.0.0.1:${server.port}`);

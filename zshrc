@@ -251,11 +251,9 @@ export PATH="/opt/homebrew/opt/openjdk/bin:$PATH"
 export CPPFLAGS="-I/opt/homebrew/opt/openjdk/include"
 export ES_JAVA_HOME="$(brew --prefix openjdk)/libexec/openjdk.jdk/Contents/Home"
 
-# ------------------------------------------------------------------------------
-# Rust
-# ------------------------------------------------------------------------------
-. ${HOME}/.cargo/env
-
+# Rust is not set up here: .zshenv is read before .zshrc and already sources
+# ${HOME}/.cargo/env, guarded. Repeating it here only re-read the same file, and
+# unguarded it was the interactive half of the same startup error.
 
 if [ -d "$(brew --prefix)/share/google-cloud-sdk/" ]
 then
