@@ -38,6 +38,7 @@ gibo: zshrc hooks direnv unguarded too, and direnv is a formula.
 	ln -sf ~/src/github.com/motchang/dotfiles/.config/hunk/config.toml ~/.config/hunk/config.toml
 
 	herdr plugin link ~/src/github.com/motchang/dotfiles/.config/herdr/plugins/claude-fork
+	herdr plugin link ~/src/github.com/motchang/dotfiles/.config/herdr/plugins/claude-fresh
 	herdr plugin link ~/src/github.com/motchang/dotfiles/.config/herdr/plugins/hunk-diff
 	herdr plugin link ~/src/github.com/motchang/dotfiles/.config/herdr/plugins/hunk-gh-diff
 
