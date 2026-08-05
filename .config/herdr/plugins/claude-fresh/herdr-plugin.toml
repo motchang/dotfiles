@@ -1,0 +1,18 @@
+id = "local.claude-fresh"
+name = "Claude Fresh"
+version = "0.1.0"
+min_herdr_version = "0.7.0"
+description = "Open a fresh Claude Code session in a new split pane, reusing the current pane's --add-dir set"
+platforms = ["macos", "linux"]
+
+[[actions]]
+id = "right"
+title = "Fresh Claude session (right)"
+contexts = ["pane"]
+command = ["bash", "fresh.sh", "right"]
+
+[[actions]]
+id = "down"
+title = "Fresh Claude session (down)"
+contexts = ["pane"]
+command = ["bash", "fresh.sh", "down"]
