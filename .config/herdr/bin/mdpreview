@@ -28,9 +28,20 @@ if command -v readlink >/dev/null 2>&1 && readlink -f "$self" >/dev/null 2>&1; t
 fi
 root=$(CDPATH= cd -- "$(dirname -- "$self")/../mdpreview-server" && pwd)
 
+# Any render server, whatever directory it was started from, rather than only the
+# one in ${root}. A server started before this directory was renamed - or one from
+# a second checkout - answers /health on the same port and is indistinguishable
+# from ours there, so matching ${root} alone let `--stop` report success while
+# that process kept the port. Not anchored on `bun run`, so the bare `bun` form
+# matches too.
+server_pattern='mdpreview(-server)?/server\.ts'
+
+stop_server() {
+  pkill -f "$server_pattern" 2>/dev/null || true
+}
+
 if [ "$1" = "--stop" ]; then
-  pkill -f "bun run ${root}/server.ts" 2>/dev/null || true
-  pkill -f "bun ${root}/server.ts" 2>/dev/null || true
+  stop_server
   echo "mdpreview: stopped"
   exit 0
 fi
@@ -174,6 +185,14 @@ resolve_file() {
 }
 
 ensure_server() {
+  # Whoever holds the port has to be the server in ${root}. /health cannot tell
+  # one server from another, so on its own it would hand back a server from
+  # another directory for as long as that process lived - rendering with code this
+  # copy does not have, silently. Retiring it here is what keeps the health check
+  # below meaning "our server is up" rather than "something answers".
+  if ! pgrep -f "${root}/server\.ts" >/dev/null 2>&1; then
+    stop_server
+  fi
   if ! curl -fsS -m 1 "${base}/health" >/dev/null 2>&1; then
     # --retry-connrefused lets the first request wait out the server's startup.
     nohup bun run "${root}/server.ts" >>"${TMPDIR:-/tmp}/mdpreview-server.log" 2>&1 &
