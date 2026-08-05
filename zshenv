@@ -71,5 +71,13 @@ export PATH
 unset SSH_ASKPASS
 
 # export JAVA_HOME=`/usr/libexec/java_home -v 9`
-source "$HOME/.cargo/env"
-. "$HOME/.cargo/env"
+
+# rustup writes this file; a mise-managed rust does not, so it is not always
+# there. Unguarded it fails on every zsh invocation, non-interactive ones
+# included, since .zshenv is read before anything else. It still earns its place
+# with a rust from mise: `cargo install` puts binaries in ${HOME}/.cargo/bin
+# whichever cargo ran, and this is what puts that on PATH.
+if [ -f ${HOME}/.cargo/env ]
+then
+    . ${HOME}/.cargo/env
+fi
