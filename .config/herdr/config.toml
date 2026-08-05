@@ -182,6 +182,23 @@ key = "prefix+ctrl+down"
 type = "plugin_action"
 command = "local.claude-fork.down"
 
+# claude-fresh reuses the 2/3 split numbering above rather than pairing with
+# claude-fork's ctrl+arrows: `alt+arrow_left`/`alt+arrow_right` are the only two
+# bare alt+ bindings Ghostty ships, and it rewrites them to esc:b/esc:f, so
+# prefix+alt+right arrives as alt+f and can never match. The other arrow
+# modifiers are spoken for too (shift = adjust_selection, super = text:\x05,
+# super+alt = goto_split). So: prefix+2/3 splits empty, prefix+alt+2/3 splits
+# with a fresh claude in it, prefix+ctrl+arrow splits with a forked one.
+[[keys.command]]
+key = "prefix+alt+3"     # side-by-side, matching split_vertical
+type = "plugin_action"
+command = "local.claude-fresh.right"
+
+[[keys.command]]
+key = "prefix+alt+2"     # stacked, matching split_horizontal
+type = "plugin_action"
+command = "local.claude-fresh.down"
+
 
 # Legacy indexed shortcut config is still parsed for compatibility.
 # Prefer switch_tab, switch_workspace, and focus_agent for new configs.
