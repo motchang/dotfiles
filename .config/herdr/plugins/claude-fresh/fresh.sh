@@ -56,6 +56,19 @@ while IFS= read -r arg; do
   src_argv+=("$arg")
 done < <(jq -r '.argv[1:][]' <<<"$claude_json")
 
+# A variadic group's end is ambiguous: `cw` appends the caller's own claude args
+# after its generated --add-dir flags, so `cw <preset> "do the thing"` puts a
+# one-shot prompt exactly where another directory would go. --add-dir takes
+# directory paths, so require one — the prompt is not a directory, so it drops
+# out, which is what a fresh session wants anyway. Resolve relative to the source
+# pane rather than to this script, which runs from the herdr server's cwd.
+is_pane_dir() {
+  case "$1" in
+    /*) [ -d "$1" ] ;;
+    *)  [ -d "$cwd/$1" ] ;;
+  esac
+}
+
 add_dirs=()
 i=0
 n=${#src_argv[@]}
@@ -66,12 +79,15 @@ while [ "$i" -lt "$n" ]; do
       while [ "$i" -lt "$n" ]; do
         case "${src_argv[$i]}" in
           -*) break ;;
-          *) add_dirs+=("${src_argv[$i]}"); i=$((i + 1)) ;;
         esac
+        is_pane_dir "${src_argv[$i]}" || break
+        add_dirs+=("${src_argv[$i]}")
+        i=$((i + 1))
       done
       continue
       ;;
     --add-dir=*)
+      # Unambiguous spelling — a prompt cannot arrive this way, so take it as given.
       add_dirs+=("${src_argv[$i]#--add-dir=}")
       ;;
   esac
