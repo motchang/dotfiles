@@ -229,6 +229,17 @@ ensure_server() {
   #
   # Scoped to this port: our own copy serving another MDPREVIEW_PORT is a separate
   # preview, not a stale one, and has no bearing on who should hold this one.
+  #
+  # Without lsof the holder cannot be identified, and this carries on anyway
+  # rather than refusing the way `--stop` does: refusing would trade a check that
+  # only matters when a server from elsewhere is already here for a preview that
+  # never works at all. What must not be skipped is saying so, because the
+  # failure it leaves open - rendering through the wrong server's code - shows up
+  # as nothing more than a page that will not change.
+  if ! command -v lsof >/dev/null 2>&1 &&
+      curl -fsS -m 1 "${base}/health" >/dev/null 2>&1; then
+    echo "mdpreview: no lsof, so the server already on ${port} cannot be identified - if the preview renders stale, stop that process by hand" >&2
+  fi
   for pid in $(server_pids); do
     if ! server_is_ours "$pid"; then
       stop_server
