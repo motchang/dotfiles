@@ -1,10 +1,21 @@
 #!/bin/sh
 # Preview a markdown file (mermaid included) in a herdr-browser pane.
 #   mdpreview README.md
+#   mdpreview text                 # any herdr-browser command, aimed at this
+#   mdpreview console              # tab's preview - no view id to pass around
+#   mdpreview screenshot --output /tmp/preview.png
+#   mdpreview --view
+#   mdpreview --pane
+#   mdpreview --screen
+#   mdpreview --reset [file.md]
 #   mdpreview --stop
 #
 # Starts a local render server on first use and reuses it afterwards; the page
 # live-reloads when the file changes.
+#
+# Which pane and view in this tab hold the preview is decided here, in every
+# mode. Nothing outside needs to read `herdr pane list` or `herdr-browser views`
+# to use a preview, and nothing outside should have to.
 set -e
 
 port=${MDPREVIEW_PORT:-43128}
@@ -15,71 +26,480 @@ self=$0
 if command -v readlink >/dev/null 2>&1 && readlink -f "$self" >/dev/null 2>&1; then
   self=$(readlink -f "$self")
 fi
-root=$(CDPATH= cd -- "$(dirname -- "$self")/../mdpreview" && pwd)
+root=$(CDPATH= cd -- "$(dirname -- "$self")/../mdpreview-server" && pwd)
+
+# The render servers listening on ${port}, whatever directory they were started
+# from. Both halves of that matter. Matching only the directory reaches servers
+# this command was not asked about - a second checkout, or this one under another
+# MDPREVIEW_PORT, which the port is a knob precisely so you can run. Matching only
+# the port reaches whatever unrelated program happens to be holding it. Neither is
+# ours to kill; the one on this port that is a render server is.
+#
+# Not anchored on `bun run`, so the bare `bun` form matches too, and not anchored
+# on ${root} either: a server started before this directory was renamed, or from
+# another checkout, answers /health here indistinguishably from ours and has to be
+# reachable to be retired.
+server_pids() {
+  for pid in $(lsof -ti "tcp:${port}" -sTCP:LISTEN 2>/dev/null); do
+    if ps -o command= -p "$pid" 2>/dev/null | grep -qE 'mdpreview(-server)?/server\.ts'; then
+      printf '%s\n' "$pid"
+    fi
+  done
+}
+
+# Whether that server is the copy in ${root} rather than one from somewhere else.
+server_is_ours() {
+  ps -o command= -p "$1" 2>/dev/null | grep -qF "${root}/server.ts"
+}
+
+stop_server() {
+  pids=$(server_pids)
+  if [ -n "$pids" ]; then
+    kill $pids 2>/dev/null || true
+  fi
+  # The port has to come free before a replacement can bind it.
+  attempt=0
+  while [ -n "$(server_pids)" ] && [ "$attempt" -lt 25 ]; do
+    sleep 0.2
+    attempt=$((attempt + 1))
+  done
+  [ -n "$pids" ]
+}
 
 if [ "$1" = "--stop" ]; then
-  pkill -f "bun run ${root}/server.ts" 2>/dev/null || true
-  pkill -f "bun ${root}/server.ts" 2>/dev/null || true
-  echo "mdpreview: stopped"
+  # Without lsof there is no way to tell which server belongs to this port, and
+  # killing by directory alone is what this exists to avoid. Saying so beats
+  # reporting a stop that did not happen.
+  if ! command -v lsof >/dev/null 2>&1; then
+    echo "mdpreview: lsof is needed to find the server on ${port}" >&2
+    exit 1
+  fi
+  if stop_server; then
+    echo "mdpreview: stopped the server on ${port}"
+  else
+    echo "mdpreview: no server on ${port}"
+  fi
   exit 0
 fi
 
-if [ -z "$1" ]; then
-  echo "usage: mdpreview <file.md> | --stop" >&2
-  exit 1
+# The preview belongs in the tab it was asked for from, so which pane to reuse is
+# a per-tab question: a view whose pane sits in another tab is a Chrome nobody
+# here can see, and navigating it looks exactly like nothing happening.
+# `herdr-browser views` is daemon-wide and cannot answer that on its own.
+#
+# Both ids are required together. Scoping reuse to a tab while opening panes
+# wherever the focus happens to be would find nothing next run and open another,
+# every run.
+scoped=0
+if [ -n "${HERDR_TAB_ID:-}" ] && [ -n "${HERDR_PANE_ID:-}" ]; then
+  scoped=1
 fi
 
-if [ ! -d "${root}/node_modules" ]; then
-  echo "mdpreview: dependencies missing - run 'bun install' in ${root}" >&2
+die_panes() {
+  echo "mdpreview: could not read the herdr pane list - is herdr working?" >&2
   exit 1
-fi
+}
 
-file=$(CDPATH= cd -- "$(dirname -- "$1")" && pwd)/$(basename -- "$1")
-if [ ! -f "$file" ]; then
-  echo "mdpreview: no such file: $file" >&2
+die_views() {
+  echo "mdpreview: could not read the herdr-browser view list - is herdr-browser on PATH and working?" >&2
   exit 1
-fi
+}
 
-if ! curl -fsS -m 1 "${base}/health" >/dev/null 2>&1; then
-  # --retry-connrefused lets the first request wait out the server's startup.
-  nohup bun run "${root}/server.ts" >>"${TMPDIR:-/tmp}/mdpreview.log" 2>&1 &
-  # Each connection-refused retry would otherwise print its own error, so the
-  # retry output is dropped and the final failure is reported here instead.
-  if ! curl -fsS --retry 30 --retry-delay 0 --retry-connrefused -m 10 \
-      "${base}/health" >/dev/null 2>/dev/null; then
-    echo "mdpreview: server did not start on ${base} - see ${TMPDIR:-/tmp}/mdpreview.log" >&2
+require_tab() {
+  if [ "$scoped" != 1 ]; then
+    echo "mdpreview: $1 needs a herdr pane to scope to - there is no tab to look in from a plain terminal" >&2
     exit 1
   fi
+}
+
+# Browser-plugin panes in this tab, one pane id per line; empty when it has none.
+#
+# Existence is decided here rather than from the view list because a view is
+# registered with a null pane id and only learns its pane on the first heartbeat
+# after Chromium starts. Asking the view list would make two runs in a row both
+# conclude "nothing in this tab" and each open a pane. A new pane shows up in the
+# pane list immediately.
+#
+# The plugin's panes run with the plugin root as their cwd, which `herdr pane
+# rename` leaves alone; the label is matched too in case a later herdr starts
+# them somewhere else. A shape this does not recognize has to fail rather than
+# read as "no panes": `null | length` is 0, so a quiet mismatch would stack up a
+# fresh pane on every run.
+#
+# `-s` is what makes that guard cover a silent herdr as well. Given no input at
+# all, jq never runs the program and exits 0 - so a `herdr` that dies without
+# printing would otherwise reach the guard as an empty pane list and read as a
+# tab with no preview in it. Slurped, no input is `[]` and `.[0]` is null, which
+# the guard rejects like any other shape it does not know.
+browser_panes() {
+  herdr pane list | jq -rs --arg tab "$HERDR_TAB_ID" '
+    .[0].result.panes
+    | if type == "array" then . else error("unexpected herdr pane list shape") end
+    | .[]
+    | select(.tab_id == $tab and .pane_id != null)
+    | select((.cwd // "" | contains("official.browser")) or .label == "Browser")
+    | .pane_id
+  '
+}
+
+# The view id belonging to one of those panes, waited for: a pane opened moments
+# ago has no view to name yet, and leaving it unnamed hands the choice back to a
+# CLI that is not tab-aware. Prints nothing if the wait runs out. Any of them is
+# on screen in this tab, so which one comes first does not matter.
+view_for_panes() {
+  attempt=0
+  limit=${2:-50}
+  while [ "$attempt" -lt "$limit" ]; do
+    view=$(herdr-browser views | jq -rs --arg panes "$1" '
+      ($panes | split("\n")) as $here
+      | .[0].views
+      | if type == "array" then . else error("unexpected herdr-browser views shape") end
+      | map(select(.view_id != null and .pane_id != null and (.pane_id | IN($here[]))))
+      | .[0].view_id // empty
+    ')
+    if [ -n "$view" ]; then
+      printf '%s\n' "$view"
+      return 0
+    fi
+    sleep 0.2
+    attempt=$((attempt + 1))
+  done
+}
+
+# Any view at all, for the no-tab case.
+any_view() {
+  herdr-browser views | jq -rs '
+    .[0].views
+    | if type == "array" then . else error("unexpected herdr-browser views shape") end
+    | map(select(.view_id != null))
+    | .[0].view_id // empty
+  '
+}
+
+# Sets `target` to the view id to navigate, or to `open` when this tab needs a
+# preview pane of its own. View ids are UUIDs, so `open` cannot collide with one.
+resolve_target() {
+  if [ "$scoped" = 1 ]; then
+    panes=$(browser_panes) || die_panes
+    if [ -z "$panes" ]; then
+      target=open
+      return 0
+    fi
+    target=$(view_for_panes "$panes") || die_views
+    if [ -z "$target" ]; then
+      echo "mdpreview: the herdr-browser pane in this tab has not registered a view - is Chrome starting or stuck?" >&2
+      exit 1
+    fi
+  else
+    # Outside herdr there is no tab to scope to and no pane to split from, so any
+    # view counts and a new pane lands next to whatever pane has focus.
+    target=$(any_view) || die_views
+    if [ -z "$target" ]; then
+      target=open
+    fi
+  fi
+}
+
+require_deps() {
+  if [ ! -d "${root}/node_modules" ]; then
+    echo "mdpreview: dependencies missing - run 'bun install' in ${root}" >&2
+    exit 1
+  fi
+}
+
+# Sets `file` to an absolute path, rejecting one that is not there. The directory
+# is resolved on its own so that a path with no directory to cd into is reported
+# as the missing file it is, rather than as cd's complaint plus whatever `pwd`
+# never printed - which reads as a different path than the one asked for.
+resolve_file() {
+  dir=$(CDPATH= cd -- "$(dirname -- "$1")" 2>/dev/null && pwd) || dir=""
+  if [ -z "$dir" ] || [ ! -f "${dir}/$(basename -- "$1")" ]; then
+    echo "mdpreview: no such file: $1" >&2
+    exit 1
+  fi
+  file="${dir}/$(basename -- "$1")"
+}
+
+ensure_server() {
+  # Whoever holds ${port} has to be the server in ${root}. /health cannot tell one
+  # server from another, so on its own it would hand back a server from another
+  # directory for as long as that process lived - rendering with code this copy
+  # does not have, silently. Retiring it here is what keeps the health check below
+  # meaning "our server is up" rather than "something answers".
+  #
+  # Scoped to this port: our own copy serving another MDPREVIEW_PORT is a separate
+  # preview, not a stale one, and has no bearing on who should hold this one.
+  #
+  # Without lsof the holder cannot be identified, and this carries on anyway
+  # rather than refusing the way `--stop` does: refusing would trade a check that
+  # only matters when a server from elsewhere is already here for a preview that
+  # never works at all. What must not be skipped is saying so, because the
+  # failure it leaves open - rendering through the wrong server's code - shows up
+  # as nothing more than a page that will not change.
+  if ! command -v lsof >/dev/null 2>&1 &&
+      curl -fsS -m 1 "${base}/health" >/dev/null 2>&1; then
+    echo "mdpreview: no lsof, so the server already on ${port} cannot be identified - if the preview renders stale, stop that process by hand" >&2
+  fi
+  for pid in $(server_pids); do
+    if ! server_is_ours "$pid"; then
+      stop_server
+      break
+    fi
+  done
+  if ! curl -fsS -m 1 "${base}/health" >/dev/null 2>&1; then
+    # --retry-connrefused lets the first request wait out the server's startup.
+    nohup bun run "${root}/server.ts" >>"${TMPDIR:-/tmp}/mdpreview-server.log" 2>&1 &
+    # Each connection-refused retry would otherwise print its own error, so the
+    # retry output is dropped and the final failure is reported here instead.
+    if ! curl -fsS --retry 30 --retry-delay 0 --retry-connrefused -m 10 \
+        "${base}/health" >/dev/null 2>/dev/null; then
+      echo "mdpreview: server did not start on ${base} - see ${TMPDIR:-/tmp}/mdpreview-server.log" >&2
+      exit 1
+    fi
+  fi
+}
+
+# Handing the file over reloads a preview that is already up, so the call waits
+# until every check that could still fail has passed: an error that leaves the
+# pane showing the new file would be reporting a failure it did not have.
+set_file() {
+  jq -n --arg path "$file" '{path: $path}' \
+    | curl -fsS -X POST -H 'content-type: application/json' --data @- "${base}/open" \
+    >/dev/null
+}
+
+# --target-pane keeps the split in this tab; without it the pane lands next to
+# whichever pane happens to be focused, which need not be this one.
+#
+# --no-focus because the pane is visible either way: the preview is something to
+# glance at, and taking the keyboard would interrupt whoever asked for it - an
+# agent previewing mid-task would pull the caller out of their own shell.
+open_pane() {
+  herdr plugin pane open \
+    --plugin official.browser --entrypoint browser \
+    --placement split --direction right \
+    ${HERDR_PANE_ID:+--target-pane "$HERDR_PANE_ID"} \
+    --env "HERDR_BROWSER_INITIAL_URL=${base}/" --no-focus
+}
+
+# Chrome sometimes stops acknowledging pointer input while the rest of CDP stays
+# healthy: `status` and `text` still answer, the page still reloads, and only
+# Input.dispatchMouseEvent times out - so the wheel does nothing and the viewer
+# writes `mouse move failed: ...` over the page. A reload does not clear it,
+# because the wedge belongs to the Chrome tab rather than to the document.
+#
+# A zero-delta wheel is the cheapest way to ask: it is a real input dispatch,
+# and it scrolls nothing. Only that one timeout counts as wedged - anything else
+# the CLI has to say is some other problem, and escalating on it would restart
+# the daemon for a reason a restart cannot fix.
+input_wedged() {
+  probe=$(HERDR_BROWSER_VIEW_ID=$1 herdr-browser wheel 0 0 0 2>&1) || true
+  case $probe in
+    *"timed out waiting for CDP Input"*) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+# Closes every browser pane in this tab and waits for them to leave the pane
+# list: a pane still listed while its viewer exits would be matched as this
+# tab's preview again, and the view it is in the middle of dropping would be
+# handed back as the reset result.
+close_panes() {
+  panes=$(browser_panes) || die_panes
+  for pane in $panes; do
+    herdr pane close "$pane" >/dev/null 2>&1 || true
+  done
+  attempt=0
+  while [ "$attempt" -lt 25 ]; do
+    panes=$(browser_panes) || die_panes
+    if [ -z "$panes" ]; then
+      return 0
+    fi
+    sleep 0.2
+    attempt=$((attempt + 1))
+  done
+  echo "mdpreview: the browser panes in this tab did not close" >&2
+  exit 1
+}
+
+# The view of the pane just opened, or nothing if it never registered one within
+# the given number of 0.2s attempts.
+wait_view() {
+  panes=$(browser_panes) || die_panes
+  if [ -z "$panes" ]; then
+    return 0
+  fi
+  view_for_panes "$panes" "${1:-50}"
+}
+
+if [ "$1" = "--view" ]; then
+  # Names this tab's preview for follow-up herdr-browser commands: the CLI's own
+  # pick is not tab-aware, and it refuses to choose at all once a second view is
+  # open anywhere.
+  resolve_target
+  if [ "$target" = open ]; then
+    echo "mdpreview: no herdr-browser pane in this tab - run 'mdpreview <file.md>' first" >&2
+    exit 1
+  fi
+  printf '%s\n' "$target"
+  exit 0
 fi
 
-jq -n --arg path "$file" '{path: $path}' \
-  | curl -fsS -X POST -H 'content-type: application/json' --data @- "${base}/open" \
-  >/dev/null
-
-# A view with no pane behind it renders into a Chrome nobody can see, so open a
-# pane when there is none instead of navigating a headless view.
-# The count has to be a real number before it reaches `-eq`: an empty or
-# non-numeric value makes that test a shell error, and since it sits in an `if`
-# condition `set -e` lets it through as merely false - which takes the
-# headless-navigate path this check exists to avoid. Report it instead.
-# The `type == "array"` guard is what makes that work: `null | length` is 0, so
-# any shape without a top-level .views array (a wrapped {result: {views: ...}},
-# an error object) would otherwise read as "no views" and stack up a fresh pane
-# on every run. Emitting nothing turns an unrecognized shape into "unknown".
-views=$(herdr-browser views \
-  | jq '.views | if type == "array" then length else empty end' 2>/dev/null) || views=
-case "$views" in
-  '' | *[!0-9]*)
-    echo "mdpreview: could not read the herdr-browser view count - is herdr-browser on PATH and working?" >&2
+if [ "$1" = "--pane" ]; then
+  # Names this tab's preview pane, one id per line, for the `herdr pane`
+  # commands - closing it, renaming it, resizing it. Reading what it is showing
+  # is `--screen`, which does not make the caller hold an id to do it.
+  require_tab --pane
+  panes=$(browser_panes) || die_panes
+  if [ -z "$panes" ]; then
+    echo "mdpreview: no herdr-browser pane in this tab - run 'mdpreview <file.md>' first" >&2
     exit 1
+  fi
+  printf '%s\n' "$panes"
+  exit 0
+fi
+
+if [ "$1" = "--screen" ]; then
+  # The pane's visible screen text, which is where the viewer reports its errors:
+  # it writes them onto the page and nowhere else, so this is the only way to read
+  # them back. `--source visible` is the one that answers for a pane drawing
+  # graphics - `recent` comes back empty.
+  require_tab --screen
+  panes=$(browser_panes) || die_panes
+  if [ -z "$panes" ]; then
+    echo "mdpreview: no herdr-browser pane in this tab - run 'mdpreview <file.md>' first" >&2
+    exit 1
+  fi
+  for pane in $panes; do
+    herdr pane read "$pane" --source visible
+  done
+  exit 0
+fi
+
+if [ "$1" = "--reset" ]; then
+  # Replaces this tab's wedged preview instead of trying to revive it. The viewer
+  # cannot recover a session it has declared over (viewer.ts handleDaemonGone
+  # tears down its input and polling for good), and a wedged Chrome tab does not
+  # come back from a reload, so both stages here end in a pane that is new.
+  require_tab --reset
+
+  if [ -n "$2" ]; then
+    require_deps
+    resolve_file "$2"
+    ensure_server
+  else
+    # Reuses whatever is on screen, which means a server has to be up already:
+    # a fresh one has no current file, and starting one here would reset onto a
+    # blank page. jq turns a silent curl into empty output rather than a failure.
+    #
+    # The file is read before ownership of the port is settled, and deliberately
+    # so. The server answering may be one this copy does not own - left from
+    # before the rename, or another checkout - and its current file is still the
+    # file on screen, which is the thing being restored. Retiring it first would
+    # throw away the only record of what to reset onto. ensure_server then makes
+    # our server the one that gets the file back and the one the pane is pointed
+    # at, so nothing here renders through code this copy does not have.
+    file=$(curl -fsS -m 2 "${base}/health" 2>/dev/null | jq -r '.file // empty')
+    if [ -z "$file" ]; then
+      echo "mdpreview: nothing is being previewed - run 'mdpreview <file.md>'" >&2
+      exit 1
+    fi
+    if [ ! -f "$file" ]; then
+      echo "mdpreview: the previewed file is gone: $file" >&2
+      exit 1
+    fi
+    require_deps
+    ensure_server
+  fi
+
+  for stage in pane daemon; do
+    close_panes
+    budget=50
+    if [ "$stage" = daemon ]; then
+      # Session-wide: this takes the daemon and with it the Chrome behind every
+      # other browser pane, which drops them all to "session ended" until they
+      # are reopened. Only reached when a new pane was not enough, which means
+      # the daemon rather than the tab is what is stuck.
+      echo "mdpreview: a new pane did not clear it - restarting the browser daemon" >&2
+      herdr-browser stop >/dev/null 2>&1 || true
+      # The replacement pane now pays for a cold Chrome start rather than joining
+      # a daemon that already has one up, and the wait a warm pane needs is not
+      # enough for that. Running out of it here would report a reset that worked
+      # as a reset that failed.
+      budget=150
+    fi
+    set_file
+    open_pane >/dev/null
+    view=$(wait_view "$budget") || die_views
+    if [ -n "$view" ] && ! input_wedged "$view"; then
+      if [ "$stage" = daemon ]; then
+        echo "mdpreview: reset ok - browser daemon restarted, previewing ${file}"
+      else
+        echo "mdpreview: reset ok - new preview pane, previewing ${file}"
+      fi
+      exit 0
+    fi
+  done
+
+  echo "mdpreview: reset failed - pointer input still times out with a new pane and a new daemon." >&2
+  echo "mdpreview: the pane is open and the page renders; check 'mdpreview status' and 'mdpreview --screen'." >&2
+  exit 1
+fi
+
+if [ -z "$1" ]; then
+  echo "usage: mdpreview <file.md> | <herdr-browser command> | --view | --pane | --screen | --reset [file.md] | --stop" >&2
+  exit 1
+fi
+
+# A markdown path is the only thing taken as a file; anything else is a command
+# for the preview. That is decided on the spelling rather than on whether the
+# path happens to exist, so `mdpreview text` cannot turn into a preview of a file
+# called `text` that someone left in the cwd - write `./text` to mean the file.
+case $1 in
+  *.md | *.markdown | *.mdown | */*) ;;
+  *)
+    # Everything else is handed to herdr-browser against this tab's preview.
+    # Naming the view belongs here and not to the caller: the CLI's own pick
+    # ignores which tab it is in, and refuses to pick at all once a second
+    # browser pane is open anywhere - so a caller left to do this itself has to
+    # read the pane and view lists to answer a question this script has already
+    # answered. herdr-browser rejects a word that is not one of its commands,
+    # which is why this needs no list of them to keep in step with.
+    resolve_target
+    if [ "$target" = open ]; then
+      echo "mdpreview: no preview in this tab - run 'mdpreview <file.md>' first" >&2
+      exit 1
+    fi
+    export HERDR_BROWSER_VIEW_ID=$target
+    exec herdr-browser "$@"
     ;;
 esac
 
-if [ "$views" -eq 0 ]; then
-  exec herdr plugin pane open \
-    --plugin official.browser --entrypoint browser \
-    --placement split --direction right \
-    --env "HERDR_BROWSER_INITIAL_URL=${base}/" --focus
+require_deps
+resolve_file "$1"
+ensure_server
+
+resolve_target
+
+# The JSON that opening a pane and navigating a view print is of no use to
+# whoever asked for a preview, and an agent reading it pays for every field of
+# it. One line saying what happened covers both; failures still come through on
+# stderr, and the view id is a `mdpreview --view` away for anyone who wants it.
+if [ "$target" = open ]; then
+  set_file
+  open_pane >/dev/null
+  echo "mdpreview: previewing ${file} in a new pane"
+  exit 0
 fi
 
-exec herdr-browser open "${base}/"
+set_file
+# Names the view to navigate. Left to itself the CLI picks one without regard to
+# which tab it is in, and silently makes a pane-less view when it finds none.
+#
+# Naming it is a request, not a guarantee: the CLI drops the name if that view's
+# heartbeat fails (daemonClient.ts ensureView) and falls back to its own pick,
+# still exiting 0. Closing the pane in the moment between the check above and
+# this line is enough to hit it, and it is silent when it happens.
+export HERDR_BROWSER_VIEW_ID=$target
+herdr-browser open "${base}/" >/dev/null
+echo "mdpreview: previewing ${file}"

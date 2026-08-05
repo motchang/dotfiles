@@ -1,5 +1,5 @@
 {
-  "name": "mdpreview",
+  "name": "mdpreview-server",
   "private": true,
   "type": "module",
   "scripts": {
