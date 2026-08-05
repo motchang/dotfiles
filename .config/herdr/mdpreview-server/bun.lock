@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "mdpreview",
+      "name": "mdpreview-server",
       "dependencies": {
         "github-markdown-css": "^5.9.0",
         "highlight.js": "^11.11.1",
