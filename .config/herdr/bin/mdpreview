@@ -26,7 +26,7 @@ self=$0
 if command -v readlink >/dev/null 2>&1 && readlink -f "$self" >/dev/null 2>&1; then
   self=$(readlink -f "$self")
 fi
-root=$(CDPATH= cd -- "$(dirname -- "$self")/../mdpreview" && pwd)
+root=$(CDPATH= cd -- "$(dirname -- "$self")/../mdpreview-server" && pwd)
 
 if [ "$1" = "--stop" ]; then
   pkill -f "bun run ${root}/server.ts" 2>/dev/null || true
@@ -176,12 +176,12 @@ resolve_file() {
 ensure_server() {
   if ! curl -fsS -m 1 "${base}/health" >/dev/null 2>&1; then
     # --retry-connrefused lets the first request wait out the server's startup.
-    nohup bun run "${root}/server.ts" >>"${TMPDIR:-/tmp}/mdpreview.log" 2>&1 &
+    nohup bun run "${root}/server.ts" >>"${TMPDIR:-/tmp}/mdpreview-server.log" 2>&1 &
     # Each connection-refused retry would otherwise print its own error, so the
     # retry output is dropped and the final failure is reported here instead.
     if ! curl -fsS --retry 30 --retry-delay 0 --retry-connrefused -m 10 \
         "${base}/health" >/dev/null 2>/dev/null; then
-      echo "mdpreview: server did not start on ${base} - see ${TMPDIR:-/tmp}/mdpreview.log" >&2
+      echo "mdpreview: server did not start on ${base} - see ${TMPDIR:-/tmp}/mdpreview-server.log" >&2
       exit 1
     fi
   fi
