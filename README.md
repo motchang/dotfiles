@@ -31,6 +31,16 @@ gibo: zshrc hooks direnv unguarded too, and direnv is a formula.
 	mkdir -p ~/.config/git
 	gibo dump macOS Emacs JetBrains > ~/.config/git/ignore
 
+	mkdir -p ~/.config/ghostty
+	ln -sf ~/src/github.com/motchang/dotfiles/.config/ghostty/config ~/.config/ghostty/config
+
+On macOS Ghostty reads both `~/.config/ghostty/config` and `~/Library/Application
+Support/com.mitchellh.ghostty/config`, in that order, so the template it writes
+into Application Support the first time it starts shadows every key set here.
+Delete it.
+
+	rm -f ~/Library/Application\ Support/com.mitchellh.ghostty/config
+
 	mkdir -p ~/.config/herdr
 	ln -sf ~/src/github.com/motchang/dotfiles/.config/herdr/config.toml ~/.config/herdr/config.toml
 

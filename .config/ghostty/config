@@ -1,0 +1,11 @@
+# Ghostty. Every option and its default: `ghostty +show-config --default --docs`,
+# or https://ghostty.org/docs/config. Command + Shift + comma reloads this file.
+
+# font-family = "Source Code Pro Medium"
+font-family = "Source Code Pro"
+font-size = 15
+
+# window-padding-x = 2
+
+theme = Dracula+
+macos-option-as-alt = true
