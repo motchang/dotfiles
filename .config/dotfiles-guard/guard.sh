@@ -21,9 +21,6 @@ hits=0
 
 note() { printf '%s\n' "$*" >&2; }
 
-# pre-push は ref 情報を stdin で渡してくる。読み捨てないと呼び出し元が SIGPIPE を受ける。
-[ "$mode" = pre-push ] && cat >/dev/null 2>&1
-
 if [ ! -f "$PATTERNS" ]; then
   note "guard: 社内語パターンが見つかりません: $PATTERNS"
   note ""
@@ -35,28 +32,54 @@ if [ ! -f "$PATTERNS" ]; then
   exit 1
 fi
 
+# ---- push されるコミットの特定（pre-push のみ） ---------------------------
+# pre-push は stdin で「<local ref> <local sha> <remote ref> <remote sha>」を受け取る。
+# HEAD を見てはいけない: checkout 中のブランチと push 対象は一致するとは限らず、
+# 別ブランチを push したときに見当違いのツリーを検査してしまう。
+revs=''
+if [ "$mode" = pre-push ]; then
+  while read -r _lref lsha _rref _rsha; do
+    [ -n "${lsha:-}" ] || continue
+    case "$lsha" in *[!0]*) revs="$revs $lsha" ;; esac   # 全 0 は ref 削除なので無視
+  done
+  [ -n "$revs" ] || exit 0
+fi
+
 # ---- 対象ファイル ---------------------------------------------------------
 case "$mode" in
   pre-commit) files=$(git diff --cached --name-only --diff-filter=ACM) ;;
-  pre-push)   files=$(git ls-tree -r --name-only HEAD) ;;
+  pre-push)   files=$(for r in $revs; do git ls-tree -r --name-only "$r"; done | sort -u) ;;
   *) note "guard: 不明なモード: $mode"; exit 1 ;;
 esac
 [ -n "$files" ] || exit 0
 
 # ---- 走査対象テキストを 1 ファイルに集める --------------------------------
 # pre-commit … ステージされた差分の追加行だけ（既存行を蒸し返さない）
-# pre-push   … HEAD のファイル全文（--no-verify ですり抜けた分を拾う）
+# pre-push   … push されるツリーの全文 + push される各コミットの追加行。
+#              後者が無いと「一度入れて後のコミットで消した」秘密が、履歴に残った
+#              まま公開されてしまう。公開後は履歴も同じだけ読まれる。
 tmp=$(mktemp "${TMPDIR:-/tmp}/dotfiles-guard.XXXXXX") || exit 1
 trap 'rm -f "$tmp"' EXIT HUP INT TERM
 
-printf '%s\n' "$files" | while IFS= read -r f; do
-  [ -n "$f" ] || continue
-  if [ "$mode" = pre-commit ]; then
-    git diff --cached -U0 --diff-filter=ACM -- "$f" | grep '^+' | grep -v '^+++'
-  else
-    git show "HEAD:$f" 2>/dev/null
-  fi | awk -v p="$f" '{print p ": " $0}'
-done > "$tmp"
+if [ "$mode" = pre-commit ]; then
+  printf '%s\n' "$files" | while IFS= read -r f; do
+    [ -n "$f" ] || continue
+    git diff --cached -U0 --diff-filter=ACM -- "$f" \
+      | grep '^+' | grep -v '^+++' | awk -v p="$f" '{print p ": " $0}'
+  done > "$tmp"
+else
+  for r in $revs; do
+    git ls-tree -r --name-only "$r" | while IFS= read -r f; do
+      [ -n "$f" ] || continue
+      git show "$r:$f" 2>/dev/null | awk -v p="$f" '{print p ": " $0}'
+    done
+    for c in $(git rev-list "$r" --not --remotes 2>/dev/null); do
+      short=$(git rev-parse --short "$c")
+      git show --format= -U0 "$c" \
+        | grep '^+' | grep -v '^+++' | awk -v p="$short" '{print "commit " p ": " $0}'
+    done
+  done > "$tmp"
+fi
 
 # コミット者のメールアドレスも同じルールで検査する（公開されるメタデータのため）。
 printf '(git config user.email): %s\n' "$(git config user.email 2>/dev/null)" >> "$tmp"
