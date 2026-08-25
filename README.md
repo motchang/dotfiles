@@ -118,11 +118,43 @@ The render server lives in `.config/herdr/mdpreview-server` (bun) and logs to
 
 # Claude Code skills
 
-Under `~/.claude/skills`, keep a real directory and symlink SKILL.md alone. Skill
-discovery walks those directories with readdir, so a directory that is itself a
-symlink risks not being picked up.
+`~/.claude` is a repository of its own now - motchang/.claude - and the mdpreview
+skill moved there with everything else that lives under that directory. Nothing
+below `.claude/` is tracked here any more; follow that repository's README to set
+the skills up.
 
-The mdpreview skill (markdown previewing for Claude Code):
+# secret guard
 
-	mkdir -p ~/.claude/skills/mdpreview
-	ln -sfn ~/src/github.com/motchang/dotfiles/.claude/skills/mdpreview/SKILL.md ~/.claude/skills/mdpreview/SKILL.md
+`.githooks/pre-commit` and `.githooks/pre-push` keep work-machine leftovers out of
+a public repository: absolute home paths, credentials that look like tokens, and
+vocabulary that would name an employer. Cloning does not switch them on - git
+only reads `.githooks` once this repository is pointed at it, and only this
+repository.
+
+	git config core.hooksPath .githooks
+
+Never do that with `git config --global core.hooksPath`. A global setting arms
+the same hooks in every repository on the machine, including the ones where an
+absolute path or an internal project name is entirely legitimate, and ordinary
+commits there would start failing.
+
+The two hooks are stubs. The checks live in `.config/dotfiles-guard/guard.sh` and
+are reached through a fixed path outside the repository, so a checkout that has
+the stubs but not the body fails loudly rather than committing unchecked - which
+is what pointing core.hooksPath straight at a missing directory would do.
+
+	mkdir -p ~/.config/dotfiles-guard
+	ln -sf ~/src/github.com/motchang/dotfiles/.config/dotfiles-guard/guard.sh \
+	       ~/.config/dotfiles-guard/guard.sh
+
+The structural rules - absolute paths, token shapes, private keys - are in
+guard.sh, where they can be read by anyone. The words that would identify an
+employer cannot be written down in public, so they stay in a private dotfiles
+repository and are linked in beside the body as `patterns`.
+
+	ln -sf <private dotfiles repo>/.config/dotfiles-guard/patterns \
+	       ~/.config/dotfiles-guard/patterns
+
+The guard fails closed: with no patterns file it refuses every commit and push
+instead of letting them through half-checked. `DOTFILES_GUARD_DIR` overrides
+`~/.config/dotfiles-guard` for both halves.

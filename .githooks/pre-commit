@@ -1,0 +1,19 @@
+#!/bin/sh
+# 機密混入ガードのスタブ。本体は公開 dotfiles リポジトリが提供する。
+#
+# core.hooksPath を ~/.config/dotfiles-guard に直接向けないのは、
+# その先が存在しないとき git がエラーを出さず黙ってフックを飛ばすため。
+# 追跡されるこのスタブを噛ませることで「ガードが無い状態」を fail closed にする。
+#
+# 有効化: git config core.hooksPath .githooks
+set -u
+body="${DOTFILES_GUARD_DIR:-$HOME/.config/dotfiles-guard}/guard.sh"
+if [ ! -x "$body" ]; then
+  echo "guard: ガード本体が見つかりません: $body" >&2
+  echo "  公開 dotfiles リポジトリを clone し、symlink を張ってください:" >&2
+  echo "    mkdir -p ~/.config/dotfiles-guard" >&2
+  echo "    ln -sf ~/src/github.com/motchang/dotfiles/.config/dotfiles-guard/guard.sh \\" >&2
+  echo "           ~/.config/dotfiles-guard/guard.sh" >&2
+  exit 1
+fi
+exec "$body" "$(basename "$0")"
