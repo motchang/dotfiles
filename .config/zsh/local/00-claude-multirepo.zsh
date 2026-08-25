@@ -8,6 +8,9 @@
 #   typeset -gA CLAUDE_MR_DESC=(    name "説明" )
 #   typeset -ga CLAUDE_MR_HEAVY=( repo-with-unscoped-rules )
 #
+# その定義ファイルのパスは $CLAUDE_MR_CONFIG（既定: ~/.config/zsh/local/50-workspaces.zsh）。
+# `cw edit` で $EDITOR を開き、閉じたら構文チェックのうえ現在のシェルへ再読み込みする。
+#
 # herdr（https://herdr.dev 的なターミナルワークスペースマネージャ）が動いていれば、
 # プリセットの起点リポジトリ名 = herdr workspace のラベルとして自動連携する:
 #   - 既存の同名 workspace があればそこに新規タブを開く
@@ -18,6 +21,9 @@
 
 typeset -gA CLAUDE_MR_PRESETS CLAUDE_MR_DESC 2>/dev/null
 typeset -ga CLAUDE_MR_HEAVY 2>/dev/null
+
+# ワークスペース定義ファイル。別の場所に置くなら、このファイルより前に export しておく。
+: ${CLAUDE_MR_CONFIG:=${XDG_CONFIG_HOME:-$HOME/.config}/zsh/local/50-workspaces.zsh}
 
 _cw_herdr_available() {
   [[ "${CLAUDE_MR_HERDR:-1}" == "0" ]] && return 1
@@ -36,9 +42,12 @@ _cw_herdr_find_workspace() {
 _cw_list() {
   if (( ! ${#CLAUDE_MR_PRESETS} )); then
     print -u2 -r -- "cw: プリセット未定義。\$CLAUDE_MR_PRESETS を設定してください"
+    print -u2 -r -- "    'cw edit' で $CLAUDE_MR_CONFIG を編集できます"
     return 1
   fi
   print -r -- "usage: cw [-n|--dry-run] [-l|--local] [-b|--background] <preset> [claude args...]"
+  print -r -- "       cw list           プリセット一覧（引数なしと同じ）"
+  print -r -- "       cw edit           ワークスペース定義を \$EDITOR で編集して再読み込み"
   print -r -- "  herdr が動いていれば workspace 連携、なければ現シェルで起動"
   print -r --
   local p pw=0
@@ -76,6 +85,63 @@ _cw_list() {
   done
 }
 
+# ワークスペース定義を $EDITOR で開き、閉じたら構文チェックして現在のシェルへ反映する。
+_cw_edit() {
+  local f="$CLAUDE_MR_CONFIG"
+  [[ -n "$f" ]] || { print -u2 -r -- "cw: \$CLAUDE_MR_CONFIG が空です"; return 1 }
+
+  if [[ ! -e "$f" ]]; then
+    mkdir -p "${f:h}" || return 1
+    cat >"$f" <<'TEMPLATE'
+# ワークスペース定義（機密。公開リポジトリに置かないこと / chmod 600）
+# 依存: 00-claude-multirepo.zsh が先に読まれていること
+
+CLAUDE_MR_ROOT="$HOME/src"
+
+# プリセット名 → "起点リポジトリ 追加リポジトリ..."
+typeset -gA CLAUDE_MR_PRESETS=(
+)
+
+typeset -gA CLAUDE_MR_DESC=(
+)
+
+# 追加時に CLAUDE.md / .claude/rules を読ませないリポジトリ
+typeset -ga CLAUDE_MR_HEAVY=()
+
+cw_reload
+TEMPLATE
+    chmod 600 "$f"
+    print -r -- "cw: 雛形を作成しました: $f"
+  fi
+
+  # シンボリックリンク経由だとエディタが追従確認を出すことがあるため実体を開く
+  f="${f:A}"
+
+  # $EDITOR は "emacsclient -nw" のように引数を含みうるので単語分割する
+  local -a ed
+  ed=(${=EDITOR:-vi})
+  "${ed[@]}" "$f" || { print -u2 -r -- "cw: エディタが異常終了しました: ${ed[1]}"; return 1 }
+
+  local errs
+  if ! errs=$(zsh -n "$f" 2>&1); then
+    print -u2 -r -- "cw: 構文エラーのため再読み込みしていません:"
+    print -u2 -r -- "$errs"
+    return 1
+  fi
+
+  # 削除されたプリセットの cw-<name> が残らないよう、旧キーを控えておく
+  local -a old_presets=(${(k)CLAUDE_MR_PRESETS})
+  source "$f" || { print -u2 -r -- "cw: 再読み込みに失敗: $f"; return 1 }
+  cw_reload
+
+  local p
+  for p in $old_presets; do
+    (( ${+CLAUDE_MR_PRESETS[$p]} )) || unfunction "cw-$p" 2>/dev/null
+  done
+
+  print -r -- "cw: 再読み込みしました ($f) — プリセット ${#CLAUDE_MR_PRESETS} 件"
+}
+
 cw() {
   local dry=0 force_local=0 background=0
   while [[ "$1" == (-n|--dry-run|-l|--local|-b|--background) ]]; do
@@ -89,6 +155,7 @@ cw() {
 
   local preset="$1"
   [[ -z "$preset" || "$preset" == (-h|--help|list) ]] && { _cw_list; return $?; }
+  [[ "$preset" == edit ]] && { _cw_edit; return $?; }
   shift
 
   if [[ -z "$CLAUDE_MR_ROOT" ]]; then
@@ -209,5 +276,5 @@ cw_reload() {
   done
 }
 
-_cw() { compadd -- ${(k)CLAUDE_MR_PRESETS} }
+_cw() { compadd -- ${(ok)CLAUDE_MR_PRESETS} edit list }
 compdef _cw cw 2>/dev/null
