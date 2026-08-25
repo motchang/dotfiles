@@ -45,9 +45,23 @@ elif ! git -C "$cwd" rev-parse --verify "$base_name" >/dev/null 2>&1; then
 fi
 
 head="${branch:-HEAD}"
-separator="..."
-[ -n "${HUNK_GH_DIFF_TWO_DOT:-}" ] && separator=".."
-range="${base_ref}${separator}${head}"
+# Diff the working tree against the merge base rather than passing a
+# `base...head` commit range: a range hides staged/unstaged/untracked work,
+# which is usually the part still being reviewed. A single ref makes hunk diff
+# base -> working tree, so committed and uncommitted changes show up together.
+# Set HUNK_DIFF_COMMITTED_ONLY=1 for the PR's committed range only (and
+# HUNK_GH_DIFF_TWO_DOT=1 alongside it to switch that range to two-dot).
+range=""
+if [ -z "${HUNK_DIFF_COMMITTED_ONLY:-}" ]; then
+  range=$(git -C "$cwd" merge-base "$base_ref" HEAD 2>/dev/null || true)
+  # Abbreviate so hunk's title stays readable; it shows the ref verbatim.
+  [ -n "$range" ] && range=$(git -C "$cwd" rev-parse --short "$range" 2>/dev/null || true)
+fi
+if [ -z "$range" ]; then
+  separator="..."
+  [ -n "${HUNK_GH_DIFF_TWO_DOT:-}" ] && separator=".."
+  range="${base_ref}${separator}${head}"
+fi
 
 theme_args=(--no-transparent-bg)
 [ -n "${HUNK_THEME:-}" ] && theme_args=(--theme "$HUNK_THEME" --no-transparent-bg)
