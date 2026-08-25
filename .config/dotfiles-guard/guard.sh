@@ -98,9 +98,9 @@ report() {  # report <見出し> <検出結果>
 
 check() {  # check <正規表現> <説明> [除外正規表現]
   if [ -n "${3:-}" ]; then
-    found=$(grep -nE -- "$1" "$tmp" | grep -vE -- "$3")
+    found=$(grep -E -- "$1" "$tmp" | grep -vE -- "$3")
   else
-    found=$(grep -nE -- "$1" "$tmp")
+    found=$(grep -E -- "$1" "$tmp")
   fi
   [ -n "$found" ] && report "$2" "$found"
   return 0
@@ -120,7 +120,7 @@ check 'BEGIN [A-Z ]*PRIVATE KEY'     '秘密鍵'
 # ---- 社内語ルール（非公開ファイル由来） -----------------------------------
 while IFS= read -r pat || [ -n "$pat" ]; do
   case "$pat" in ''|\#*) continue ;; esac
-  found=$(grep -inF -- "$pat" "$tmp")
+  found=$(grep -iF -- "$pat" "$tmp")
   [ -n "$found" ] && report "社内語: $pat" "$found"
   hitnames=$(printf '%s\n' "$files" | grep -iF -- "$pat")
   [ -n "$hitnames" ] && report "社内語（ファイル名）: $pat" "$hitnames"
@@ -128,10 +128,12 @@ done < "$PATTERNS"
 
 # ---- allowlist の強制（.gitignore を無視ルールから強制ルールへ格上げ） -----
 # .gitignore で落ちるはずのパスが staged にあるのは git add -f された証拠。
-if [ "$mode" = pre-commit ]; then
-  forced=$(printf '%s\n' "$files" | git check-ignore --no-index --stdin 2>/dev/null)
-  [ -n "$forced" ] && report 'allowlist 外のパスが force-add されている' "$forced"
-fi
+# 両モードで走らせる: pre-push は --no-verify で pre-commit を飛ばして作られた
+# コミットを拾うためのものなので、pre-commit にしか無い検査があっては用をなさない。
+# なお git check-ignore が見るのは作業ツリー側の .gitignore であって、push される
+# ref の .gitignore ではない。食い違う場合は作業ツリー側の基準で判定される。
+forced=$(printf '%s\n' "$files" | git check-ignore --no-index --stdin 2>/dev/null)
+[ -n "$forced" ] && report 'allowlist 外のパスが force-add されている' "$forced"
 
 if [ "$hits" -ne 0 ]; then
   note ""
