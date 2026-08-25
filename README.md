@@ -118,11 +118,66 @@ The render server lives in `.config/herdr/mdpreview-server` (bun) and logs to
 
 # Claude Code skills
 
-Under `~/.claude/skills`, keep a real directory and symlink SKILL.md alone. Skill
-discovery walks those directories with readdir, so a directory that is itself a
-symlink risks not being picked up.
+`~/.claude` is a repository of its own now - motchang/.claude - and the mdpreview
+skill moved there with everything else that lives under that directory. Nothing
+below `.claude/` is tracked here any more; follow that repository's README to set
+the skills up.
 
-The mdpreview skill (markdown previewing for Claude Code):
+# secret guard
 
-	mkdir -p ~/.claude/skills/mdpreview
-	ln -sfn ~/src/github.com/motchang/dotfiles/.claude/skills/mdpreview/SKILL.md ~/.claude/skills/mdpreview/SKILL.md
+Two hooks keep work-machine leftovers out of a public repository: absolute home
+paths, credentials that look like tokens, and vocabulary that would name an
+employer. Cloning does not switch them on, and neither does anything inside the
+repository - the hooks are installed outside it and pointed at by absolute path.
+
+	mkdir -p ~/.config/dotfiles-guard/hooks
+	cp .config/dotfiles-guard/hooks/pre-commit \
+	   .config/dotfiles-guard/hooks/pre-push \
+	   ~/.config/dotfiles-guard/hooks/
+	chmod +x ~/.config/dotfiles-guard/hooks/pre-commit \
+	         ~/.config/dotfiles-guard/hooks/pre-push
+	ln -sf ~/src/github.com/motchang/dotfiles/.config/dotfiles-guard/guard.sh \
+	       ~/.config/dotfiles-guard/guard.sh
+	git config core.hooksPath "$HOME/.config/dotfiles-guard/hooks"
+
+Write that last path so the shell expands it rather than leaving a `~` for git to
+interpret. The expansion lands in `.git/config`, which is not tracked, so the
+absolute path it records is never published.
+
+Never use `git config --global core.hooksPath`. A global setting arms the same
+hooks in every repository on the machine, including the ones where an absolute
+path or an internal project name is entirely legitimate, and ordinary commits
+there would start failing.
+
+The stubs are copied rather than linked, and the hooksPath is absolute rather
+than relative, because git does not report a hooksPath that is not there - it
+skips the hooks and says nothing. A relative in-repo path is therefore armed
+only on the branches that carry the directory: check out one that does not and
+the guard silently comes off, while `git config core.hooksPath` still answers
+as though everything were in place. A symlinked stub fails the same way, since
+its target disappears on checkout and an unexecutable hook is skipped just as
+quietly. A real file outside the repository survives every branch switch.
+
+They stay tracked here even so, so the code that gates every commit can be
+reviewed and versioned like anything else. The cost is that the installed copies
+can drift: edit a stub and install it again, or the machine keeps running the
+old one. Because the directory sits outside any working tree, several
+repositories can share one installation - `~/.claude` will point at this same
+guard.
+
+The stubs only locate the body and exec it, so the checks themselves live in
+`.config/dotfiles-guard/guard.sh` and are reached through a fixed path. That half
+is a symlink on purpose: if it vanishes, the stub notices and refuses the commit
+instead of letting it through unchecked.
+
+The structural rules - absolute paths, token shapes, private keys - are in
+guard.sh, where they can be read by anyone. The words that would identify an
+employer cannot be written down in public, so they stay in a private dotfiles
+repository and are linked in beside the body as `patterns`.
+
+	ln -sf <private dotfiles repo>/.config/dotfiles-guard/patterns \
+	       ~/.config/dotfiles-guard/patterns
+
+The guard fails closed: with no patterns file it refuses every commit and push
+instead of letting them through half-checked. `DOTFILES_GUARD_DIR` overrides
+`~/.config/dotfiles-guard` for both halves.

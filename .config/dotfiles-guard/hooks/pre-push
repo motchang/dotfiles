@@ -1,0 +1,29 @@
+#!/bin/sh
+# 機密混入ガードのスタブ。本体は公開 dotfiles リポジトリが提供する。
+#
+# core.hooksPath をリポジトリ内の相対パス（旧 .githooks）に向けるのはやめた。
+# そのディレクトリを持たないブランチを checkout すると hooksPath の指す先が消え、
+# git はエラーを出さず黙ってフックを飛ばす。追跡されたスタブを噛ませても、
+# スタブ自体の不在は fail closed にできない。
+#
+# そのため、このファイルはリポジトリの外に「コピー」として設置する。symlink に
+# してはいけない: リンク先がブランチ切替で消えると実行不能として扱われ、git は
+# やはり黙って飛ばすので、同じ穴が開く。
+#
+# 一方 guard.sh は symlink のままでよい。ブランチ切替で消えれば、下の存在確認が
+# 検出して fail closed になる。
+#
+# このファイルを直したら、設置済みのコピーも張り直すこと。
+#
+# 有効化: git config core.hooksPath "$HOME/.config/dotfiles-guard/hooks"
+set -u
+body="${DOTFILES_GUARD_DIR:-$HOME/.config/dotfiles-guard}/guard.sh"
+if [ ! -x "$body" ]; then
+  echo "guard: ガード本体が見つかりません: $body" >&2
+  echo "  公開 dotfiles リポジトリを clone し、symlink を張ってください:" >&2
+  echo "    mkdir -p ~/.config/dotfiles-guard" >&2
+  echo "    ln -sf ~/src/github.com/motchang/dotfiles/.config/dotfiles-guard/guard.sh \\" >&2
+  echo "           ~/.config/dotfiles-guard/guard.sh" >&2
+  exit 1
+fi
+exec "$body" "$(basename "$0")"
