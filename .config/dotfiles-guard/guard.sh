@@ -84,9 +84,12 @@ fi
 # コミット者のメールアドレスも同じルールで検査する（公開されるメタデータのため）。
 printf '(git config user.email): %s\n' "$(git config user.email 2>/dev/null)" >> "$tmp"
 
+# macOS の /bin/sh は bash 3.2 で、変数名の解析が UTF-8 に対応していない。$var の
+# 直後に全角文字が来ると先頭バイトまで変数名に食い込み、set -u の下では unbound
+# variable で異常終了する。日本語に隣接する変数は必ず ${var} と書くこと。
 report() {  # report <見出し> <検出結果>
   if [ "$hits" -eq 0 ]; then
-    note "guard: 公開リポジトリに出せない内容が含まれています（$mode）"
+    note "guard: 公開リポジトリに出せない内容が含まれています（${mode}）"
     hits=1
   fi
   note "  [$1]"
