@@ -84,7 +84,7 @@ goes out to the network - mermaid.js and highlight.js are both served locally.
 
 Markdown, syntax highlighting, GitHub alerts and the table of contents are
 rendered on the Bun side; only mermaid, which needs a DOM, is drawn in the
-browser.
+browser. `.md`, `.markdown` and `.mdown` all count as markdown.
 
 	cd ~/src/github.com/motchang/dotfiles/.config/herdr/mdpreview-server && bun install
 
@@ -94,7 +94,7 @@ Usage (the port is 43128 by default; `MDPREVIEW_PORT` overrides it):
 
 	mdpreview README.md
 	mdpreview --browser README.md
-	mdpreview --browser     # the same, for whatever is already being previewed
+	mdpreview --browser     # the same, for the file most recently previewed
 	mdpreview text          # any herdr-browser command, aimed at this tab's preview
 	mdpreview console
 	mdpreview --screen      # the viewer's own errors, as written onto the pane
@@ -119,17 +119,34 @@ for; an opener that is installed but cannot reach a display (`xdg-open` with no
 also takes focus, unlike a pane: a pane is already on screen in the tab being
 looked at, whereas asking for a browser tab is asking to be shown one.
 
-With no file argument it reuses whatever the server is currently holding, the way
-`--reset` does, and says so if nothing is. Handing the file back over broadcasts
-a reload, so a preview already open on a long document scrolls back to the top.
+With no file argument it reuses the most recent file any surface was pointed at,
+and says so if there is none. `--reset` with no argument comes back to the file
+the pane modes last opened instead, which is the one a pane is actually showing.
+Either way, handing the file back over broadcasts a reload, so a page already
+open on a long document scrolls back to the top.
 
-Three things are worth knowing before leaning on it. The server still tracks a
-single current file, so a tab and a preview pane share one preview: previewing a
-second file navigates both. `open` starts a tab rather than finding an existing
-one, so running `--browser` twice leaves two tabs on the same preview - close the
-spare. And a preview in a tab cannot be driven: `mdpreview text` and the rest of
-the passthrough need a view, so inside a herdr session they report having no
-preview in this tab even while a `--browser` tab is open on one.
+Previews are independent of each other. Each page carries its own file in its
+URL - `/?file=<path>` - so a pane in this tab, a pane in another and any number
+of browser tabs each hold a different file, and saving one reloads only the pages
+showing that one. `--browser B.md` while a pane shows `A.md` leaves that pane on
+`A.md`. Only a bare `/`, which is what a hand-typed URL and a page from before
+this gets, follows whichever file was opened last.
+
+Running `--browser` twice does not stack tabs: the server knows whether a live
+page is already showing the file and the second run reloads that instead of
+opening another. It knows by counting connected reload streams, so a tab Chrome
+has discarded or frozen in the background reads as gone and a second tab opens -
+an occasional spare tab rather than a refusal to show a preview that is no longer
+on screen. Panes are not counted; a pane on the file is no reason to withhold a
+tab from someone who asked for one.
+
+What a tab still cannot do is be driven. `mdpreview text` and the rest of the
+passthrough need a view, so inside a herdr session they report having no preview
+in this tab even while a `--browser` tab is open on one.
+
+`?file=` only serves paths that were registered by previewing them. A markdown
+file sitting on disk that mdpreview was never pointed at comes back 404, and so
+does anything else - the query is not a way to ask this server to read a file.
 
 With two or more browser panes open, herdr-browser cannot pick a target for
 itself (409), so which view to aim at has to be named. Working that out is
