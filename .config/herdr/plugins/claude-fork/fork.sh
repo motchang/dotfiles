@@ -5,10 +5,8 @@
 # https://gist.github.com/miyagawa/cb1a9f6c8695d1219efba0c66d5f78f7
 #
 # The fork point is not ours to pick. `claude --resume <id> --fork-session`
-# starts from whatever the source session's transcript happens to hold on disk
-# at the instant the new process reads it, so a source that is mid-turn at that
-# instant yields a fork whose conversation is quietly truncated and whose last
-# answer is simply missing. Two ways that happens in practice:
+# starts from whatever the source session's transcript holds on disk at the
+# instant the new process reads it, and there are two ways that lands badly:
 #
 #   1. A race. The key was pressed while the source was still working, so the
 #      answer had not been written out yet. A few seconds of waiting fixes it.
@@ -19,22 +17,28 @@
 #      One such loss was of text written 6m26s earlier: waiting does not help
 #      here, only answering the question does.
 #
-# One test catches both. Ignoring the sidecar entries a fork drops anyway - and
-# the two kinds of `user` entry nobody typed - the last entry in the transcript
-# must be an `assistant` entry holding a `text` block and no `tool_use` block.
-# Both sets are skipped over rather than judged, so the scan keeps walking back
-# to the entry underneath. Deliberately NOT a whole-file scan for a
-# `tool_use` with no `tool_result`: the transcript is a tree, and a branch the
-# user abandoned with an interrupt leaves a dangling `tool_use` behind for good,
-# which would block forking forever. The tail test has no such false positive.
+# Both harms need an assistant turn that was started and never finished, so that
+# is the only thing the guard holds a fork back for. A transcript whose last
+# entry is a *user* entry is not that case, whatever put it there - a typed
+# message, a slash command, `!` bash mode, a background agent reporting in.
+# Nothing needs rewinding and no written answer is at risk; the fork just
+# answers it. Letting those through is what keeps the guard from crying wolf,
+# and it is by far the commonest tail there is.
 #
-# The new pane is the only channel that reaches the user - toast notifications
-# are disabled on this machine, and whether a plugin action's stderr surfaces
-# anywhere at all is unknown - so the guard reports itself by writing into it.
+# Deliberately NOT a whole-file scan for a `tool_use` with no `tool_result`: the
+# transcript is a tree, and a branch the user abandoned with an interrupt leaves
+# a dangling `tool_use` behind for good, which would block forking forever. The
+# tail test has no such false positive.
+#
+# The guard reports itself by writing into the new pane. Toast notifications are
+# disabled on this machine, and while `herdr plugin log list` does record each
+# action's stdout and stderr, a log you have to go and query does not reach
+# anyone at the moment it matters.
 #
 # Set CLAUDE_FORK_NO_WAIT=1 to skip the guard and fork immediately.
 # Set CLAUDE_FORK_DRY_RUN=1 to print the decision and the herdr calls it implies
 # without splitting or running anything.
+# Set CLAUDE_FORK_WAIT_SECONDS to change how long an in-flight turn is given.
 set -euo pipefail
 
 direction="${1:-right}"
@@ -44,6 +48,11 @@ case "$direction" in
     echo "usage: fork.sh [right|down]" >&2
     exit 1
     ;;
+esac
+
+wait_seconds="${CLAUDE_FORK_WAIT_SECONDS:-30}"
+case "$wait_seconds" in
+  ''|*[!0-9]*) wait_seconds=30 ;;
 esac
 
 pane_id="${HERDR_PANE_ID:?HERDR_PANE_ID not set — run this action from a pane context}"
@@ -81,92 +90,64 @@ fork_cmd="exec claude --resume $(shq "$session_id") --fork-session"
 claude_config="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
 transcript=$(find "$claude_config/projects" -maxdepth 2 -name "$session_id.jsonl" 2>/dev/null | head -1) || true
 
-# --- the completed-turn test -------------------------------------------------
-# Only `assistant` and `user` entries sit *on* the conversation. Every other
-# .type is a sidecar hanging off it that a fork does not carry: system/*
-# (turn_duration, stop_hook_summary, away_summary, informational), attachment,
-# last-prompt, file-history-snapshot, ai-title, mode, permission-mode,
-# atis-latch, pr-link, queue-operation and more. Whitelisting the two rather
-# than blacklisting the sidecars is deliberate, and load-bearing: of the 138
-# cleanly-finished transcripts on this machine, 112 have a *non*-`system`
-# sidecar sitting after their final assistant text, so a blacklist that only
-# skipped `system` would refuse four good forks out of five. The sidecar set
-# also grows with Claude Code releases, and an unfamiliar new .type has to fall
-# out as "ignore this", never as "the turn is unfinished".
+# --- read the tail -----------------------------------------------------------
+# Only `assistant` and `user` entries sit *on* the conversation; every other
+# .type is a sidecar hanging off it that a fork does not carry (system/*,
+# attachment, last-prompt, file-history-snapshot, ai-title, mode, pr-link,
+# queue-operation and a growing list besides). Whitelisting the two rather than
+# blacklisting the sidecars is deliberate, and load-bearing: sidecars trail the
+# final assistant text in the great majority of cleanly finished transcripts, so
+# a blacklist would refuse most good forks outright. It also fails in the right
+# direction, since a .type added by a future release falls out as "ignore this"
+# rather than as "the turn is unfinished".
 #
-# Sets tail_state / tail_kind / tail_detail. jq is allowed to fail: the source
-# may be appending to this very file, and a half-written last line has to come
-# back as `unreadable` - which routes to the wait - rather than take the script
-# down under `set -e`.
-tail_state=""
+# The interrupt marker Claude Code writes when ESC is pressed is skipped too, on
+# the same keep-walking-backwards footing rather than being judged itself. It
+# says nothing about the turn underneath, and what is underneath is usually the
+# tool result from the call that got interrupted - a turn still in flight, and
+# exactly what the guard should be waiting on. Judging the marker itself would
+# read as a plain user tail and fork straight past that.
+#
+# Sets tail_kind (one of complete / empty / message / tool_result / tool_use /
+# partial / unreadable) and tail_detail. jq is allowed to fail: the source may
+# be appending to this very file, and a half-written last line has to come back
+# as `unreadable` - which routes to the wait - rather than take the script down
+# under `set -e`. Every array index is `?`-guarded so a content block that is
+# not an object cannot throw and be misreported as a torn file.
 tail_kind=""
 tail_detail=""
 read_tail() {
   local out
   out=$(jq -n -r '
-    # Two more entry shapes the scan walks straight past. Both are `user`
-    # entries that a human did not type, and both routinely land last:
-    #
-    #   * the interrupt marker Claude Code writes when ESC is pressed, and
-    #   * the envelope holding the output of a slash command.
-    #
-    # Neither says anything about whether the turn underneath finished, so the
-    # scan keeps walking backwards to the entry beneath and judges *that*. They
-    # are skipped rather than declared complete, and the difference is the whole
-    # point: pressing ESC during a tool call leaves the turn genuinely open, and
-    # a "complete" verdict here would wave through failure mode 2 itself.
-    #
-    # The predicates match the exact shape Claude Code writes - a lone `text`
-    # block equal to the whole marker, or a string that both opens and closes
-    # with one tag pair - so a user message that merely quotes one of these is
-    # still read as a user message.
-    #
-    # Worth the code: of the 307 such entries across the transcripts on this
-    # machine, 67 sit directly on an `assistant` `text`. A fork pressed at any
-    # of those moments used to be refused for no reason. (Such a tail is rare
-    # as the *final* state of a file, because a session interrupted after an
-    # answer usually carried on afterwards - but the guard is evaluated at
-    # whatever instant the key was pressed, not at the end of a session.)
-    def tagged($t):
-      startswith("<" + $t + ">")
-      and (sub("[[:space:]]+$"; "") | endswith("</" + $t + ">"));
-    def unspoken:
+    def marker:
       .type == "user"
-      and ( (.message.content) as $c
-            | if ($c | type) == "string" then
-                ($c | tagged("local-command-stdout"))
-                or ($c | tagged("local-command-caveat"))
-              elif ($c | type) == "array" then
-                ([ $c[].type ] == ["text"])
-                and ( $c[0].text == "[Request interrupted by user]"
-                      or $c[0].text == "[Request interrupted by user for tool use]" )
-              else false
-              end );
+      and ((.message.content | type) == "array")
+      and ([ .message.content[]? | .type? ] == ["text"])
+      and ( ((.message.content[0]? | .text?) // "") as $t
+            | $t == "[Request interrupted by user]"
+              or $t == "[Request interrupted by user for tool use]" );
     last(inputs
          | select(.type == "assistant" or .type == "user")
-         | select(unspoken | not))
-    | if . == null then "incomplete\tnone\t"
-      else ( (.message.content // []) | if type == "array" then . else [] end ) as $blocks
+         | select(marker | not))
+    | if . == null then "empty\t"
+      else ( (.message.content // []) | if type == "array" then . else [] end ) as $b
         | if .type != "assistant" then
-            "incomplete\tuser\t"
-            + ( if ( [ $blocks[] | select(.type == "tool_result") ] | length ) > 0
-                then "tool_result" else "message" end )
+            if ( [ $b[]? | select(.type? == "tool_result") ] | length ) > 0
+            then "tool_result\t" else "message\t" end
           else
-            ( [ $blocks[] | select(.type == "tool_use") ] | first ) as $pending
-            | if $pending != null then "incomplete\ttool_use\t" + ($pending.name // "")
-              elif ( [ $blocks[] | select(.type == "text") ] | length ) > 0 then "complete\t\t"
-              else "incomplete\tassistant\t" + ( ( [ $blocks[].type ] | first ) // "" )
+            ( [ $b[]? | select(.type? == "tool_use") ] | first ) as $pending
+            | if $pending != null then "tool_use\t" + ($pending.name? // "")
+              elif ( [ $b[]? | select(.type? == "text") ] | length ) > 0 then "complete\t"
+              else "partial\t" + ( ( [ $b[]? | .type? ] | first ) // "" )
               end
           end
       end
   ' "$1" 2>/dev/null) || out=""
-  [ -n "$out" ] || out=$(printf 'incomplete\tunreadable\t')
-  IFS=$'\t' read -r tail_state tail_kind tail_detail <<<"$out" || true
-  :
+  [ -n "$out" ] || out=$'unreadable\t'
+  IFS=$'\t' read -r tail_kind tail_detail <<<"$out" || true
 }
 
 # --- decide ------------------------------------------------------------------
-wait_seconds=30
 decision="fork"
 reason=""
 
@@ -179,25 +160,45 @@ elif [ -z "$transcript" ]; then
   reason="no transcript found under $claude_config/projects"
 else
   read_tail "$transcript"
-  if [ "$tail_state" = "complete" ]; then
-    reason="the source session's last turn is complete"
-  elif [ "$tail_kind" = "unreadable" ]; then
-    # A last line that will not parse means the source process is writing to the
-    # file at this very instant, which is itself evidence the turn is in flight.
-    # So this is the wait case no matter what the pane status claims: refusing on
-    # a transient parse failure would turn a race we can win into a hard stop.
-    # A transcript that is genuinely damaged still refuses, one timeout later.
-    decision="wait"
-    reason="transcript did not parse - the source looks like it is mid-write"
-  elif [ "$agent_status" = "idle" ]; then
-    # Nothing is running, so nothing is going to finish the turn on its own.
-    # Waiting here would only postpone the same refusal by wait_seconds.
-    decision="refuse"
-    reason="last turn is incomplete and the source pane is idle"
-  else
-    decision="wait"
-    reason="last turn is incomplete and the source pane is $agent_status"
-  fi
+  case "$tail_kind" in
+    complete)
+      reason="the last turn is finished"
+      ;;
+    message)
+      reason="the last entry is a user message, which the fork will answer itself"
+      ;;
+    empty)
+      reason="the transcript holds no conversation to be mid-way through"
+      ;;
+    tool_use)
+      if [ "$agent_status" = "idle" ]; then
+        # A tool call with no result, and nothing running to produce one. Unlike
+        # the other open-turn tails this will not resolve on its own, so waiting
+        # would only postpone the same refusal by wait_seconds.
+        decision="refuse"
+        reason="an unanswered ${tail_detail:-tool} call, and the source pane is idle"
+      else
+        decision="wait"
+        reason="an unanswered ${tail_detail:-tool} call, and the source pane is $agent_status"
+      fi
+      ;;
+    unreadable)
+      # A last line that will not parse means the source process is writing to
+      # the file at this very instant, which is itself evidence the turn is in
+      # flight. So this is the wait case no matter what the pane status claims:
+      # refusing on a transient parse failure would turn a race we can win into
+      # a hard stop. A genuinely damaged file still refuses, one timeout later.
+      decision="wait"
+      reason="the transcript did not parse - the source looks like it is mid-write"
+      ;;
+    *)
+      # tool_result, or an assistant turn that has only got as far as thinking.
+      # Both mean the answer is still being written - this is the race, and the
+      # case waiting was built for.
+      decision="wait"
+      reason="the turn is still in flight ($tail_kind)"
+      ;;
+  esac
 fi
 
 # --- what the guard says in the pane -----------------------------------------
@@ -214,100 +215,86 @@ printf_cmd() {
   printf '%s' "$cmd"
 }
 
-refusal_lines=()
-build_refusal() {
-  local timed_out="${1:-}"
-  refusal_lines=("")
-
-  # A transcript that never became readable is a different complaint from a turn
-  # that never finished, and wants a different message: nothing is known about
-  # the turn, and the file itself is the thing to go and look at.
-  if [ "$tail_kind" = "unreadable" ]; then
-    refusal_lines+=("Fork not started: the source session's transcript could not be read.")
-    refusal_lines+=("")
-    if [ -n "$timed_out" ]; then
-      refusal_lines+=("  Re-read it for ${wait_seconds}s and it never parsed. A file merely being appended")
-      refusal_lines+=("  to comes right within a second, so this one looks damaged:")
-    else
-      refusal_lines+=("  Its last line does not parse - truncated, or the file is damaged:")
-    fi
-    refusal_lines+=("  $transcript")
-    refusal_lines+=("")
-    refusal_lines+=("Without reading it there is no way to tell whether the last turn finished, so")
-    refusal_lines+=("forking might silently drop the tail of the conversation.")
-    refusal_lines+=("")
-    refusal_lines+=("To fork anyway, paste:")
-    refusal_lines+=("")
-    refusal_lines+=("  claude --resume $(shq "$session_id") --fork-session")
-    refusal_lines+=("")
-    return
-  fi
-
-  refusal_lines+=("Fork not started: the source session's last turn is incomplete.")
-  refusal_lines+=("")
-  if [ -n "$timed_out" ]; then
-    refusal_lines+=("  Waited ${wait_seconds}s for the turn to finish and it did not.")
-    refusal_lines+=("")
-  fi
-  case "$tail_kind" in
-    tool_use)
-      if [ "$tail_detail" = "AskUserQuestion" ]; then
-        refusal_lines+=("  The source is waiting on a question nobody has answered yet. Answer it in")
-        refusal_lines+=("  the source pane first and the fork will carry the whole conversation.")
-      elif [ -n "$tail_detail" ]; then
-        refusal_lines+=("  The source is sitting on a $tail_detail tool call with no result yet, so the")
-        refusal_lines+=("  turn it belongs to is still open.")
-      else
-        refusal_lines+=("  The source is sitting on a tool call with no result yet, so the turn it")
-        refusal_lines+=("  belongs to is still open.")
-      fi
-      ;;
-    user)
-      if [ "$tail_detail" = "tool_result" ]; then
-        refusal_lines+=("  The source's last entry is a tool result, so the turn that asked for it has")
-        refusal_lines+=("  not been answered yet.")
-      else
-        refusal_lines+=("  The source's last entry is a message to the assistant that has not been")
-        refusal_lines+=("  answered yet.")
-      fi
-      ;;
-    assistant)
-      refusal_lines+=("  The source's last entry is an assistant ${tail_detail:-non-text} block, so the turn")
-      refusal_lines+=("  has not been closed out with an answer.")
-      ;;
-    *)
-      refusal_lines+=("  The transcript has no finished assistant turn at its end.")
-      ;;
-  esac
-  refusal_lines+=("")
-  refusal_lines+=("Forking now would rewind past that unfinished turn, so the tail of the")
-  refusal_lines+=("conversation - including any answer already written inside it - would not")
-  refusal_lines+=("carry over.")
-  refusal_lines+=("")
-  refusal_lines+=("To fork anyway, paste:")
-  refusal_lines+=("")
-  refusal_lines+=("  claude --resume $(shq "$session_id") --fork-session")
-  refusal_lines+=("")
-}
-
 # zsh echoes a command line before running it, and the refusal is long enough
 # that its own quoted source would push the message off a short pane. Clear
 # first so what is left on screen is the message and a prompt.
 refusal_cmd() {
-  build_refusal "${1:-}"
-  printf 'clear; %s' "$(printf_cmd ${refusal_lines[@]+"${refusal_lines[@]}"})"
+  local timed_out="${1:-}"
+  local lines
+  lines=("")
+  if [ "$tail_kind" = "unreadable" ]; then
+    # Distinct from the mid-turn refusal on purpose: nothing is known about the
+    # turn here, and the file itself is the thing to go and look at.
+    if [ -e "$transcript" ]; then
+      lines+=("Fork not started: the source session's transcript could not be read.")
+      lines+=("")
+      lines+=("  Its last line still would not parse after ${wait_seconds}s, so the file looks")
+      lines+=("  damaged rather than merely mid-write:")
+    else
+      lines+=("Fork not started: the source session's transcript has gone.")
+      lines+=("")
+      lines+=("  It disappeared while the guard was watching it:")
+    fi
+    lines+=("  $transcript")
+    lines+=("")
+    lines+=("Without reading it there is no way to tell whether the last turn finished, so")
+    lines+=("forking might silently drop the tail of the conversation.")
+  else
+    lines+=("Fork not started: the source session is still mid-turn.")
+    lines+=("")
+    if [ -n "$timed_out" ]; then
+      lines+=("  Waited ${wait_seconds}s for the turn to finish and it did not.")
+      lines+=("")
+    fi
+    case "$tail_kind" in
+      tool_use)
+        if [ "$tail_detail" = "AskUserQuestion" ]; then
+          # The one thing here the user could not have guessed, and the one they
+          # can actually act on: the source is blocked on them, not on the model.
+          lines+=("  The source is waiting on a question nobody has answered. Answer it in the")
+          lines+=("  source pane first and the fork will carry the whole conversation.")
+        else
+          lines+=("  Its last entry is a ${tail_detail:-tool} call with no result yet.")
+        fi
+        ;;
+      tool_result)
+        lines+=("  Its last entry is a tool result the assistant has not replied to yet.")
+        ;;
+      *)
+        lines+=("  Its last entry is ${tail_detail:-partial} output, not a finished answer.")
+        ;;
+    esac
+    lines+=("")
+    lines+=("Forking now would rewind past that unfinished turn, so the tail of the")
+    lines+=("conversation - including any answer already written inside it - would not")
+    lines+=("carry over.")
+  fi
+  lines+=("")
+  lines+=("To fork anyway, paste:")
+  lines+=("")
+  lines+=("  claude --resume $(shq "$session_id") --fork-session")
+  lines+=("")
+  printf 'clear; %s' "$(printf_cmd ${lines[@]+"${lines[@]}"})"
 }
+
+# The new pane is by construction the source pane's neighbour in $direction, so
+# focus can be handed to it without knowing its id.
+focus_new_pane() {
+  herdr pane focus --pane "$pane_id" --direction "$direction" >/dev/null
+}
+focus_cmd="herdr pane focus --pane $(shq "$pane_id") --direction $direction"
 
 if [ -n "${CLAUDE_FORK_DRY_RUN:-}" ]; then
   printf 'transcript:   %s\n' "${transcript:-<not found>}"
   printf 'agent_status: %s\n' "$agent_status"
-  printf 'tail:         %s\n' "${tail_state:-<not evaluated>}${tail_kind:+ $tail_kind}${tail_detail:+ $tail_detail}"
+  printf 'tail:         %s\n' "${tail_kind:-<not evaluated>}${tail_detail:+ $tail_detail}"
   printf 'decision:     %s (%s)\n' "$decision" "$reason"
-  printf 'herdr pane split --pane %s --direction %s --cwd %s --focus\n' \
+  printf 'herdr pane split --pane %s --direction %s --cwd %s --no-focus\n' \
     "$pane_id" "$direction" "$(shq "$cwd")"
   case "$decision" in
     fork)
       printf 'herdr pane run <new-pane> %s\n' "$fork_cmd"
+      printf '%s\n' "$focus_cmd"
       ;;
     wait)
       printf 'herdr pane run <new-pane> %s\n' "$(printf_cmd "$notice_line")"
@@ -315,9 +302,11 @@ if [ -n "${CLAUDE_FORK_DRY_RUN:-}" ]; then
       printf 'herdr pane run <new-pane> %s\n' "$fork_cmd"
       printf '# or, on timeout,\n'
       printf 'herdr pane run <new-pane> %s\n' "$(refusal_cmd 1)"
+      printf '%s\n' "$focus_cmd"
       ;;
     refuse)
       printf 'herdr pane run <new-pane> %s\n' "$(refusal_cmd)"
+      printf '%s\n' "$focus_cmd"
       ;;
   esac
   exit 0
@@ -326,7 +315,13 @@ fi
 # The split happens now whatever the guard decides: the pane appearing is how
 # the user knows the keypress registered, and holding it back to go read a file
 # first would make a perfectly good fork feel broken.
-split_json=$(herdr pane split --pane "$pane_id" --direction "$direction" --cwd "$cwd" --focus)
+#
+# It is left unfocused, though. On the waiting path this pane can sit here for
+# wait_seconds with a live shell prompt in it, and `pane run` sends its text to
+# whatever is already on that command line - so anything typed into a focused
+# prompt meanwhile would end up with the fork command glued onto the end of it.
+# Focus is handed over at the moment the pane has something to show instead.
+split_json=$(herdr pane split --pane "$pane_id" --direction "$direction" --cwd "$cwd" --no-focus)
 new_pane_id=$(jq -r '.result.pane.pane_id' <<<"$split_json")
 
 timed_out=""
@@ -335,10 +330,12 @@ if [ "$decision" = "wait" ]; then
   deadline=$(( $(date +%s) + wait_seconds ))
   while :; do
     read_tail "$transcript"
-    if [ "$tail_state" = "complete" ]; then
-      decision="fork"
-      break
-    fi
+    case "$tail_kind" in
+      complete|message|empty)
+        decision="fork"
+        break
+        ;;
+    esac
     if [ "$(date +%s)" -ge "$deadline" ]; then
       decision="refuse"
       timed_out=1
@@ -353,3 +350,4 @@ if [ "$decision" = "fork" ]; then
 else
   herdr pane run "$new_pane_id" "$(refusal_cmd "$timed_out")"
 fi
+focus_new_pane
