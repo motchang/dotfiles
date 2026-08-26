@@ -19,9 +19,11 @@
 #      One such loss was of text written 6m26s earlier: waiting does not help
 #      here, only answering the question does.
 #
-# One test catches both. Ignoring the sidecar entries a fork drops anyway, the
-# last entry in the transcript must be an `assistant` entry holding a `text`
-# block and no `tool_use` block. Deliberately NOT a whole-file scan for a
+# One test catches both. Ignoring the sidecar entries a fork drops anyway - and
+# the two kinds of `user` entry nobody typed - the last entry in the transcript
+# must be an `assistant` entry holding a `text` block and no `tool_use` block.
+# Both sets are skipped over rather than judged, so the scan keeps walking back
+# to the entry underneath. Deliberately NOT a whole-file scan for a
 # `tool_use` with no `tool_result`: the transcript is a tree, and a branch the
 # user abandoned with an interrupt leaves a dangling `tool_use` behind for good,
 # which would block forking forever. The tail test has no such false positive.
@@ -93,15 +95,56 @@ transcript=$(find "$claude_config/projects" -maxdepth 2 -name "$session_id.jsonl
 # out as "ignore this", never as "the turn is unfinished".
 #
 # Sets tail_state / tail_kind / tail_detail. jq is allowed to fail: the source
-# may be appending to this very file, and a half-written last line should read
-# as "not finished yet" rather than take the script down under `set -e`.
+# may be appending to this very file, and a half-written last line has to come
+# back as `unreadable` - which routes to the wait - rather than take the script
+# down under `set -e`.
 tail_state=""
 tail_kind=""
 tail_detail=""
 read_tail() {
   local out
   out=$(jq -n -r '
-    last(inputs | select(.type == "assistant" or .type == "user"))
+    # Two more entry shapes the scan walks straight past. Both are `user`
+    # entries that a human did not type, and both routinely land last:
+    #
+    #   * the interrupt marker Claude Code writes when ESC is pressed, and
+    #   * the envelope holding the output of a slash command.
+    #
+    # Neither says anything about whether the turn underneath finished, so the
+    # scan keeps walking backwards to the entry beneath and judges *that*. They
+    # are skipped rather than declared complete, and the difference is the whole
+    # point: pressing ESC during a tool call leaves the turn genuinely open, and
+    # a "complete" verdict here would wave through failure mode 2 itself.
+    #
+    # The predicates match the exact shape Claude Code writes - a lone `text`
+    # block equal to the whole marker, or a string that both opens and closes
+    # with one tag pair - so a user message that merely quotes one of these is
+    # still read as a user message.
+    #
+    # Worth the code: of the 307 such entries across the transcripts on this
+    # machine, 67 sit directly on an `assistant` `text`. A fork pressed at any
+    # of those moments used to be refused for no reason. (Such a tail is rare
+    # as the *final* state of a file, because a session interrupted after an
+    # answer usually carried on afterwards - but the guard is evaluated at
+    # whatever instant the key was pressed, not at the end of a session.)
+    def tagged($t):
+      startswith("<" + $t + ">")
+      and (sub("[[:space:]]+$"; "") | endswith("</" + $t + ">"));
+    def unspoken:
+      .type == "user"
+      and ( (.message.content) as $c
+            | if ($c | type) == "string" then
+                ($c | tagged("local-command-stdout"))
+                or ($c | tagged("local-command-caveat"))
+              elif ($c | type) == "array" then
+                ([ $c[].type ] == ["text"])
+                and ( $c[0].text == "[Request interrupted by user]"
+                      or $c[0].text == "[Request interrupted by user for tool use]" )
+              else false
+              end );
+    last(inputs
+         | select(.type == "assistant" or .type == "user")
+         | select(unspoken | not))
     | if . == null then "incomplete\tnone\t"
       else ( (.message.content // []) | if type == "array" then . else [] end ) as $blocks
         | if .type != "assistant" then
@@ -138,6 +181,14 @@ else
   read_tail "$transcript"
   if [ "$tail_state" = "complete" ]; then
     reason="the source session's last turn is complete"
+  elif [ "$tail_kind" = "unreadable" ]; then
+    # A last line that will not parse means the source process is writing to the
+    # file at this very instant, which is itself evidence the turn is in flight.
+    # So this is the wait case no matter what the pane status claims: refusing on
+    # a transient parse failure would turn a race we can win into a hard stop.
+    # A transcript that is genuinely damaged still refuses, one timeout later.
+    decision="wait"
+    reason="transcript did not parse - the source looks like it is mid-write"
   elif [ "$agent_status" = "idle" ]; then
     # Nothing is running, so nothing is going to finish the turn on its own.
     # Waiting here would only postpone the same refusal by wait_seconds.
@@ -166,11 +217,34 @@ printf_cmd() {
 refusal_lines=()
 build_refusal() {
   local timed_out="${1:-}"
-  refusal_lines=(
-    ""
-    "Fork not started: the source session's last turn is incomplete."
-    ""
-  )
+  refusal_lines=("")
+
+  # A transcript that never became readable is a different complaint from a turn
+  # that never finished, and wants a different message: nothing is known about
+  # the turn, and the file itself is the thing to go and look at.
+  if [ "$tail_kind" = "unreadable" ]; then
+    refusal_lines+=("Fork not started: the source session's transcript could not be read.")
+    refusal_lines+=("")
+    if [ -n "$timed_out" ]; then
+      refusal_lines+=("  Re-read it for ${wait_seconds}s and it never parsed. A file merely being appended")
+      refusal_lines+=("  to comes right within a second, so this one looks damaged:")
+    else
+      refusal_lines+=("  Its last line does not parse - truncated, or the file is damaged:")
+    fi
+    refusal_lines+=("  $transcript")
+    refusal_lines+=("")
+    refusal_lines+=("Without reading it there is no way to tell whether the last turn finished, so")
+    refusal_lines+=("forking might silently drop the tail of the conversation.")
+    refusal_lines+=("")
+    refusal_lines+=("To fork anyway, paste:")
+    refusal_lines+=("")
+    refusal_lines+=("  claude --resume $(shq "$session_id") --fork-session")
+    refusal_lines+=("")
+    return
+  fi
+
+  refusal_lines+=("Fork not started: the source session's last turn is incomplete.")
+  refusal_lines+=("")
   if [ -n "$timed_out" ]; then
     refusal_lines+=("  Waited ${wait_seconds}s for the turn to finish and it did not.")
     refusal_lines+=("")
@@ -200,10 +274,6 @@ build_refusal() {
     assistant)
       refusal_lines+=("  The source's last entry is an assistant ${tail_detail:-non-text} block, so the turn")
       refusal_lines+=("  has not been closed out with an answer.")
-      ;;
-    unreadable)
-      refusal_lines+=("  The transcript could not be parsed - most likely it is being written to")
-      refusal_lines+=("  right now.")
       ;;
     *)
       refusal_lines+=("  The transcript has no finished assistant turn at its end.")
