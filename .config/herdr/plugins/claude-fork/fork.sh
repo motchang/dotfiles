@@ -19,11 +19,20 @@
 #
 # Both harms need an assistant turn that was started and never finished, so that
 # is the only thing the guard holds a fork back for. A transcript whose last
-# entry is a *user* entry is not that case, whatever put it there - a typed
-# message, a slash command, `!` bash mode, a background agent reporting in.
-# Nothing needs rewinding and no written answer is at risk; the fork just
+# entry is a *user* entry is usually not that case, whatever put it there - a
+# typed message, a slash command, `!` bash mode, a background agent reporting
+# in. Nothing needs rewinding and no written answer is at risk; the fork just
 # answers it. Letting those through is what keeps the guard from crying wolf,
 # and it is by far the commonest tail there is.
+#
+# "Usually", because a user entry can also land *on top of* a tool call that is
+# still open - the tail then looks like an ordinary message while the turn
+# underneath is the unfinished kind, and forking rewinds past it after all. So
+# the tail test also carries the calls still outstanding on the current turn,
+# and judges such a tail as the open call instead. Rare but real: measured over
+# the transcripts on this machine it happens in roughly one tool call in ten
+# thousand, and every AskUserQuestion left pending - some for the better part of
+# an hour - had nothing written under it at all.
 #
 # Deliberately NOT a whole-file scan for a `tool_use` with no `tool_result`: the
 # transcript is a tree, and a branch the user abandoned with an interrupt leaves
@@ -126,17 +135,43 @@ read_tail() {
       and ( ((.message.content[0]? | .text?) // "") as $t
             | $t == "[Request interrupted by user]"
               or $t == "[Request interrupted by user for tool use]" );
-    last(inputs
-         | select(.type == "assistant" or .type == "user")
-         | select(marker | not))
+    def blocks: (.message.content // []) | if type == "array" then . else [] end;
+    # One forward pass keeps two things: the last entry that counts as the tail,
+    # and the tool calls still outstanding on the turn the tail belongs to.
+    # `pending` is emptied at every assistant entry holding a `text` block, so it
+    # only ever describes the turn in progress - which is what keeps this a tail
+    # test rather than the whole-file tree scan ruled out above. Walking forward
+    # rather than backwards is what lets it stay streaming: `pending` holds one
+    # small record per unanswered call, never the file.
+    reduce ( inputs | select(.type == "assistant" or .type == "user") ) as $e
+      ( { last: null, pending: [] };
+        ( $e | blocks ) as $b
+        | ( if $e.type == "assistant"
+               and ( [ $b[]? | select(.type? == "text") ] | length ) > 0
+            then .pending = [] else . end )
+        | .pending += [ $b[]? | select(.type? == "tool_use")
+                        | { id: (.id? // ""), name: (.name? // "") } ]
+        | ( [ $b[]? | select(.type? == "tool_result") | .tool_use_id? // "" ] ) as $done
+        | .pending = [ .pending[] | select( ([.id] - $done) | length > 0 ) ]
+        | ( if ($e | marker) then . else .last = $e end ) )
+    | . as $state
+    | $state.last
     | if . == null then "empty\t"
-      else ( (.message.content // []) | if type == "array" then . else [] end ) as $b
+      else blocks as $b
         | if .type != "assistant" then
-            if ( [ $b[]? | select(.type? == "tool_result") ] | length ) > 0
-            then "tool_result\t" else "message\t" end
+            if ( [ $b[]? | select(.type? == "tool_result") ] | length ) > 0 then
+              "tool_result\t"
+            elif ( $state.pending | length ) > 0 then
+              # A user entry landed on top of a tool call that is still open -
+              # a skill body being injected, a background agent reporting in, a
+              # message typed while the turn ran. The tail looks like a plain
+              # user message, but the turn underneath is the unfinished kind,
+              # and forking would rewind past it. Judge it as that instead.
+              "tool_use\t" + ($state.pending[0].name)
+            else "message\t" end
           else
-            ( [ $b[]? | select(.type? == "tool_use") ] | first ) as $pending
-            | if $pending != null then "tool_use\t" + ($pending.name? // "")
+            ( [ $b[]? | select(.type? == "tool_use") ] | first ) as $open
+            | if $open != null then "tool_use\t" + ($open.name? // "")
               elif ( [ $b[]? | select(.type? == "text") ] | length ) > 0 then "complete\t"
               else "partial\t" + ( ( [ $b[]? | .type? ] | first ) // "" )
               end
