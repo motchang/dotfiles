@@ -34,10 +34,13 @@
 # thousand, and every AskUserQuestion left pending - some for the better part of
 # an hour - had nothing written under it at all.
 #
-# Deliberately NOT a whole-file scan for a `tool_use` with no `tool_result`: the
-# transcript is a tree, and a branch the user abandoned with an interrupt leaves
-# a dangling `tool_use` behind for good, which would block forking forever. The
-# tail test has no such false positive.
+# Deliberately NOT a whole-file scan for a `tool_use` with no `tool_result`.
+# Claude Code does close every call it opens - across every transcript on this
+# machine not one is left dangling, synthetic results for interrupted calls
+# included - so such a scan would buy nothing on a healthy transcript. What it would cost is recoverability: one call left open by a
+# crash, or by some future change to that behaviour, would block every fork for
+# the rest of the session. Bounding the test to the turn in progress means an
+# anomaly like that stops mattering as soon as one more answer is written.
 #
 # The guard reports itself by writing into the new pane. Toast notifications are
 # disabled on this machine, and while `herdr plugin log list` does record each
@@ -60,8 +63,15 @@ case "$direction" in
 esac
 
 wait_seconds="${CLAUDE_FORK_WAIT_SECONDS:-30}"
+# Anything that is not a plain number falls back to the default - and so does
+# anything absurdly large. `$(( $(date +%s) + w ))` overflows on a big enough
+# value and yields a deadline in the far future rather than an error, which the
+# poll loop then never reaches: the action never returns, and the pane is left
+# sitting on the waiting notice for good. Five digits is already far past any
+# useful turn, so cap it by length and never do arithmetic on the raw value.
 case "$wait_seconds" in
   ''|*[!0-9]*) wait_seconds=30 ;;
+  ?????*)      wait_seconds=30 ;;
 esac
 
 pane_id="${HERDR_PANE_ID:?HERDR_PANE_ID not set — run this action from a pane context}"
@@ -112,30 +122,39 @@ transcript=$(find "$claude_config/projects" -maxdepth 2 -name "$session_id.jsonl
 #
 # The interrupt marker Claude Code writes when ESC is pressed is skipped too, on
 # the same keep-walking-backwards footing rather than being judged itself. It
-# says nothing about the turn underneath, and what is underneath is usually the
-# tool result from the call that got interrupted - a turn still in flight, and
-# exactly what the guard should be waiting on. Judging the marker itself would
-# read as a plain user tail and fork straight past that.
+# says nothing about the turn underneath. What is underneath is a plain user
+# entry more often than not, so this is not the majority case; the one that
+# matters is the sizeable minority sitting on the tool result from the call that
+# got interrupted, because those are exactly the markers where skipping changes
+# the answer - a turn still in flight, and one the guard should be waiting on.
+# Judging the marker itself would read as a plain user tail and fork past those.
 #
 # Sets tail_kind (one of complete / empty / message / tool_result / tool_use /
 # partial / unreadable) and tail_detail. jq is allowed to fail: the source may
 # be appending to this very file, and a half-written last line has to come back
 # as `unreadable` - which routes to the wait - rather than take the script down
-# under `set -e`. Every array index is `?`-guarded so a content block that is
-# not an object cannot throw and be misreported as a torn file.
+# under `set -e`. Reads of the content and of the blocks inside it are all
+# `?`-guarded, so neither a `.message` that is not an object nor a content block
+# that is not an object can throw and be misreported as a torn file.
 tail_kind=""
 tail_detail=""
 read_tail() {
   local out
   out=$(jq -n -r '
+    # `.message` is not always an object - a malformed entry can carry a bare
+    # string - so every read of the content goes through one guarded accessor.
+    # It has to yield a value rather than `empty`: an update expression that
+    # produces `empty` makes `reduce` below collapse its whole accumulator to
+    # null, so a plain `?` here would trade a wrong verdict for a broken one.
+    def content: .message?.content? // null;
     def marker:
       .type == "user"
-      and ((.message.content | type) == "array")
-      and ([ .message.content[]? | .type? ] == ["text"])
-      and ( ((.message.content[0]? | .text?) // "") as $t
+      and ((content | type) == "array")
+      and ([ content[]? | .type? ] == ["text"])
+      and ( ((content[0]? | .text?) // "") as $t
             | $t == "[Request interrupted by user]"
               or $t == "[Request interrupted by user for tool use]" );
-    def blocks: (.message.content // []) | if type == "array" then . else [] end;
+    def blocks: content | if type == "array" then . else [] end;
     # One forward pass keeps two things: the last entry that counts as the tail,
     # and the tool calls still outstanding on the turn the tail belongs to.
     # `pending` is emptied at every assistant entry holding a `text` block, so it
@@ -230,6 +249,13 @@ else
       # tool_result, or an assistant turn that has only got as far as thinking.
       # Both mean the answer is still being written - this is the race, and the
       # case waiting was built for.
+      #
+      # Note these deliberately do NOT consult agent_status the way `tool_use`
+      # above does, so a dead session stalls for wait_seconds before refusing.
+      # That is the intended trade: agent_status flickers to idle between the
+      # calls of a running tool loop, and an idle->fork shortcut here would fork
+      # straight into the middle of one. An unanswered `tool_use` can take the
+      # shortcut because nothing but the user can ever close it.
       decision="wait"
       reason="the turn is still in flight ($tail_kind)"
       ;;
