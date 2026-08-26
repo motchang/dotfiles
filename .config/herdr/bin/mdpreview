@@ -1,6 +1,8 @@
 #!/bin/sh
-# Preview a markdown file (mermaid included) in a herdr-browser pane.
+# Preview a markdown file (mermaid included) in a herdr-browser pane, or in the
+# desktop browser.
 #   mdpreview README.md
+#   mdpreview --browser [file.md]  # a desktop browser tab instead of a pane
 #   mdpreview text                 # any herdr-browser command, aimed at this
 #   mdpreview console              # tab's preview - no view id to pass around
 #   mdpreview screenshot --output /tmp/preview.png
@@ -11,7 +13,10 @@
 #   mdpreview --stop
 #
 # Starts a local render server on first use and reuses it afterwards; the page
-# live-reloads when the file changes.
+# live-reloads when the file changes. Nothing in that server knows about herdr -
+# it serves plain HTTP on the loopback port below - so the same preview shows in
+# an ordinary browser tab. That is what --browser asks for outright, and what a
+# run from a plain terminal falls back to now that it has no tab for a pane.
 #
 # Which pane and view in this tab hold the preview is decided here, in every
 # mode. Nothing outside needs to read `herdr pane list` or `herdr-browser views`
@@ -191,8 +196,13 @@ resolve_target() {
       exit 1
     fi
   else
-    # Outside herdr there is no tab to scope to and no pane to split from, so any
-    # view counts and a new pane lands next to whatever pane has focus.
+    # Only --view arrives here now. Outside herdr there is no tab to scope to and
+    # no pane to split from, so a view found this way is a Chrome in some other
+    # tab and a pane opened this way lands next to whatever pane has focus -
+    # neither of them anywhere the caller can look, which is why previewing and
+    # driving a preview both stop short of this branch and go to the browser or
+    # refuse outright. --view keeps it because a caller asking for a view id by
+    # name has asked for whatever the daemon has, not for a preview.
     target=$(any_view) || die_views
     if [ -z "$target" ]; then
       target=open
@@ -280,6 +290,40 @@ open_pane() {
     --placement split --direction right \
     ${HERDR_PANE_ID:+--target-pane "$HERDR_PANE_ID"} \
     --env "HERDR_BROWSER_INITIAL_URL=${base}/" --no-focus
+}
+
+# Hands a URL to whatever the desktop treats as a browser: `open` on macOS,
+# `xdg-open` on Linux. Both return as soon as the browser has been told, so
+# there is no tab to wait for here and nothing to report back beyond having
+# asked - and no view id either, which is the difference that matters: a tab
+# opened this way is not a herdr-browser view and cannot be driven over CDP.
+#
+# Neither one present is fatal rather than a warning, because a silent failure
+# here looks exactly like a browser that opened on another desktop. The message
+# names the URL so that a machine with no opener at all is still one command
+# away from the preview by hand.
+open_url() {
+  if command -v open >/dev/null 2>&1; then
+    open "$1"
+  elif command -v xdg-open >/dev/null 2>&1; then
+    xdg-open "$1"
+  else
+    echo "mdpreview: no way to open a browser - neither open nor xdg-open is on PATH; the preview is at $1" >&2
+    exit 1
+  fi
+}
+
+# The whole of a browser preview once the file and the server are settled.
+#
+# The file goes to the server before the tab is opened, and not the other way
+# round: a tab that loads first renders whatever the server still held, and the
+# reload that POSTing the file broadcasts only reaches a page already listening
+# on /events - which a tab still starting up is not. Opening second costs
+# nothing, because the page is rendered per request.
+preview_in_browser() {
+  set_file
+  open_url "${base}/"
+  echo "mdpreview: previewing ${file} in a browser tab"
 }
 
 # Chrome sometimes stops acknowledging pointer input while the rest of CDP stays
@@ -446,8 +490,43 @@ if [ "$1" = "--reset" ]; then
   exit 1
 fi
 
+if [ "$1" = "--browser" ]; then
+  # Shows the preview in the desktop browser instead of in a pane. No pane, no
+  # view and no daemon are involved, which is why this is deliberately not
+  # guarded by require_tab: asked for from inside a herdr session it means "not
+  # in a pane this time", and that is a thing to honour rather than to refuse.
+  if [ -n "$2" ]; then
+    require_deps
+    resolve_file "$2"
+    ensure_server
+  else
+    # No file named: show whatever the server already holds, the way --reset
+    # with no argument does, and read before ensure_server for the same reason.
+    # The server answering may be one this copy does not own - left from before
+    # a rename, or another checkout - and its current file is still the file on
+    # screen; retiring it first would throw away the only record of what to
+    # reopen. ensure_server then makes our server the one that gets the file
+    # back and the one the tab is pointed at. jq turns a silent curl into empty
+    # output rather than a failure.
+    file=$(curl -fsS -m 2 "${base}/health" 2>/dev/null | jq -r '.file // empty')
+    if [ -z "$file" ]; then
+      echo "mdpreview: nothing is being previewed - run 'mdpreview <file.md>'" >&2
+      exit 1
+    fi
+    if [ ! -f "$file" ]; then
+      echo "mdpreview: the previewed file is gone: $file" >&2
+      exit 1
+    fi
+    require_deps
+    ensure_server
+  fi
+
+  preview_in_browser
+  exit 0
+fi
+
 if [ -z "$1" ]; then
-  echo "usage: mdpreview <file.md> | <herdr-browser command> | --view | --pane | --screen | --reset [file.md] | --stop" >&2
+  echo "usage: mdpreview <file.md> | <herdr-browser command> | --browser [file.md] | --view | --pane | --screen | --reset [file.md] | --stop" >&2
   exit 1
 fi
 
@@ -465,6 +544,18 @@ case $1 in
     # read the pane and view lists to answer a question this script has already
     # answered. herdr-browser rejects a word that is not one of its commands,
     # which is why this needs no list of them to keep in step with.
+    #
+    # All of them drive a page over CDP, and the only page reachable that way is
+    # one the browser plugin owns. A tab handed to the desktop browser is not:
+    # nothing is attached to it and no view id names it, so unscoped there is
+    # nothing here to drive. Saying so is the whole answer - falling through to
+    # any_view would report on a Chrome in another tab, and `text` returning a
+    # document nobody here is looking at is worse than no answer, because it
+    # reads as the preview and is not.
+    if [ "$scoped" != 1 ]; then
+      echo "mdpreview: '$1' drives a herdr-browser pane over CDP, and outside a herdr session the preview is a plain browser tab - run it from a herdr pane" >&2
+      exit 1
+    fi
     resolve_target
     if [ "$target" = open ]; then
       echo "mdpreview: no preview in this tab - run 'mdpreview <file.md>' first" >&2
@@ -478,6 +569,18 @@ esac
 require_deps
 resolve_file "$1"
 ensure_server
+
+# Unscoped, the preview goes to the desktop browser rather than into herdr. This
+# used to reach for any view at all and split a pane if it found none, and both
+# halves of that put the preview where whoever ran the command cannot see it -
+# in another tab's Chrome, or beside whichever pane happens to have focus. From
+# a plain terminal it never even got that far: with no herdr-browser daemon up,
+# reading the view list fails and the run dies at die_views. A browser tab is
+# somewhere they are looking, and it needs none of that machinery.
+if [ "$scoped" != 1 ]; then
+  preview_in_browser
+  exit 0
+fi
 
 resolve_target
 

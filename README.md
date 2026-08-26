@@ -78,9 +78,9 @@ and so on, for driving from Bash in Claude Code):
 
 # mdpreview
 
-Previews markdown in a herdr-browser pane. Embedded mermaid renders too, and
-saving the file reloads the page. Nothing goes out to the network - mermaid.js
-and highlight.js are both served locally.
+Previews markdown in a herdr-browser pane, or in an ordinary desktop browser
+tab. Embedded mermaid renders too, and saving the file reloads the page. Nothing
+goes out to the network - mermaid.js and highlight.js are both served locally.
 
 Markdown, syntax highlighting, GitHub alerts and the table of contents are
 rendered on the Bun side; only mermaid, which needs a DOM, is drawn in the
@@ -93,6 +93,8 @@ browser.
 Usage (the port is 43128 by default; `MDPREVIEW_PORT` overrides it):
 
 	mdpreview README.md
+	mdpreview --browser README.md
+	mdpreview --browser     # the same, for whatever is already being previewed
 	mdpreview text          # any herdr-browser command, aimed at this tab's preview
 	mdpreview console
 	mdpreview --screen      # the viewer's own errors, as written onto the pane
@@ -102,15 +104,29 @@ Usage (the port is 43128 by default; `MDPREVIEW_PORT` overrides it):
 A herdr-browser pane in the same tab is reused; a tab without one gets a fresh
 pane split off to the right, without taking focus. A view in another tab is not a
 candidate for reuse - nobody in this tab can see it. Outside herdr (no
-HERDR_TAB_ID / HERDR_PANE_ID) there is no tab to scope to, so any existing view
-is used and, failing that, the focused pane is split.
+HERDR_TAB_ID / HERDR_PANE_ID) there is no tab to scope to and no pane to split
+from, so a file argument goes to the desktop browser instead. The render server
+has no herdr in it - it is plain HTTP on the loopback port - so the page is the
+same one either way.
+
+`--browser` asks for that tab outright, and works inside a herdr session too:
+it is how a preview goes to the browser that is already open rather than into a
+pane. With no file argument it reuses whatever the server is currently holding,
+the way `--reset` does, and says so if nothing is. Two things are worth knowing
+before leaning on it. The server still tracks a single current file, so a tab
+and a preview pane share one preview: previewing a second file navigates both.
+And `open` starts a tab rather than finding an existing one, so running
+`--browser` twice can leave two tabs on the same preview - close the spare.
 
 With two or more browser panes open, herdr-browser cannot pick a target for
 itself (409), so which view to aim at has to be named. Working that out is
 mdpreview's job: `mdpreview <herdr-browser command>` names this tab's view and
 then calls herdr-browser. Nothing on the calling side has to read the pane or
-view list. `--view` (view id) and `--pane` (pane id) are still there for a
-command that wants an id in the environment.
+view list. Those commands reach the page over CDP, which gets to a herdr-browser
+pane and to nothing else - a desktop tab has no view to attach to - so outside
+herdr they say so rather than answering about a Chrome in some other tab.
+`--view` (view id) and `--pane` (pane id) are still there for a command that
+wants an id in the environment.
 
 The render server lives in `.config/herdr/mdpreview-server` (bun) and logs to
 `${TMPDIR}/mdpreview-server.log`. It sits at a different layer from the command
