@@ -19,8 +19,10 @@
 # run from a plain terminal falls back to now that it has no tab for a pane.
 #
 # Which pane and view in this tab hold the preview is decided here, in every
-# mode. Nothing outside needs to read `herdr pane list` or `herdr-browser views`
-# to use a preview, and nothing outside should have to.
+# mode that has one to decide. Nothing outside needs to read `herdr pane list`
+# or `herdr-browser views` to use a preview, and nothing outside should have to.
+# The browser-tab modes have neither to answer for, which is exactly what lets
+# them run from a plain terminal where those lists have nothing to say.
 set -e
 
 port=${MDPREVIEW_PORT:-43128}
@@ -269,13 +271,81 @@ ensure_server() {
   fi
 }
 
+# Sets `file` to whatever the render server is currently showing, for the modes
+# that take no file argument, and leaves our own server up and ready to show it
+# again. Everything a named file needs, in other words, for the case where the
+# file is not named but is already on screen.
+#
+# A server has to be up already: a fresh one has no current file, and starting
+# one here would restore onto a blank page. jq turns a silent curl into empty
+# output rather than a failure.
+#
+# The file is read before ownership of the port is settled, and deliberately so.
+# The server answering may be one this copy does not own - left from before the
+# rename, or another checkout - and its current file is still the file on screen,
+# which is the thing being restored. Retiring it first would throw away the only
+# record of what to restore onto. ensure_server then makes our server the one
+# that gets the file back and the one the pane or tab is pointed at, so nothing
+# afterwards renders through code this copy does not have.
+#
+# require_deps waits until there is something to restore, for the same reason:
+# complaining about node_modules is the right answer when a preview is wanted
+# and the wrong one when the answer is that there is no preview to return to.
+resume_current_file() {
+  file=$(curl -fsS -m 2 "${base}/health" 2>/dev/null | jq -r '.file // empty')
+  if [ -z "$file" ]; then
+    echo "mdpreview: nothing is being previewed - run 'mdpreview <file.md>'" >&2
+    exit 1
+  fi
+  if [ ! -f "$file" ]; then
+    echo "mdpreview: the previewed file is gone: $file" >&2
+    exit 1
+  fi
+  require_deps
+  ensure_server
+}
+
 # Handing the file over reloads a preview that is already up, so the call waits
 # until every check that could still fail has passed: an error that leaves the
 # pane showing the new file would be reporting a failure it did not have.
+#
+# curl runs without -f on purpose. The server refuses a path it will not render
+# - a suffix outside the markdown set it recognises, a file it cannot read - and
+# answers 400 with the reason in the body's `error` field. -f throws that body
+# away, so all that reaches the caller is `curl: (22) The requested URL returned
+# error: 400`, naming neither the file nor what was wrong with it, and set -e
+# ends the run on curl's status before anything can say more. --fail-with-body
+# would keep the status and the body together in one flag, and is not used
+# because it arrived in curl 7.76 while this runs on whatever curl the machine
+# came with. So success is read out of the reply, and curl's own status is left
+# to mean the narrower thing it can still be trusted for: the request did not
+# happen at all.
 set_file() {
-  jq -n --arg path "$file" '{path: $path}' \
-    | curl -fsS -X POST -H 'content-type: application/json' --data @- "${base}/open" \
-    >/dev/null
+  if ! reply=$(jq -n --arg path "$file" '{path: $path}' \
+      | curl -sS -X POST -H 'content-type: application/json' --data @- "${base}/open"); then
+    echo "mdpreview: could not hand ${file} to the render server on ${base}" >&2
+    exit 1
+  fi
+  # A reply that is not the object expected here has to read as a refusal and
+  # not as consent. jq indexing a string is an error rather than a false, and
+  # taking that quietly would report a preview the server never accepted - so
+  # the shape is checked before the field is, and both reads are asked for
+  # separately: `.error` is absent from the success shape and would answer the
+  # same empty for a refusal that failed to say why.
+  ok=$(printf '%s' "$reply" \
+    | jq -r 'if type == "object" then (.ok // false) else false end' 2>/dev/null) \
+    || ok=false
+  if [ "$ok" = true ]; then
+    return 0
+  fi
+  reason=$(printf '%s' "$reply" \
+    | jq -r 'if type == "object" then (.error // empty) else empty end' 2>/dev/null) \
+    || reason=''
+  if [ -z "$reason" ]; then
+    reason="it refused and said nothing about why"
+  fi
+  echo "mdpreview: the render server on ${port} would not take ${file} - ${reason}" >&2
+  exit 1
 }
 
 # --target-pane keeps the split in this tab; without it the pane lands next to
@@ -292,37 +362,75 @@ open_pane() {
     --env "HERDR_BROWSER_INITIAL_URL=${base}/" --no-focus
 }
 
-# Hands a URL to whatever the desktop treats as a browser: `open` on macOS,
-# `xdg-open` on Linux. Both return as soon as the browser has been told, so
-# there is no tab to wait for here and nothing to report back beyond having
-# asked - and no view id either, which is the difference that matters: a tab
-# opened this way is not a herdr-browser view and cannot be driven over CDP.
+# The command that hands a URL to the desktop browser, or nothing when the
+# machine has neither. Chosen by platform rather than by which name turns up on
+# PATH first: on Darwin `open` opens a URL, but on Linux a program called `open`
+# is as likely to be something else - util-linux ships `openvt` and some
+# distributions link `open` to it, and a personal shim under that name is a
+# common enough habit - and preferring it there would spend the run on something
+# that was never going to show a page while `xdg-open` sat untried next to it.
+# Each platform's second choice is kept rather than dropped: a Darwin box
+# without `open` is odd but not a reason to refuse, and neither is a Linux one
+# where only the macOS name has been shimmed in.
 #
-# Neither one present is fatal rather than a warning, because a silent failure
-# here looks exactly like a browser that opened on another desktop. The message
-# names the URL so that a machine with no opener at all is still one command
-# away from the preview by hand.
-open_url() {
-  if command -v open >/dev/null 2>&1; then
-    open "$1"
-  elif command -v xdg-open >/dev/null 2>&1; then
-    xdg-open "$1"
+# Resolved separately from being run so that the one failure knowable in advance
+# - no opener installed at all - can be reported before the file has been handed
+# to the server, which is the step that navigates any pane already on this
+# preview. The other failure, an opener that exists and then exits non-zero,
+# cannot be known without running it and so necessarily lands after that; set -e
+# ends the run on it, with whatever the opener itself had to say.
+find_opener() {
+  if [ "$(uname -s)" = Darwin ]; then
+    first=open
+    second=xdg-open
   else
-    echo "mdpreview: no way to open a browser - neither open nor xdg-open is on PATH; the preview is at $1" >&2
-    exit 1
+    first=xdg-open
+    second=open
   fi
+  if command -v "$first" >/dev/null 2>&1; then
+    printf '%s\n' "$first"
+  elif command -v "$second" >/dev/null 2>&1; then
+    printf '%s\n' "$second"
+  fi
+}
+
+# Hands the URL over, with the opener already settled by find_opener. Both
+# openers return as soon as the browser has been told, so there is no tab to
+# wait for here and nothing to report back beyond having asked - and no view id
+# either, which is the difference that matters downstream: a tab opened this way
+# is not a herdr-browser view and cannot be driven over CDP.
+#
+# Focus is taken, and that is the choice rather than an oversight. open_pane
+# passes --no-focus because a pane is already on screen in a tab being looked
+# at, so taking the keyboard for it would interrupt whoever asked - but asking
+# for a browser tab is asking to be shown one, and a tab that opens behind the
+# terminal is a preview that did not happen. The unscoped fallback inherits the
+# same behaviour without having asked for it; that is the cost of a path whose
+# only remaining place to put a preview is a browser.
+open_url() {
+  "$1" "$2"
 }
 
 # The whole of a browser preview once the file and the server are settled.
 #
-# The file goes to the server before the tab is opened, and not the other way
-# round: a tab that loads first renders whatever the server still held, and the
-# reload that POSTing the file broadcasts only reaches a page already listening
-# on /events - which a tab still starting up is not. Opening second costs
-# nothing, because the page is rendered per request.
+# The opener is looked up first, before set_file, so that a machine with no
+# opener is turned away while nothing has changed yet: set_file navigates every
+# page on this preview, a herdr pane included, so failing after it would move
+# someone's pane and then report that nothing had been shown.
+#
+# The file still goes to the server before the tab is opened, and not the other
+# way round: a tab that loads first renders whatever the server was holding, and
+# the reload that POSTing the file broadcasts only reaches a page already
+# listening on /events - which a tab still starting up is not. Opening second
+# costs nothing, because the page is rendered per request.
 preview_in_browser() {
+  opener=$(find_opener)
+  if [ -z "$opener" ]; then
+    echo "mdpreview: no way to open a browser - neither open nor xdg-open is on PATH; the preview is at ${base}/" >&2
+    exit 1
+  fi
   set_file
-  open_url "${base}/"
+  open_url "$opener" "${base}/"
   echo "mdpreview: previewing ${file} in a browser tab"
 }
 
@@ -382,7 +490,17 @@ if [ "$1" = "--view" ]; then
   # open anywhere.
   resolve_target
   if [ "$target" = open ]; then
-    echo "mdpreview: no herdr-browser pane in this tab - run 'mdpreview <file.md>' first" >&2
+    # Two unrelated failures land here and they want different advice. Scoped,
+    # the tab simply has no preview yet and running one is the fix. Unscoped
+    # there is no tab for a message to be about, and previewing a file cannot be
+    # the fix any more: that opens a browser tab, which has no view id and never
+    # acquires one, so the old advice would send the caller round the same
+    # failure for as long as they were willing to follow it.
+    if [ "$scoped" = 1 ]; then
+      echo "mdpreview: no herdr-browser pane in this tab - run 'mdpreview <file.md>' first" >&2
+    else
+      echo "mdpreview: --view needs a herdr pane - outside a herdr session the preview is a browser tab, which has no view id to name" >&2
+    fi
     exit 1
   fi
   printf '%s\n' "$target"
@@ -432,28 +550,8 @@ if [ "$1" = "--reset" ]; then
     resolve_file "$2"
     ensure_server
   else
-    # Reuses whatever is on screen, which means a server has to be up already:
-    # a fresh one has no current file, and starting one here would reset onto a
-    # blank page. jq turns a silent curl into empty output rather than a failure.
-    #
-    # The file is read before ownership of the port is settled, and deliberately
-    # so. The server answering may be one this copy does not own - left from
-    # before the rename, or another checkout - and its current file is still the
-    # file on screen, which is the thing being restored. Retiring it first would
-    # throw away the only record of what to reset onto. ensure_server then makes
-    # our server the one that gets the file back and the one the pane is pointed
-    # at, so nothing here renders through code this copy does not have.
-    file=$(curl -fsS -m 2 "${base}/health" 2>/dev/null | jq -r '.file // empty')
-    if [ -z "$file" ]; then
-      echo "mdpreview: nothing is being previewed - run 'mdpreview <file.md>'" >&2
-      exit 1
-    fi
-    if [ ! -f "$file" ]; then
-      echo "mdpreview: the previewed file is gone: $file" >&2
-      exit 1
-    fi
-    require_deps
-    ensure_server
+    # No file named: reset onto whatever is on screen now.
+    resume_current_file
   fi
 
   for stage in pane daemon; do
@@ -500,25 +598,11 @@ if [ "$1" = "--browser" ]; then
     resolve_file "$2"
     ensure_server
   else
-    # No file named: show whatever the server already holds, the way --reset
-    # with no argument does, and read before ensure_server for the same reason.
-    # The server answering may be one this copy does not own - left from before
-    # a rename, or another checkout - and its current file is still the file on
-    # screen; retiring it first would throw away the only record of what to
-    # reopen. ensure_server then makes our server the one that gets the file
-    # back and the one the tab is pointed at. jq turns a silent curl into empty
-    # output rather than a failure.
-    file=$(curl -fsS -m 2 "${base}/health" 2>/dev/null | jq -r '.file // empty')
-    if [ -z "$file" ]; then
-      echo "mdpreview: nothing is being previewed - run 'mdpreview <file.md>'" >&2
-      exit 1
-    fi
-    if [ ! -f "$file" ]; then
-      echo "mdpreview: the previewed file is gone: $file" >&2
-      exit 1
-    fi
-    require_deps
-    ensure_server
+    # No file named: open a tab on whatever is on screen now. Handing the file
+    # back over broadcasts a reload, so a preview already open on a long
+    # document loses its scroll position - the cost of this taking the same
+    # route as a named file rather than trusting a server it may not own.
+    resume_current_file
   fi
 
   preview_in_browser
@@ -545,20 +629,32 @@ case $1 in
     # answered. herdr-browser rejects a word that is not one of its commands,
     # which is why this needs no list of them to keep in step with.
     #
-    # All of them drive a page over CDP, and the only page reachable that way is
-    # one the browser plugin owns. A tab handed to the desktop browser is not:
-    # nothing is attached to it and no view id names it, so unscoped there is
-    # nothing here to drive. Saying so is the whole answer - falling through to
+    # Whatever the word turns out to be, it is going to a view to be run
+    # against, over CDP, and the only page reachable that way is one the browser
+    # plugin owns. A tab handed to the desktop browser is not: nothing is
+    # attached to it and no view id names it, so unscoped there is nothing here
+    # to drive at all. Saying so is the whole answer - falling through to
     # any_view would report on a Chrome in another tab, and `text` returning a
     # document nobody here is looking at is worse than no answer, because it
     # reads as the preview and is not.
+    #
+    # The message stops short of calling the word a command, because the case
+    # above sends everything it does not recognise as a path down here and a
+    # mistyped filename is at least as likely as a real one. Naming the spelling
+    # rule is what turns the refusal into something the caller can act on.
     if [ "$scoped" != 1 ]; then
-      echo "mdpreview: '$1' drives a herdr-browser pane over CDP, and outside a herdr session the preview is a plain browser tab - run it from a herdr pane" >&2
+      echo "mdpreview: '$1' would be run against a herdr-browser view, and outside a herdr session there is none - the preview is a plain browser tab." >&2
+      echo "mdpreview: run it from a herdr pane; if '$1' was meant as a file to preview, name it with a .md suffix or a ./ prefix." >&2
       exit 1
     fi
     resolve_target
     if [ "$target" = open ]; then
-      echo "mdpreview: no preview in this tab - run 'mdpreview <file.md>' first" >&2
+      # --browser is named here because it opens a preview this cannot reach: a
+      # desktop tab has no view, so a tab opened moments ago still leaves this
+      # with nothing to drive and reads as no preview at all. Advising a bare
+      # `mdpreview <file.md>` on its own would then be advising a second preview
+      # surface rather than a fix.
+      echo "mdpreview: no herdr-browser pane in this tab - run 'mdpreview <file.md>' to open one; a preview opened with --browser is a desktop tab and cannot be driven from here" >&2
       exit 1
     fi
     export HERDR_BROWSER_VIEW_ID=$target

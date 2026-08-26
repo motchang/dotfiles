@@ -111,12 +111,22 @@ same one either way.
 
 `--browser` asks for that tab outright, and works inside a herdr session too:
 it is how a preview goes to the browser that is already open rather than into a
-pane. With no file argument it reuses whatever the server is currently holding,
-the way `--reset` does, and says so if nothing is. Two things are worth knowing
-before leaning on it. The server still tracks a single current file, so a tab
-and a preview pane share one preview: previewing a second file navigates both.
-And `open` starts a tab rather than finding an existing one, so running
-`--browser` twice can leave two tabs on the same preview - close the spare.
+pane. It needs `open` (macOS) or `xdg-open` (Linux) and refuses outright with
+neither - the one way this can fail that the pane path has no equivalent for. It
+also takes focus, unlike a pane: a pane is already on screen in the tab being
+looked at, whereas asking for a browser tab is asking to be shown one.
+
+With no file argument it reuses whatever the server is currently holding, the way
+`--reset` does, and says so if nothing is. Handing the file back over broadcasts
+a reload, so a preview already open on a long document scrolls back to the top.
+
+Three things are worth knowing before leaning on it. The server still tracks a
+single current file, so a tab and a preview pane share one preview: previewing a
+second file navigates both. `open` starts a tab rather than finding an existing
+one, so running `--browser` twice leaves two tabs on the same preview - close the
+spare. And a preview in a tab cannot be driven: `mdpreview text` and the rest of
+the passthrough need a view, so inside a herdr session they report having no
+preview in this tab even while a `--browser` tab is open on one.
 
 With two or more browser panes open, herdr-browser cannot pick a target for
 itself (409), so which view to aim at has to be named. Working that out is
