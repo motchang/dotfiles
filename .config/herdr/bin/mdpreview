@@ -301,15 +301,31 @@ ensure_server() {
 # `.recent // .file` also covers an older server on this port, which ensure_server
 # below goes out of its way to contemplate: no `recent` field means fall back to
 # the one field it does have.
+#
+# Both fields are read either way, so that a failure can say which kind of
+# nothing it found. jq turns a silent curl - or a foreign server answering
+# something that is not JSON - into empty output rather than a failure.
 resume_current_file() {
+  health=$(curl -fsS -m 2 "${base}/health" 2>/dev/null) || health=''
+  recent=$(printf '%s' "$health" | jq -r '.recent // .file // empty' 2>/dev/null) \
+    || recent=''
   if [ "$1" = recent ]; then
-    field='.recent // .file // empty'
+    file=$recent
   else
-    field='.file // empty'
+    file=$(printf '%s' "$health" | jq -r '.file // empty' 2>/dev/null) || file=''
   fi
-  file=$(curl -fsS -m 2 "${base}/health" 2>/dev/null | jq -r "$field")
   if [ -z "$file" ]; then
-    echo "mdpreview: nothing is being previewed - run 'mdpreview <file.md>'" >&2
+    # A pane mode finding no pane-side file while a browser tab is holding one is
+    # not "nothing is being previewed" - something is, and saying otherwise is
+    # false in exactly the state it prints in. --browser never moves the current
+    # file, on purpose, so this is the ordinary consequence of previewing in a tab
+    # and then asking to rebuild a pane. What --reset needs is a file to rebuild
+    # onto, so it asks for one rather than adopting the tab's.
+    if [ "$1" != recent ] && [ -n "$recent" ]; then
+      printf '%s\n' "mdpreview: nothing is being previewed in a pane - ${recent} is open in a browser tab, which --reset does not rebuild; name a file: 'mdpreview --reset <file.md>'" >&2
+    else
+      echo "mdpreview: nothing is being previewed - run 'mdpreview <file.md>'" >&2
+    fi
     exit 1
   fi
   if [ ! -f "$file" ]; then

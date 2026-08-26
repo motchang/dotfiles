@@ -142,8 +142,21 @@ function broadcastReload(key: string): void {
     try {
       client.enqueue(payload);
     } catch {
+      // Only a cancelled stream ever lands here. enqueue on the controller of a
+      // stream that has been cancelled throws "Controller is already closed";
+      // enqueue on one whose start() threw does not throw at all, so this is not
+      // a general reaper and must not be read as one. The guard around watch()
+      // in startWatching is what covers that other case.
       channel.clients.delete(client);
     }
+  }
+  // Dropping the last client here has to close the watch as well. Otherwise the
+  // channel outlives the only audience its watchers had and they go on firing
+  // into an empty map - which is the state unsubscribe exists to prevent, and it
+  // is the only other place that runs this path.
+  if (channel.clients.size === 0) {
+    stopWatching(channel);
+    channels.delete(key);
   }
 }
 
@@ -222,23 +235,65 @@ function startWatching(key: string): void {
     names.set(dir, known);
   }
   for (const [dir, known] of names) {
-    channel.watchers.push(
-      watch(dir, (_event, changed) => {
-        // Fingerprint the path as opened, not the resolved one: statSync follows
-        // the link, so one comparison covers both an edit to the real file and a
-        // link repointed at a different file.
-        const state = fileState(file);
-        if (!known.has(changed ?? "") && state === channel.watchedState) {
-          return;
-        }
-        channel.watchedState = state;
-        if (channel.reloadTimer) {
-          clearTimeout(channel.reloadTimer);
-        }
-        channel.reloadTimer = setTimeout(() => broadcastReload(key), 50);
-      }),
-    );
+    // watch() throws synchronously - ENOENT - when the directory is not there,
+    // which is what a preview whose directory has been removed or renamed under
+    // it looks like. Letting that escape is what must not happen, and the reason
+    // is entirely about where this is called from. startWatching runs inside the
+    // ReadableStream start() of /events, a start() that throws propagates out of
+    // the constructor without cancel() ever running, and subscribe has already
+    // recorded the client by then - so the client stays in the channel with no
+    // stream behind it. Nothing reaps it later either: enqueue on a controller
+    // whose start() threw does not throw, so broadcastReload's catch never sees
+    // it. The channel would then report a phantom tab to /viewers and suppress
+    // --browser on that path for as long as the server lived.
+    //
+    // Giving up on the directory instead leaves the channel with no watchers,
+    // which is an inert state that already exists: it is what the empty key
+    // produces whenever nothing has been opened yet. The page stays connected
+    // and silent until /open comes back for the path - see rearmWatching - and
+    // that is also what the version before per-path channels did, only louder.
+    // There, watchFile was called from setCurrentFile inside /open's own try, so
+    // a missing directory came back as a clean 400 and /events was never part of
+    // it. Silence is the closer match to that than a 500 on the reload stream.
+    try {
+      channel.watchers.push(
+        watch(dir, (_event, changed) => {
+          // Fingerprint the path as opened, not the resolved one: statSync follows
+          // the link, so one comparison covers both an edit to the real file and a
+          // link repointed at a different file.
+          const state = fileState(file);
+          if (!known.has(changed ?? "") && state === channel.watchedState) {
+            return;
+          }
+          channel.watchedState = state;
+          if (channel.reloadTimer) {
+            clearTimeout(channel.reloadTimer);
+          }
+          channel.reloadTimer = setTimeout(() => broadcastReload(key), 50);
+        }),
+      );
+    } catch {
+      // This directory cannot be watched. Another entry in `names` still might -
+      // a symlinked target whose own directory survived, say - so the loop goes
+      // on rather than giving up on the file.
+    }
   }
+}
+
+// Re-arms the watch on a path that has pages connected to it.
+//
+// This is the recovery route for a channel startWatching gave up on: a preview
+// whose directory went away is connected and silent, and comes back the moment
+// something registers the path again. /open is the right place to do it from
+// because bin/mdpreview re-registers the file on every preview, so the thing
+// anyone does when a preview looks dead - run mdpreview again - is already the
+// fix, with nothing new to know.
+function rearmWatching(key: string): void {
+  const channel = channels.get(key);
+  if (!channel || channel.clients.size === 0) {
+    return;
+  }
+  startWatching(key);
 }
 
 function subscribe(
@@ -471,9 +526,14 @@ function shell(
   events: string,
   toc = "",
 ): string {
-  // JSON.stringify makes the URL a JS string literal; < is escaped on top of
-  // that because JSON.stringify leaves it alone, and a path spelling a closing
-  // script tag would otherwise end the block early.
+  // JSON.stringify is what makes this a JS string literal, and on its own it is
+  // already enough: `events` comes out of URLSearchParams.toString(), which
+  // percent-encodes everything outside [A-Za-z0-9*-._], so a path spelling a
+  // closing script tag arrives as %3C%2Fscript%3E and a U+2028 as %E2%80%A8 - no
+  // <, quote, backslash or line separator survives to reach it. The extra escape
+  // below therefore guards a string that currently cannot contain a <. It is
+  // kept as depth, so that building this URL some other way later cannot quietly
+  // turn a path into markup.
   const eventsLiteral = JSON.stringify(events).replaceAll("<", "\\u003c");
   return `<!doctype html>
 <html lang="en">
@@ -581,6 +641,10 @@ const server = Bun.serve({
         // Absent means current, so a script from before this change still works.
         const makeCurrent = current !== false;
         const file = await registerFile(path, makeCurrent);
+        // Before the reload, not after: a channel whose watch was given up on -
+        // its directory had gone - is watching nothing until this runs, and a
+        // page told to reload first would come back to a still-dead stream.
+        rearmWatching(file);
         // The file's own channel first, then the follow-current one if this
         // moved it. A page in both at once would be an odd thing to arrange and
         // the worst it costs is a second reload of a page that just reloaded.
@@ -598,9 +662,17 @@ const server = Bun.serve({
     if (pathname === "/viewers") {
       // Not for pages to call. It answers a question about what the user has
       // open, and no page has a use for the answer - bin/mdpreview is what asks,
-      // before deciding whether to open a tab. A same-origin GET carries no
-      // Origin, so this turns away a cross-origin caller rather than our own
-      // page; the cross-origin one is the caller it is here to turn away.
+      // before deciding whether to open a tab.
+      //
+      // The check is weaker here than on /open, and worth being honest about.
+      // What makes it decisive there is that browsers attach Origin to every
+      // cross-origin POST. A cross-origin GET made no-cors does not carry one -
+      // an <img src>, an iframe, a stylesheet link - so all this turns away is
+      // the fetch and XHR shapes, which same-origin policy already stops from
+      // reading the reply. Nothing follows from that on this route: it has no
+      // side effect and its body is unreadable cross-origin. The check stays
+      // because the route is not meant for pages, not because it is what makes
+      // that so.
       if (request.headers.get("origin") !== null) {
         return new Response("forbidden", { status: 403 });
       }
@@ -615,8 +687,16 @@ const server = Bun.serve({
     if (pathname === "/events") {
       // Reachable from the page, unlike /open and /viewers: this is the one
       // endpoint the preview itself has to call, and an EventSource is how it
-      // calls it. The registry check is what keeps that from being a way to ask
-      // the server to watch an arbitrary path and report when it changes.
+      // calls it. So it allows an Origin, which means any page anywhere can
+      // subscribe with an <img src="/events?file=..."> if it already knows a
+      // registered path's absolute spelling.
+      //
+      // The registry check covers what that would otherwise be worth - having
+      // the server watch a path of the caller's choosing and report when it
+      // changed. It does not cover the counting: surfaceFor reads such a client
+      // as a tab, so the trick can cost one suppressed --browser tab on a path
+      // the caller already knew the name of. That is the whole of it, and it
+      // does not earn any machinery.
       const target = targetFor(url);
       if (!target.ok) {
         return new Response("not found", { status: 404 });

@@ -130,15 +130,21 @@ URL - `/?file=<path>` - so a pane in this tab, a pane in another and any number
 of browser tabs each hold a different file, and saving one reloads only the pages
 showing that one. `--browser B.md` while a pane shows `A.md` leaves that pane on
 `A.md`. Only a bare `/`, which is what a hand-typed URL and a page from before
-this gets, follows whichever file was opened last.
+this gets, follows a file it was not told about - and it follows the one the pane
+modes last opened, not the most recent of all: `--browser B.md` leaves a bare-`/`
+page on `A.md` too, which is the same distinction `--reset` and `--browser` draw
+between them above.
 
 Running `--browser` twice does not stack tabs: the server knows whether a live
 page is already showing the file and the second run reloads that instead of
-opening another. It knows by counting connected reload streams, so a tab Chrome
-has discarded or frozen in the background reads as gone and a second tab opens -
-an occasional spare tab rather than a refusal to show a preview that is no longer
-on screen. Panes are not counted; a pane on the file is no reason to withhold a
-tab from someone who asked for one.
+opening another. It knows by counting connected reload streams, which leaves two
+windows where a spare tab still appears. One is a tab Chrome has discarded or
+frozen in the background, which reads as gone. The other is two runs close
+enough together that the first tab has not finished loading and connecting its
+stream - the easier of the two to hit, and no heuristic is going to tell that
+apart from a tab that never opened. A spare tab is the better failure than
+refusing to show a preview that is not on screen. Panes are not counted either;
+a pane on the file is no reason to withhold a tab from someone who asked for one.
 
 What a tab still cannot do is be driven. `mdpreview text` and the rest of the
 passthrough need a view, so inside a herdr session they report having no preview
