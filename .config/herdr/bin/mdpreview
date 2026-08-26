@@ -78,13 +78,13 @@ if [ "$1" = "--stop" ]; then
   # killing by directory alone is what this exists to avoid. Saying so beats
   # reporting a stop that did not happen.
   if ! command -v lsof >/dev/null 2>&1; then
-    echo "mdpreview: lsof is needed to find the server on ${port}" >&2
+    printf '%s\n' "mdpreview: lsof is needed to find the server on ${port}" >&2
     exit 1
   fi
   if stop_server; then
-    echo "mdpreview: stopped the server on ${port}"
+    printf '%s\n' "mdpreview: stopped the server on ${port}"
   else
-    echo "mdpreview: no server on ${port}"
+    printf '%s\n' "mdpreview: no server on ${port}"
   fi
   exit 0
 fi
@@ -114,7 +114,7 @@ die_views() {
 
 require_tab() {
   if [ "$scoped" != 1 ]; then
-    echo "mdpreview: $1 needs a herdr pane to scope to - there is no tab to look in from a plain terminal" >&2
+    printf '%s\n' "mdpreview: $1 needs a herdr pane to scope to - there is no tab to look in from a plain terminal" >&2
     exit 1
   fi
 }
@@ -214,7 +214,7 @@ resolve_target() {
 
 require_deps() {
   if [ ! -d "${root}/node_modules" ]; then
-    echo "mdpreview: dependencies missing - run 'bun install' in ${root}" >&2
+    printf '%s\n' "mdpreview: dependencies missing - run 'bun install' in ${root}" >&2
     exit 1
   fi
 }
@@ -226,7 +226,7 @@ require_deps() {
 resolve_file() {
   dir=$(CDPATH= cd -- "$(dirname -- "$1")" 2>/dev/null && pwd) || dir=""
   if [ -z "$dir" ] || [ ! -f "${dir}/$(basename -- "$1")" ]; then
-    echo "mdpreview: no such file: $1" >&2
+    printf '%s\n' "mdpreview: no such file: $1" >&2
     exit 1
   fi
   file="${dir}/$(basename -- "$1")"
@@ -250,7 +250,7 @@ ensure_server() {
   # as nothing more than a page that will not change.
   if ! command -v lsof >/dev/null 2>&1 &&
       curl -fsS -m 1 "${base}/health" >/dev/null 2>&1; then
-    echo "mdpreview: no lsof, so the server already on ${port} cannot be identified - if the preview renders stale, stop that process by hand" >&2
+    printf '%s\n' "mdpreview: no lsof, so the server already on ${port} cannot be identified - if the preview renders stale, stop that process by hand" >&2
   fi
   for pid in $(server_pids); do
     if ! server_is_ours "$pid"; then
@@ -265,7 +265,7 @@ ensure_server() {
     # retry output is dropped and the final failure is reported here instead.
     if ! curl -fsS --retry 30 --retry-delay 0 --retry-connrefused -m 10 \
         "${base}/health" >/dev/null 2>/dev/null; then
-      echo "mdpreview: server did not start on ${base} - see ${TMPDIR:-/tmp}/mdpreview-server.log" >&2
+      printf '%s\n' "mdpreview: server did not start on ${base} - see ${TMPDIR:-/tmp}/mdpreview-server.log" >&2
       exit 1
     fi
   fi
@@ -298,7 +298,7 @@ resume_current_file() {
     exit 1
   fi
   if [ ! -f "$file" ]; then
-    echo "mdpreview: the previewed file is gone: $file" >&2
+    printf '%s\n' "mdpreview: the previewed file is gone: $file" >&2
     exit 1
   fi
   require_deps
@@ -317,23 +317,35 @@ resume_current_file() {
 # ends the run on curl's status before anything can say more. --fail-with-body
 # would keep the status and the body together in one flag, and is not used
 # because it arrived in curl 7.76 while this runs on whatever curl the machine
-# came with. So success is read out of the reply, and curl's own status is left
-# to mean the narrower thing it can still be trusted for: the request did not
-# happen at all.
+# came with. So success is read out of the reply instead, and curl's own status
+# is left to mean the one thing it still reports usefully: no reply arrived.
+#
+# Which is not the same as nothing having happened, and the message is careful
+# not to say otherwise. server.ts sets the current file and broadcasts the
+# reload before it writes the response, and curl exits non-zero for a partial
+# transfer or an empty reply as readily as for a connection it never made - so a
+# server killed mid-answer leaves every page on this preview already navigated
+# with no way for this to know.
+#
+# -m because this was the only curl in the file without one, and a server that
+# accepts the connection and then never answers would hang the run forever with
+# nothing on screen to say why.
 set_file() {
   if ! reply=$(jq -n --arg path "$file" '{path: $path}' \
-      | curl -sS -X POST -H 'content-type: application/json' --data @- "${base}/open"); then
-    echo "mdpreview: could not hand ${file} to the render server on ${base}" >&2
+      | curl -sS -m 10 -X POST -H 'content-type: application/json' --data @- "${base}/open"); then
+    printf '%s\n' "mdpreview: no reply from the render server on ${base} - ${file} may already have reached it" >&2
     exit 1
   fi
   # A reply that is not the object expected here has to read as a refusal and
   # not as consent. jq indexing a string is an error rather than a false, and
-  # taking that quietly would report a preview the server never accepted - so
-  # the shape is checked before the field is, and both reads are asked for
-  # separately: `.error` is absent from the success shape and would answer the
-  # same empty for a refusal that failed to say why.
+  # taking that quietly would report a preview the server never accepted.
+  #
+  # `.ok == true` rather than `.ok // false`, which under -r prints the string
+  # "true" for a `{"ok":"true"}` and passes the test below. Ours never sends
+  # that; a foreign server on this port is exactly the case none of this can
+  # assume anything about.
   ok=$(printf '%s' "$reply" \
-    | jq -r 'if type == "object" then (.ok // false) else false end' 2>/dev/null) \
+    | jq -r 'if type == "object" then (.ok == true) else false end' 2>/dev/null) \
     || ok=false
   if [ "$ok" = true ]; then
     return 0
@@ -342,9 +354,19 @@ set_file() {
     | jq -r 'if type == "object" then (.error // empty) else empty end' 2>/dev/null) \
     || reason=''
   if [ -z "$reason" ]; then
+    # jq finding no reason in a body it could not parse means it could not read
+    # one, not that there was none to read - and dropping -f above was the whole
+    # point of not discarding bodies. server.ts answers a bad Host or an
+    # unexpected Origin with a bare `forbidden`, and a foreign server on this
+    # port owes us no JSON at all, so the body itself is the reason in that
+    # case. One line and cut short, because this prints on one line of a
+    # terminal and an unknown server may well answer with an HTML page.
+    reason=$(printf '%s' "$reply" | head -n 1 | cut -c1-200)
+  fi
+  if [ -z "$reason" ]; then
     reason="it refused and said nothing about why"
   fi
-  echo "mdpreview: the render server on ${port} would not take ${file} - ${reason}" >&2
+  printf '%s\n' "mdpreview: the render server on ${port} would not take ${file} - ${reason}" >&2
   exit 1
 }
 
@@ -373,12 +395,8 @@ open_pane() {
 # without `open` is odd but not a reason to refuse, and neither is a Linux one
 # where only the macOS name has been shimmed in.
 #
-# Resolved separately from being run so that the one failure knowable in advance
-# - no opener installed at all - can be reported before the file has been handed
-# to the server, which is the step that navigates any pane already on this
-# preview. The other failure, an opener that exists and then exits non-zero,
-# cannot be known without running it and so necessarily lands after that; set -e
-# ends the run on it, with whatever the opener itself had to say.
+# Prints the name rather than running it, so that the caller decides when - see
+# preview_in_browser, where the when is the point.
 find_opener() {
   if [ "$(uname -s)" = Darwin ]; then
     first=open
@@ -394,11 +412,25 @@ find_opener() {
   fi
 }
 
-# Hands the URL over, with the opener already settled by find_opener. Both
-# openers return as soon as the browser has been told, so there is no tab to
-# wait for here and nothing to report back beyond having asked - and no view id
-# either, which is the difference that matters downstream: a tab opened this way
-# is not a herdr-browser view and cannot be driven over CDP.
+# The whole of a browser preview once the file and the server are settled.
+#
+# The opener is resolved before set_file and run after it, and that order is the
+# point. set_file navigates every page on this preview, a herdr pane included,
+# so the one opener failure knowable in advance - none installed at all - has to
+# be reported while nothing has changed yet; otherwise the run moves someone's
+# pane and then reports that nothing was shown. The other failure, an opener
+# that exists and exits non-zero, cannot be known without running it and so
+# necessarily lands after; set -e ends the run on it, with whatever the opener
+# itself had to say.
+#
+# The file still goes to the server before the tab is opened, and not the other
+# way round: a tab that loads first renders whatever the server was holding, and
+# the reload that POSTing the file broadcasts only reaches a page already
+# listening on /events - which a tab still starting up is not. Opening second
+# costs nothing, because the page is rendered per request. The opener returns as
+# soon as the browser has been told, so there is nothing to wait for and nothing
+# to report back beyond having asked - and no view id, which is the difference
+# the passthrough and --view both have to account for.
 #
 # Focus is taken, and that is the choice rather than an oversight. open_pane
 # passes --no-focus because a pane is already on screen in a tab being looked
@@ -407,31 +439,15 @@ find_opener() {
 # terminal is a preview that did not happen. The unscoped fallback inherits the
 # same behaviour without having asked for it; that is the cost of a path whose
 # only remaining place to put a preview is a browser.
-open_url() {
-  "$1" "$2"
-}
-
-# The whole of a browser preview once the file and the server are settled.
-#
-# The opener is looked up first, before set_file, so that a machine with no
-# opener is turned away while nothing has changed yet: set_file navigates every
-# page on this preview, a herdr pane included, so failing after it would move
-# someone's pane and then report that nothing had been shown.
-#
-# The file still goes to the server before the tab is opened, and not the other
-# way round: a tab that loads first renders whatever the server was holding, and
-# the reload that POSTing the file broadcasts only reaches a page already
-# listening on /events - which a tab still starting up is not. Opening second
-# costs nothing, because the page is rendered per request.
 preview_in_browser() {
   opener=$(find_opener)
   if [ -z "$opener" ]; then
-    echo "mdpreview: no way to open a browser - neither open nor xdg-open is on PATH; the preview is at ${base}/" >&2
+    printf '%s\n' "mdpreview: no way to open a browser - neither open nor xdg-open is on PATH; the preview is at ${base}/" >&2
     exit 1
   fi
   set_file
-  open_url "$opener" "${base}/"
-  echo "mdpreview: previewing ${file} in a browser tab"
+  "$opener" "${base}/"
+  printf '%s\n' "mdpreview: previewing ${file} in a browser tab"
 }
 
 # Chrome sometimes stops acknowledging pointer input while the rest of CDP stays
@@ -496,10 +512,16 @@ if [ "$1" = "--view" ]; then
     # the fix any more: that opens a browser tab, which has no view id and never
     # acquires one, so the old advice would send the caller round the same
     # failure for as long as they were willing to follow it.
+    #
+    # The unscoped message reports the state and stops there. It must not say
+    # --view needs a herdr pane, because unscoped it does not: resolve_target
+    # hands back any view the daemon happens to have and this prints it, which
+    # is the behaviour that branch defends on purpose. What is true here is only
+    # that the daemon has none.
     if [ "$scoped" = 1 ]; then
       echo "mdpreview: no herdr-browser pane in this tab - run 'mdpreview <file.md>' first" >&2
     else
-      echo "mdpreview: --view needs a herdr pane - outside a herdr session the preview is a browser tab, which has no view id to name" >&2
+      echo "mdpreview: no herdr-browser view anywhere to name - outside a herdr session a preview is a plain browser tab, which has no view id; open a herdr-browser pane if a view is what you need" >&2
     fi
     exit 1
   fi
@@ -554,6 +576,20 @@ if [ "$1" = "--reset" ]; then
     resume_current_file
   fi
 
+  # Handed over before the loop, because close_panes below is destructive and
+  # this is the last step that can still refuse. `--reset FILE` never passes
+  # through the spelling rule further down, so resolve_file admits any existing
+  # path and the server is the first thing to reject it - which, done from inside
+  # the loop, happened after the tab's working preview had already been closed
+  # for a replacement that was never going to open. Same ordering the browser
+  # path gets, for the same reason.
+  #
+  # The in-loop calls stay: each stage is meant to be a complete attempt at
+  # getting the file on screen rather than something that leans on state set
+  # before a daemon restart it does not control. The repeated POST costs one
+  # reload broadcast, to panes that are being replaced anyway.
+  set_file
+
   for stage in pane daemon; do
     close_panes
     budget=50
@@ -575,9 +611,9 @@ if [ "$1" = "--reset" ]; then
     view=$(wait_view "$budget") || die_views
     if [ -n "$view" ] && ! input_wedged "$view"; then
       if [ "$stage" = daemon ]; then
-        echo "mdpreview: reset ok - browser daemon restarted, previewing ${file}"
+        printf '%s\n' "mdpreview: reset ok - browser daemon restarted, previewing ${file}"
       else
-        echo "mdpreview: reset ok - new preview pane, previewing ${file}"
+        printf '%s\n' "mdpreview: reset ok - new preview pane, previewing ${file}"
       fi
       exit 0
     fi
@@ -642,9 +678,14 @@ case $1 in
     # above sends everything it does not recognise as a path down here and a
     # mistyped filename is at least as likely as a real one. Naming the spelling
     # rule is what turns the refusal into something the caller can act on.
+    #
+    # printf and not echo, here and everywhere a message interpolates something:
+    # /bin/sh on this platform and dash both expand backslash escapes in echo
+    # without being asked, so a filename with a \t in it would be reported as a
+    # different name than the one that was typed.
     if [ "$scoped" != 1 ]; then
-      echo "mdpreview: '$1' would be run against a herdr-browser view, and outside a herdr session there is none - the preview is a plain browser tab." >&2
-      echo "mdpreview: run it from a herdr pane; if '$1' was meant as a file to preview, name it with a .md suffix or a ./ prefix." >&2
+      printf '%s\n' "mdpreview: '$1' would be run against a herdr-browser view, and outside a herdr session there is none - the preview is a plain browser tab." >&2
+      printf '%s\n' "mdpreview: run it from a herdr pane; if '$1' was meant as a file to preview, name it with a .md suffix or a ./ prefix." >&2
       exit 1
     fi
     resolve_target
@@ -687,7 +728,7 @@ resolve_target
 if [ "$target" = open ]; then
   set_file
   open_pane >/dev/null
-  echo "mdpreview: previewing ${file} in a new pane"
+  printf '%s\n' "mdpreview: previewing ${file} in a new pane"
   exit 0
 fi
 
@@ -701,4 +742,4 @@ set_file
 # this line is enough to hit it, and it is silent when it happens.
 export HERDR_BROWSER_VIEW_ID=$target
 herdr-browser open "${base}/" >/dev/null
-echo "mdpreview: previewing ${file}"
+printf '%s\n' "mdpreview: previewing ${file}"

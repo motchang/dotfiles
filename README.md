@@ -105,14 +105,17 @@ A herdr-browser pane in the same tab is reused; a tab without one gets a fresh
 pane split off to the right, without taking focus. A view in another tab is not a
 candidate for reuse - nobody in this tab can see it. Outside herdr (no
 HERDR_TAB_ID / HERDR_PANE_ID) there is no tab to scope to and no pane to split
-from, so a file argument goes to the desktop browser instead. The render server
-has no herdr in it - it is plain HTTP on the loopback port - so the page is the
-same one either way.
+from, so a file argument goes to the desktop browser instead, taking focus with
+it - the same tab `--browser` would open, on a path that never asked for one. The
+render server has no herdr in it - it is plain HTTP on the loopback port - so the
+page is the same one either way.
 
 `--browser` asks for that tab outright, and works inside a herdr session too:
 it is how a preview goes to the browser that is already open rather than into a
 pane. It needs `open` (macOS) or `xdg-open` (Linux) and refuses outright with
-neither - the one way this can fail that the pane path has no equivalent for. It
+neither - the plainest way this can fail that the pane path has no equivalent
+for; an opener that is installed but cannot reach a display (`xdg-open` with no
+`DISPLAY`, say) fails later, and reports whatever it has to say for itself. It
 also takes focus, unlike a pane: a pane is already on screen in the tab being
 looked at, whereas asking for a browser tab is asking to be shown one.
 
@@ -136,7 +139,10 @@ view list. Those commands reach the page over CDP, which gets to a herdr-browser
 pane and to nothing else - a desktop tab has no view to attach to - so outside
 herdr they say so rather than answering about a Chrome in some other tab.
 `--view` (view id) and `--pane` (pane id) are still there for a command that
-wants an id in the environment.
+wants an id in the environment. Outside herdr `--view` still answers with
+whatever view the daemon has, since asking for an id by name is asking for that;
+what it cannot do is produce one for a `--browser` tab, which has no view id, so
+with no pane open anywhere it refuses instead.
 
 The render server lives in `.config/herdr/mdpreview-server` (bun) and logs to
 `${TMPDIR}/mdpreview-server.log`. It sits at a different layer from the command
