@@ -50,6 +50,14 @@ const marked = new Marked(
   {
     gfm: true,
     breaks: false,
+    // Asked for outright, because renderPage depends on parse being synchronous
+    // and the dependency is not obvious from the call. See the comment there:
+    // the table of contents comes out of a module-level list that the next parse
+    // clears, so nothing may yield between the parse and the read, and `await`
+    // was that yield. Setting it here rather than passing it per call keeps the
+    // renderer and the plugins above from going through an options merge on
+    // every render.
+    async: false,
     renderer: {
       code({ text, lang }) {
         const language = (lang ?? "").trim().split(/\s+/)[0] ?? "";
@@ -513,8 +521,36 @@ async function renderPage(url: URL): Promise<Response> {
     const message = error instanceof Error ? error.message : String(error);
     return htmlResponse(nonce, basename(file), file, `<p>${escapeHtml(message)}</p>`, events);
   }
-  // gfmHeadingId's preprocess hook clears the heading list on every parse.
-  const body = await marked.parse(source);
+  // No await between this parse and renderToc, and that is the fix rather than
+  // a tidy-up.
+  //
+  // renderToc reads marked-gfm-heading-id's heading list, which lives at module
+  // scope, and gfmHeadingId's preprocess hook clears it at the start of every
+  // parse. So a body is only safely paired with its own table of contents while
+  // nothing else parses in between - and `await` was exactly that gap. parse is
+  // synchronous with this plugin set (hence `async: false` above), so the await
+  // bought nothing but a microtask yield, and any other render landing in it left
+  // this response holding the other file's headings.
+  //
+  // It was invisible before per-file URLs, because the server only ever rendered
+  // one file and two concurrent renders read the same headings. Rendering
+  // different files at once is the entire point of those URLs, so it is not
+  // invisible now.
+  //
+  // Reading the list sooner would not help: the clobber happens during the yield,
+  // not after it. Atomicity is the property being bought, and the only way to
+  // have it is for there to be no yield at all. renderPage stays async for the
+  // file read above, which is a real await and harmless - it is before the parse.
+  const body = marked.parse(source);
+  // A future plugin that makes parse asynchronous again would otherwise render
+  // "[object Promise]" into the page and quietly bring the interleaving back.
+  // Better to stop here and say which invariant broke.
+  if (typeof body !== "string") {
+    throw new Error(
+      "marked.parse returned a promise: renderToc can no longer be trusted to " +
+        "match the body it is paired with",
+    );
+  }
   return htmlResponse(nonce, basename(file), file, body, events, renderToc());
 }
 
