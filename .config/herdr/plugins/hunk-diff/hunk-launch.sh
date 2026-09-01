@@ -38,7 +38,22 @@ case "$mode" in
       fi
     done
     base="${base:-origin/main}"
-    diff_args=(diff "${base}...${branch}")
+    # Diff the working tree against the merge base rather than passing a
+    # `base...branch` commit range: a range hides staged/unstaged/untracked
+    # work, which is usually the part still being reviewed. A single ref makes
+    # hunk diff base -> working tree, so committed and uncommitted changes show
+    # up together. Set HUNK_DIFF_COMMITTED_ONLY=1 for the range-only view.
+    merge_base=""
+    if [ -z "${HUNK_DIFF_COMMITTED_ONLY:-}" ]; then
+      merge_base=$(git -C "$cwd" merge-base "$base" HEAD 2>/dev/null || true)
+      # Abbreviate so hunk's title stays readable; it shows the ref verbatim.
+      [ -n "$merge_base" ] && merge_base=$(git -C "$cwd" rev-parse --short "$merge_base" 2>/dev/null || true)
+    fi
+    if [ -n "$merge_base" ]; then
+      diff_args=(diff "$merge_base")
+    else
+      diff_args=(diff "${base}...${branch}")
+    fi
     ;;
   *)
     diff_args=(diff)
