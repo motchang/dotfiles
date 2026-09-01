@@ -15,6 +15,16 @@
 //
 // A bare / still renders the last file opened as the current one, so a page from
 // before this change, or a URL someone kept, still resolves to something.
+//
+// Putting the path in the query is also what makes a relative link inside the
+// document something this server has to answer for. A browser resolves one
+// against the page URL, and that URL is / with the path in the query and no
+// directory in it at all, so `design/05-corpus.md` next to docs/design.md is
+// asked for as /design/05-corpus.md - a path this server does not serve and
+// could not pick a file for if it did. The document's own directory is the
+// missing half and it is known here: see previewHref, which rewrites those links
+// into ?file= URLs of their own, and previewSrc, which does the same for a
+// relative image and points it at the /image route.
 
 import { realpathSync, statSync, watch, type FSWatcher } from "node:fs";
 import { basename, dirname, extname, resolve } from "node:path";
@@ -32,6 +42,23 @@ const PORT = Number(process.env.MDPREVIEW_PORT) || 43128;
 // path. Without it the command advertised a spelling this then refused, and the
 // refusal named the file rather than the mismatch that caused it.
 const MARKDOWN_EXTENSIONS = new Set([".md", ".markdown", ".mdown"]);
+// The image suffixes /image will serve, and what each is served as. A whitelist
+// and not a table with a fallback: the content type is what the browser acts on,
+// so a suffix with no entry here is a file this has no business deciding about,
+// and previewSrc leaves the reference alone rather than guessing. Written with
+// `| undefined` because a miss is the point of the table and the index
+// signature's optimism would hide it.
+const IMAGE_TYPES: Record<string, string | undefined> = {
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".gif": "image/gif",
+  ".webp": "image/webp",
+  ".avif": "image/avif",
+  ".bmp": "image/bmp",
+  ".ico": "image/x-icon",
+  ".svg": "image/svg+xml",
+};
 // The names the page is ever legitimately reached under. A DNS rebinding attack
 // resolves the attacker's own hostname to 127.0.0.1, and the Host header is what
 // gives that away.
@@ -58,6 +85,19 @@ const marked = new Marked(
     // renderer and the plugins above from going through an options merge on
     // every render.
     async: false,
+    // Rewrites a relative link into this server's URL for the file it names.
+    //
+    // Done to the token rather than from a link renderer so that marked still
+    // builds the anchor: the title, the markup inside the link text and the URL
+    // cleaning it does on the way out are all things there is no reason to
+    // reimplement in order to change one field.
+    walkTokens(token) {
+      if (token.type === "link") {
+        token.href = previewHref(token.href);
+      } else if (token.type === "image") {
+        token.href = previewSrc(token.href);
+      }
+    },
     renderer: {
       code({ text, lang }) {
         const language = (lang ?? "").trim().split(/\s+/)[0] ?? "";
@@ -83,13 +123,41 @@ const marked = new Marked(
 // user's browser, which can point an iframe or a window at 127.0.0.1 without
 // being able to read the result but perfectly able to make the read happen. The
 // markdown-extension check narrows that; it does not close it. Registration
-// does: a path arrives here only by way of /open, which nothing but local
-// tooling can reach - see the Origin refusal there.
+// does: a path arrives here by way of /open, which nothing but local tooling can
+// reach - see the Origin refusal there - or as a relative link inside a document
+// /open already accepted, which previewHref adds so that following the link
+// renders instead of 404ing.
+//
+// That second route widens the set, and by how much is worth saying plainly. It
+// reaches one hop out from a file the user asked to see, and only to a markdown
+// file already sitting on disk beside it. So a document can make a path
+// renderable by naming it, to a caller that has to know the spelling to ask and
+// is a page in a local browser either way. Refusing it would hold the set to
+// exactly what /open said, at the price of every relative link in every document
+// rendered - which is the thing being protected against being clicked.
 //
 // It only grows. A preview server is a per-session thing and the set is a
 // handful of strings; evicting would mean deciding that a path someone may still
 // have a tab on is no longer allowed to render, which is the worse failure.
 const registered = new Set<string>();
+
+// Every image a rendered document has pointed at, and what to serve each as.
+// The only files /image will hand over.
+//
+// Kept apart from `registered` rather than folded into it, because the two admit
+// different things and answer different routes. A path in here is bytes with a
+// content type on them; one in there is read, parsed and rendered as a page.
+// Merging the two would make an image reference enough to get a file rendered
+// and a markdown link enough to get one served raw.
+//
+// A map rather than a set so that one lookup answers both questions serveImage
+// has - whether this file may be served, and as what - and so that the type is
+// decided where the suffix was checked rather than a second time on the way out.
+//
+// It widens reads the way previewHref does, one hop out from a document already
+// registered, with the suffix list deciding what counts, and it grows for the
+// same reason that one does.
+const images = new Map<string, string>();
 
 // The file a bare / renders, and the file the empty-keyed reload channel
 // follows. Only /open with current !== false moves it - see registerFile for why
@@ -445,6 +513,129 @@ function eventsUrl(url: URL): string {
   return `/events?${params.toString()}`;
 }
 
+// A URL that already says where it points: a scheme of its own - http:, mailto:,
+// vscode: - or a protocol-relative //host/path. There is nothing in one to
+// resolve against a document, so previewHref leaves it as written.
+const ABSOLUTE_URL = /^(?:[a-zA-Z][a-zA-Z0-9+.-]*:|\/\/)/;
+
+// The directory that relative links in the document being rendered resolve
+// against, and the surface the page reading it declared. Null outside a render.
+//
+// Module-level for the same reason marked-gfm-heading-id's heading list is:
+// marked is built once, up there, and walkTokens is handed a token and nothing
+// else. That brings the same rule with it - nothing may yield between setting
+// this and the parse that reads it - and renderPage already has to hold exactly
+// that invariant for the table of contents. See the comment there.
+let linkBase: { dir: string; surface: string } | null = null;
+
+// Whether a path is a file that can be read right now. statSync follows
+// symlinks, so a link into a symlinked tree answers for the file at the end of
+// it rather than for the link.
+function isFile(path: string): boolean {
+  try {
+    return statSync(path).isFile();
+  } catch {
+    return false;
+  }
+}
+
+// The existing file a reference names, with whatever fragment followed it, or
+// null when there is no local file in it to find.
+//
+// Existence is settled here rather than by the callers because it is what makes
+// leaving the reference alone the right answer in all of their cases: a target
+// never written, a directory, an image someone has yet to add. Rewriting one of
+// those would trade a reference the browser reports as broken for a URL of ours
+// that renders an error, which is a worse account of the same missing file.
+function localTarget(dir: string, reference: string): { file: string; hash: string } | null {
+  const raw = reference.trim();
+  // An anchor into this same page, and everything already absolute.
+  if (raw === "" || raw.startsWith("#") || ABSOLUTE_URL.test(raw)) {
+    return null;
+  }
+  const marker = raw.indexOf("#");
+  const path = marker === -1 ? raw : raw.slice(0, marker);
+  if (path === "") {
+    return null;
+  }
+  // A reference is a URL, so a space in the file name is written %20 and a # in
+  // one is written %23. resolve() would take those literally and look for a file
+  // nobody has.
+  let target: string;
+  try {
+    target = decodeURIComponent(path);
+  } catch {
+    // A lone % that is not an escape. Take the path as it was written rather
+    // than dropping the reference over it.
+    target = path;
+  }
+  const file = resolve(dir, target);
+  if (!isFile(file)) {
+    return null;
+  }
+  return { file, hash: marker === -1 ? "" : raw.slice(marker) };
+}
+
+// The href to put in the page for a link the document wrote, which for a
+// relative one is this server's URL for the file it names.
+//
+// Only markdown is claimed. A link to a PDF, to a directory, to the source file
+// next to the document is left exactly as it was written, which is the behaviour
+// from before this: it still goes nowhere useful, and it goes nowhere useful in
+// the same way it always did.
+//
+// The surface rides along because the page it opens has to declare one of its
+// own: a link followed inside a herdr pane must not leave the new page counting
+// itself as a browser tab, or the duplicate-tab check on /viewers starts
+// refusing tabs on the strength of a pane.
+function previewHref(href: string): string {
+  const base = linkBase;
+  if (base === null) {
+    return href;
+  }
+  const target = localTarget(base.dir, href);
+  if (target === null || !MARKDOWN_EXTENSIONS.has(extname(target.file).toLowerCase())) {
+    return href;
+  }
+  // The link is only worth rewriting if the URL it becomes will be served, and
+  // targetFor serves a registered path and nothing else. See the registry above
+  // for what this widens.
+  registered.add(target.file);
+  const params = new URLSearchParams({ file: target.file, surface: base.surface });
+  // The fragment as the document wrote it: heading ids on the far side are made
+  // by the same gfmHeadingId that made this side's, so an anchor that worked in
+  // the source works here.
+  return `/?${params.toString()}${target.hash}`;
+}
+
+// The src to put in the page for an image the document wrote.
+//
+// The same problem a relative link had, and not the same fix. There is no page
+// to open for an image, only bytes to hand over, so this goes to /image rather
+// than to a ?file= URL of its own, and it carries no surface because nothing on
+// the other end declares one.
+//
+// The fragment survives for the one thing that reads one - an SVG addressed by
+// view or by element id - and means nothing to the rest, which is why it is
+// passed on rather than interpreted.
+function previewSrc(src: string): string {
+  const base = linkBase;
+  if (base === null) {
+    return src;
+  }
+  const target = localTarget(base.dir, src);
+  if (target === null) {
+    return src;
+  }
+  const type = IMAGE_TYPES[extname(target.file).toLowerCase()];
+  if (type === undefined) {
+    return src;
+  }
+  images.set(target.file, type);
+  const params = new URLSearchParams({ file: target.file });
+  return `/image?${params.toString()}${target.hash}`;
+}
+
 function renderToc(): string {
   const headings = getHeadingList().filter((heading) => heading.level <= 3);
   if (headings.length < 2) {
@@ -521,6 +712,10 @@ async function renderPage(url: URL): Promise<Response> {
     const message = error instanceof Error ? error.message : String(error);
     return htmlResponse(nonce, basename(file), file, `<p>${escapeHtml(message)}</p>`, events);
   }
+  // What the relative links in this document resolve against. Set here because
+  // this is where the file is known; a token on its own says nothing about which
+  // document it came out of.
+  linkBase = { dir: dirname(file), surface: surfaceFor(url) };
   // No await between this parse and renderToc, and that is the fix rather than
   // a tidy-up.
   //
@@ -542,6 +737,7 @@ async function renderPage(url: URL): Promise<Response> {
   // have it is for there to be no yield at all. renderPage stays async for the
   // file read above, which is a real await and harmless - it is before the parse.
   const body = marked.parse(source);
+  linkBase = null;
   // A future plugin that makes parse asynchronous again would otherwise render
   // "[object Promise]" into the page and quietly bring the interleaving back.
   // Better to stop here and say which invariant broke.
@@ -621,6 +817,51 @@ function shell(
 </script>
 </body>
 </html>`;
+}
+
+// One image a rendered document pointed at, served as bytes.
+//
+// Everything deciding whether that is allowed happened at render time: previewSrc
+// resolved the reference against the document's own directory, checked the suffix
+// and put the path in `images` with the type to serve it as. So the query here is
+// not a path to go and read, it is a name to look up in that map, and anything
+// else is a 404 for the same reason an unregistered ?file= is - it says the same
+// thing about a file that exists and one that does not.
+//
+// The two security headers are for the one suffix in the list that is also a
+// document. An <img src> cannot run script in an SVG, but a URL can be navigated
+// to, and an SVG served from this origin would then run as a page here with this
+// server's routes reachable from inside it. `default-src 'none'; sandbox` leaves
+// it able to draw itself and nothing else, and nosniff keeps the declared type
+// from being second-guessed.
+//
+// no-store because nothing reloads a page when an image under it changes - the
+// watch is on the markdown file - so reloading by hand has to be worth
+// something. Cached, it would go on showing the old picture.
+async function serveImage(url: URL): Promise<Response> {
+  const raw = url.searchParams.get("file");
+  if (raw === null) {
+    return new Response("not found", { status: 404 });
+  }
+  const file = resolve(raw);
+  const type = images.get(file);
+  if (type === undefined) {
+    return new Response("not found", { status: 404 });
+  }
+  const body = Bun.file(file);
+  if (!(await body.exists())) {
+    // Removed or renamed since the page was rendered. The image is broken either
+    // way; this only decides whether it breaks as a 404 or as a 500.
+    return new Response("not found", { status: 404 });
+  }
+  return new Response(body, {
+    headers: {
+      "content-type": type,
+      "cache-control": "no-store",
+      "x-content-type-options": "nosniff",
+      "content-security-policy": "default-src 'none'; sandbox",
+    },
+  });
 }
 
 async function serveAsset(pathname: string): Promise<Response> {
@@ -762,6 +1003,10 @@ const server = Bun.serve({
           },
         },
       );
+    }
+
+    if (pathname === "/image") {
+      return serveImage(url);
     }
 
     if (pathname.startsWith("/assets/")) {
