@@ -23,7 +23,8 @@
 // asked for as /design/05-corpus.md - a path this server does not serve and
 // could not pick a file for if it did. The document's own directory is the
 // missing half and it is known here: see previewHref, which rewrites those links
-// into ?file= URLs of their own.
+// into ?file= URLs of their own, and previewSrc, which does the same for a
+// relative image and points it at the /image route.
 
 import { realpathSync, statSync, watch, type FSWatcher } from "node:fs";
 import { basename, dirname, extname, resolve } from "node:path";
@@ -41,6 +42,23 @@ const PORT = Number(process.env.MDPREVIEW_PORT) || 43128;
 // path. Without it the command advertised a spelling this then refused, and the
 // refusal named the file rather than the mismatch that caused it.
 const MARKDOWN_EXTENSIONS = new Set([".md", ".markdown", ".mdown"]);
+// The image suffixes /image will serve, and what each is served as. A whitelist
+// and not a table with a fallback: the content type is what the browser acts on,
+// so a suffix with no entry here is a file this has no business deciding about,
+// and previewSrc leaves the reference alone rather than guessing. Written with
+// `| undefined` because a miss is the point of the table and the index
+// signature's optimism would hide it.
+const IMAGE_TYPES: Record<string, string | undefined> = {
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".gif": "image/gif",
+  ".webp": "image/webp",
+  ".avif": "image/avif",
+  ".bmp": "image/bmp",
+  ".ico": "image/x-icon",
+  ".svg": "image/svg+xml",
+};
 // The names the page is ever legitimately reached under. A DNS rebinding attack
 // resolves the attacker's own hostname to 127.0.0.1, and the Host header is what
 // gives that away.
@@ -76,6 +94,8 @@ const marked = new Marked(
     walkTokens(token) {
       if (token.type === "link") {
         token.href = previewHref(token.href);
+      } else if (token.type === "image") {
+        token.href = previewSrc(token.href);
       }
     },
     renderer: {
@@ -120,6 +140,24 @@ const marked = new Marked(
 // handful of strings; evicting would mean deciding that a path someone may still
 // have a tab on is no longer allowed to render, which is the worse failure.
 const registered = new Set<string>();
+
+// Every image a rendered document has pointed at, and what to serve each as.
+// The only files /image will hand over.
+//
+// Kept apart from `registered` rather than folded into it, because the two admit
+// different things and answer different routes. A path in here is bytes with a
+// content type on them; one in there is read, parsed and rendered as a page.
+// Merging the two would make an image reference enough to get a file rendered
+// and a markdown link enough to get one served raw.
+//
+// A map rather than a set so that one lookup answers both questions serveImage
+// has - whether this file may be served, and as what - and so that the type is
+// decided where the suffix was checked rather than a second time on the way out.
+//
+// It widens reads the way previewHref does, one hop out from a document already
+// registered, with the suffix list deciding what counts, and it grows for the
+// same reason that one does.
+const images = new Map<string, string>();
 
 // The file a bare / renders, and the file the empty-keyed reload channel
 // follows. Only /open with current !== false moves it - see registerFile for why
@@ -501,17 +539,50 @@ function isFile(path: string): boolean {
   }
 }
 
+// The existing file a reference names, with whatever fragment followed it, or
+// null when there is no local file in it to find.
+//
+// Existence is settled here rather than by the callers because it is what makes
+// leaving the reference alone the right answer in all of their cases: a target
+// never written, a directory, an image someone has yet to add. Rewriting one of
+// those would trade a reference the browser reports as broken for a URL of ours
+// that renders an error, which is a worse account of the same missing file.
+function localTarget(dir: string, reference: string): { file: string; hash: string } | null {
+  const raw = reference.trim();
+  // An anchor into this same page, and everything already absolute.
+  if (raw === "" || raw.startsWith("#") || ABSOLUTE_URL.test(raw)) {
+    return null;
+  }
+  const marker = raw.indexOf("#");
+  const path = marker === -1 ? raw : raw.slice(0, marker);
+  if (path === "") {
+    return null;
+  }
+  // A reference is a URL, so a space in the file name is written %20 and a # in
+  // one is written %23. resolve() would take those literally and look for a file
+  // nobody has.
+  let target: string;
+  try {
+    target = decodeURIComponent(path);
+  } catch {
+    // A lone % that is not an escape. Take the path as it was written rather
+    // than dropping the reference over it.
+    target = path;
+  }
+  const file = resolve(dir, target);
+  if (!isFile(file)) {
+    return null;
+  }
+  return { file, hash: marker === -1 ? "" : raw.slice(marker) };
+}
+
 // The href to put in the page for a link the document wrote, which for a
 // relative one is this server's URL for the file it names.
 //
-// Only a markdown file that exists is rewritten, and both halves of that matter.
-// Existence is what keeps a link to something never written from being turned
-// into a registered path and a page that renders an error where a plain broken
-// link would have been. The extension is what keeps this from claiming links it
-// cannot serve: an image, a PDF, a directory listing, a source file next to the
-// document. Those are left exactly as the document wrote them, which is the
-// behaviour from before this - the link still goes nowhere useful, and it goes
-// nowhere useful in the same way it always did.
+// Only markdown is claimed. A link to a PDF, to a directory, to the source file
+// next to the document is left exactly as it was written, which is the behaviour
+// from before this: it still goes nowhere useful, and it goes nowhere useful in
+// the same way it always did.
 //
 // The surface rides along because the page it opens has to declare one of its
 // own: a link followed inside a herdr pane must not leave the new page counting
@@ -522,40 +593,47 @@ function previewHref(href: string): string {
   if (base === null) {
     return href;
   }
-  const raw = href.trim();
-  // An anchor into this same page, and everything already absolute.
-  if (raw === "" || raw.startsWith("#") || ABSOLUTE_URL.test(raw)) {
-    return href;
-  }
-  const marker = raw.indexOf("#");
-  const path = marker === -1 ? raw : raw.slice(0, marker);
-  if (path === "") {
-    return href;
-  }
-  // A link target is a URL, so a space in the file name is written %20 and a #
-  // in one is written %23. resolve() would take those literally and look for a
-  // file nobody has.
-  let target: string;
-  try {
-    target = decodeURIComponent(path);
-  } catch {
-    // A lone % that is not an escape. Take the path as it was written rather
-    // than dropping the link over it.
-    target = path;
-  }
-  const file = resolve(base.dir, target);
-  if (!MARKDOWN_EXTENSIONS.has(extname(file).toLowerCase()) || !isFile(file)) {
+  const target = localTarget(base.dir, href);
+  if (target === null || !MARKDOWN_EXTENSIONS.has(extname(target.file).toLowerCase())) {
     return href;
   }
   // The link is only worth rewriting if the URL it becomes will be served, and
   // targetFor serves a registered path and nothing else. See the registry above
   // for what this widens.
-  registered.add(file);
-  const params = new URLSearchParams({ file, surface: base.surface });
+  registered.add(target.file);
+  const params = new URLSearchParams({ file: target.file, surface: base.surface });
   // The fragment as the document wrote it: heading ids on the far side are made
   // by the same gfmHeadingId that made this side's, so an anchor that worked in
   // the source works here.
-  return `/?${params.toString()}${marker === -1 ? "" : raw.slice(marker)}`;
+  return `/?${params.toString()}${target.hash}`;
+}
+
+// The src to put in the page for an image the document wrote.
+//
+// The same problem a relative link had, and not the same fix. There is no page
+// to open for an image, only bytes to hand over, so this goes to /image rather
+// than to a ?file= URL of its own, and it carries no surface because nothing on
+// the other end declares one.
+//
+// The fragment survives for the one thing that reads one - an SVG addressed by
+// view or by element id - and means nothing to the rest, which is why it is
+// passed on rather than interpreted.
+function previewSrc(src: string): string {
+  const base = linkBase;
+  if (base === null) {
+    return src;
+  }
+  const target = localTarget(base.dir, src);
+  if (target === null) {
+    return src;
+  }
+  const type = IMAGE_TYPES[extname(target.file).toLowerCase()];
+  if (type === undefined) {
+    return src;
+  }
+  images.set(target.file, type);
+  const params = new URLSearchParams({ file: target.file });
+  return `/image?${params.toString()}${target.hash}`;
 }
 
 function renderToc(): string {
@@ -741,6 +819,51 @@ function shell(
 </html>`;
 }
 
+// One image a rendered document pointed at, served as bytes.
+//
+// Everything deciding whether that is allowed happened at render time: previewSrc
+// resolved the reference against the document's own directory, checked the suffix
+// and put the path in `images` with the type to serve it as. So the query here is
+// not a path to go and read, it is a name to look up in that map, and anything
+// else is a 404 for the same reason an unregistered ?file= is - it says the same
+// thing about a file that exists and one that does not.
+//
+// The two security headers are for the one suffix in the list that is also a
+// document. An <img src> cannot run script in an SVG, but a URL can be navigated
+// to, and an SVG served from this origin would then run as a page here with this
+// server's routes reachable from inside it. `default-src 'none'; sandbox` leaves
+// it able to draw itself and nothing else, and nosniff keeps the declared type
+// from being second-guessed.
+//
+// no-store because nothing reloads a page when an image under it changes - the
+// watch is on the markdown file - so reloading by hand has to be worth
+// something. Cached, it would go on showing the old picture.
+async function serveImage(url: URL): Promise<Response> {
+  const raw = url.searchParams.get("file");
+  if (raw === null) {
+    return new Response("not found", { status: 404 });
+  }
+  const file = resolve(raw);
+  const type = images.get(file);
+  if (type === undefined) {
+    return new Response("not found", { status: 404 });
+  }
+  const body = Bun.file(file);
+  if (!(await body.exists())) {
+    // Removed or renamed since the page was rendered. The image is broken either
+    // way; this only decides whether it breaks as a 404 or as a 500.
+    return new Response("not found", { status: 404 });
+  }
+  return new Response(body, {
+    headers: {
+      "content-type": type,
+      "cache-control": "no-store",
+      "x-content-type-options": "nosniff",
+      "content-security-policy": "default-src 'none'; sandbox",
+    },
+  });
+}
+
 async function serveAsset(pathname: string): Promise<Response> {
   const relative = ASSETS[pathname];
   if (!relative) {
@@ -880,6 +1003,10 @@ const server = Bun.serve({
           },
         },
       );
+    }
+
+    if (pathname === "/image") {
+      return serveImage(url);
     }
 
     if (pathname.startsWith("/assets/")) {
