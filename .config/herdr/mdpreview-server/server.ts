@@ -777,22 +777,53 @@ function shell(
 <link rel="stylesheet" href="/assets/hljs-light.css" media="(prefers-color-scheme: light)">
 <link rel="stylesheet" href="/assets/hljs-dark.css" media="(prefers-color-scheme: dark)">
 <style>
-  :root { color-scheme: light dark; }
-  body { margin: 0; background: var(--bgColor-default, #fff); }
+  /* github-markdown-css scopes its color variables to .markdown-body -
+     specifically to .markdown-body, [data-theme="dark"] inside its own
+     @media (prefers-color-scheme: dark) block, and symmetrically to
+     .markdown-body, [data-theme="light"] inside its own
+     @media (prefers-color-scheme: light) block - so :root and body
+     never see them. The light block there is itself gated by a media
+     query rather than being an unconditional default, which is why
+     :root below also needs two blocks (an unconditional light default
+     plus a separate @media (prefers-color-scheme: dark) override)
+     instead of one merged block. Because of this scoping, every var()
+     fallback below always resolved to its light value in both themes:
+     <article> went dark via github-markdown-css's own scoped rules
+     while the chrome around it (body, .path, .toc) stayed light. These
+     8 values are hand-copied from github-markdown-css and are not kept
+     in sync automatically - that is why the dependency below is pinned
+     to an exact version instead of a caret range: bumping it means
+     deliberately re-copying these values, not silently drifting. */
+  :root {
+    color-scheme: light dark;
+    --bgColor-default: #ffffff;
+    --fgColor-default: #1f2328;
+    --fgColor-muted: #59636e;
+    --borderColor-default: #d1d9e0;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bgColor-default: #0d1117;
+      --fgColor-default: #f0f6fc;
+      --fgColor-muted: #9198a1;
+      --borderColor-default: #3d444d;
+    }
+  }
+  body { margin: 0; background: var(--bgColor-default); color: var(--fgColor-default); }
   .layout { display: flex; gap: 32px; align-items: flex-start;
             max-width: 1280px; margin: 0 auto; padding: 32px; }
   .content { flex: 1 1 auto; min-width: 0; }
   .path { font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
-          color: var(--fgColor-muted, #59636e); margin-bottom: 8px; }
-  .markdown-body { border: 1px solid var(--borderColor-default, #d1d9e0);
+          color: var(--fgColor-muted); margin-bottom: 8px; }
+  .markdown-body { border: 1px solid var(--borderColor-default);
                    border-radius: 6px; padding: 32px; }
   .toc { position: sticky; top: 32px; flex: 0 0 240px; font-size: 13px;
-         border-left: 1px solid var(--borderColor-default, #d1d9e0); padding-left: 16px; }
+         border-left: 1px solid var(--borderColor-default); padding-left: 16px; }
   .toc-title { font-weight: 600; margin-bottom: 8px;
-               color: var(--fgColor-muted, #59636e); }
+               color: var(--fgColor-muted); }
   .toc ul { list-style: none; margin: 0; padding: 0; }
   .toc li { margin: 4px 0; }
-  .toc a { color: var(--fgColor-default, #1f2328); text-decoration: none; }
+  .toc a { color: var(--fgColor-default); text-decoration: none; }
   .toc a:hover { text-decoration: underline; }
   .toc-l2 { padding-left: 12px; }
   .toc-l3 { padding-left: 24px; }
