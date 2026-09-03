@@ -5,7 +5,7 @@
     "": {
       "name": "mdpreview-server",
       "dependencies": {
-        "github-markdown-css": "^5.9.0",
+        "github-markdown-css": "5.9.0",
         "highlight.js": "^11.11.1",
         "marked": "^18.0.9",
         "marked-alert": "^2.1.2",
