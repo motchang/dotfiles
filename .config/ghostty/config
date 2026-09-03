@@ -1,9 +1,23 @@
 # Ghostty. Every option and its default: `ghostty +show-config --default --docs`,
 # or https://ghostty.org/docs/config. Command + Shift + comma reloads this file.
 
-# font-family = "Source Code Pro Medium"
 font-family = "Source Code Pro"
-font-size = 13
+font-variation = wght=500
+
+# 日本語フォールバック。Hiragino Sans は可変フォントではなく W0〜W9 が独立した
+# フェイスとして入っているので、太さは font-variation ではなくファミリ名の
+# W? で選ぶ。W3 が既定の細さ、W6 が太字相当。
+font-family = "Hiragino Sans W6"
+
+font-family-bold = "Source Code Pro"
+font-family-bold = "Hiragino Sans W9"
+
+font-family-bold-italic = "Source Code Pro"
+font-family-bold-italic = "Hiragino Sans W9"
+
+font-variation-bold = wght=700
+
+font-size = 12
 
 # window-padding-x = 2
 
@@ -11,3 +25,4 @@ font-size = 13
 theme = Monokai Pro Octagon
 # theme = Monokai Pro Light
 macos-option-as-alt = true
+cursor-style = block
