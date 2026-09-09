@@ -810,8 +810,12 @@ function shell(
     }
   }
   body { margin: 0; background: var(--bgColor-default); color: var(--fgColor-default); }
-  .layout { display: flex; gap: 32px; align-items: flex-start;
-            max-width: 1280px; margin: 0 auto; padding: 32px; }
+  /* No max-width here: this used to cap at 1280px to mirror GitHub's
+     content width, but that constraint was dropped on purpose. On wide
+     windows the extra space is more useful handed to the content -
+     tables, code blocks, and mermaid diagrams fit without shrinking -
+     so the layout stays fluid instead of capping out. */
+  .layout { display: flex; gap: 32px; align-items: flex-start; padding: 32px; }
   .content { flex: 1 1 auto; min-width: 0; }
   .path { font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
           color: var(--fgColor-muted); margin-bottom: 8px; }
