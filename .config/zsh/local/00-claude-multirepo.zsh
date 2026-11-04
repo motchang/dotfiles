@@ -177,12 +177,18 @@ cw() {
   local basedir="$CLAUDE_MR_ROOT/$base"
   [[ -d "$basedir" ]] || { print -u2 -r -- "cw: 起点が存在しない: $basedir"; return 1; }
 
-  local -a args missing added
+  local -a args herdr_args missing added
   local load_rules=1 r d
+  # herdr agent start は pane の tty にコマンド行をタイプ入力する。tty は canonical
+  # mode で 1 行 1024 バイトまでなので、絶対パスの --add-dir を並べると full プリセット
+  # (12 件) で超過する。herdr 経路だけ pane の cwd ($basedir) からの相対パスにする。
+  local up="" _c
+  for _c in ${(s:/:)base}; do up+="../"; done
   for r in $adds; do
     d="$CLAUDE_MR_ROOT/$r"
     if [[ ! -d "$d" ]]; then missing+=("$r"); continue; fi
     args+=(--add-dir "$d")
+    herdr_args+=(--add-dir "${up}${r}")
     added+=("$r")
     (( ${CLAUDE_MR_HEAVY[(Ie)$r]} )) && load_rules=0
   done
@@ -209,7 +215,7 @@ cw() {
 
   if (( dry )); then
     if (( via_herdr )); then
-      print -r -- "  \$ herdr $( (( ws_is_new )) && print -n -- "workspace create --label $base" || print -n -- "tab create --workspace $ws_id") --cwd $basedir ... && herdr agent start cw-${preset}-<pane> --kind claude --pane <pane> -- ${(j: :)args} $*"
+      print -r -- "  \$ herdr $( (( ws_is_new )) && print -n -- "workspace create --label $base" || print -n -- "tab create --workspace $ws_id") --cwd $basedir ... && herdr agent start cw-${preset}-<pane> --kind claude --pane <pane> -- ${(j: :)herdr_args} $*"
     else
       print -r -- "  \$ cd $basedir && ${envp:+${(j: :)envp} }claude ${(j: :)args} $*"
     fi
@@ -251,7 +257,7 @@ cw() {
   preset_safe="${preset_safe[1,15]}"
   local name="cw-${preset_safe}-$$-${RANDOM}" start_resp waited=0
   while true; do
-    start_resp=$(herdr agent start "$name" --kind claude --pane "$pane_id" -- "${args[@]}" "$@" 2>&1)
+    start_resp=$(herdr agent start "$name" --kind claude --pane "$pane_id" -- "${herdr_args[@]}" "$@" 2>&1)
     jq -e '.result.type=="agent_started"' >/dev/null 2>&1 <<<"$start_resp" && break
     if jq -e '.error.code=="agent_pane_busy"' >/dev/null 2>&1 <<<"$start_resp"; then
       sleep 0.4; (( waited += 400 ))
