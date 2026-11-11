@@ -1,12 +1,12 @@
 #!/bin/sh
-# Preview a markdown file (mermaid included) in a terminal-browser pane, or in
-# the desktop browser.
-#   mdpreview README.md
-#   mdpreview --browser [file.md]  # a desktop browser tab instead of a pane
-#   mdpreview -- snapshot          # a `terminal-browser action` command,
-#   mdpreview -- console           # aimed at this tab's preview - no browser
+# Preview a markdown file (mermaid included) in the desktop browser, or in a
+# terminal-browser pane.
+#   mdpreview README.md            # a desktop browser tab
+#   mdpreview --browser [file.md]  # the same; with no file, the latest one
+#   mdpreview --term README.md     # a terminal-browser pane in this herdr tab
+#   mdpreview -- snapshot          # a `terminal-browser action` command, aimed
+#   mdpreview -- console           # at this tab's pane preview - no browser
 #   mdpreview -- screenshot /tmp/preview.png   # key or tab id to pass around
-#   mdpreview --view
 #   mdpreview --pane
 #   mdpreview --reset [file.md]
 #   mdpreview --stop
@@ -14,8 +14,9 @@
 # Starts a local render server on first use and reuses it afterwards; the page
 # live-reloads when the file changes. Nothing in that server knows about herdr -
 # it serves plain HTTP on the loopback port below - so the same preview shows in
-# an ordinary browser tab. That is what --browser asks for outright, and what a
-# run from a plain terminal falls back to now that it has no tab for a pane.
+# an ordinary browser tab, and that is where a file goes unless --term asks for
+# a pane. A browser tab is the one surface that works the same from a herdr pane
+# and from a plain terminal.
 #
 # Which terminal-browser tab in this herdr tab holds the preview is decided
 # here, in every mode that has one to decide. Nothing outside needs to read
@@ -88,11 +89,42 @@ fi
 # startup files make it and not necessarily this one's.
 tb=$(command -v terminal-browser 2>/dev/null) || tb=''
 
+# $1 names the mode asking. Only --term has a way round a missing
+# terminal-browser - the same file in a browser tab - and the modes that act on
+# a pane preview have none: a browser tab is not something they can act on.
 require_tb() {
-  if [ -z "$tb" ]; then
-    echo "mdpreview: terminal-browser is not on PATH - install it (see the dotfiles README) or use --browser" >&2
-    exit 1
+  if [ -n "$tb" ]; then
+    return 0
   fi
+  if [ "$1" = --term ]; then
+    echo "mdpreview: terminal-browser is not on PATH - install it (see the dotfiles README); 'mdpreview <file.md>' opens a browser tab without it" >&2
+  else
+    printf '%s\n' "mdpreview: $1 needs terminal-browser, which is not on PATH - install it (see the dotfiles README)" >&2
+  fi
+  exit 1
+}
+
+# Refuses an option where a file was expected. The markdown spellings are let
+# through before anything that starts with `-` is refused, the same order the
+# file argument itself is checked in at the bottom, so a file really called
+# `--term.md` or `./--term` can still be named.
+not_an_option() {
+  case $1 in
+    *.md | *.markdown | *.mdown | */*) ;;
+    -*)
+      printf '%s\n' "mdpreview: unknown option: $1" >&2
+      usage
+      ;;
+  esac
+}
+
+# Refuses anything after the file. Left unchecked it was dropped without a
+# word, so `mdpreview README.md --term` opened a browser tab and looked like
+# --term had failed to do anything. $1 is the stray argument, $2 the form that
+# puts the flag where it is read.
+no_more_args() {
+  printf '%s\n' "mdpreview: unexpected argument after the file: $1 - flags go first ('$2')" >&2
+  exit 1
 }
 
 die_panes() {
@@ -300,9 +332,10 @@ ensure_server() {
 # $1 picks which of the two files /health reports to come back to. `current` is
 # the file a bare / renders, which is the one the pane modes last opened and so
 # the one --reset means by "whatever is on screen". `recent` is the most recent
-# /open of any kind, which is what --browser means: a browser preview registers
-# its file without making it current, precisely so that it cannot drag a pane
-# along, and would otherwise have nothing to resume from at all.
+# /open of any kind, which is what --browser means: a browser preview - the
+# default one included - registers its file without making it current, precisely
+# so that it cannot drag a pane along, and would otherwise have nothing to resume
+# from at all.
 #
 # `.recent // .file` also covers an older server on this port, which ensure_server
 # below goes out of its way to contemplate: no `recent` field means fall back to
@@ -323,12 +356,19 @@ resume_current_file() {
   if [ -z "$file" ]; then
     # A pane mode finding no pane-side file while a browser tab is holding one is
     # not "nothing is being previewed" - something is, and saying otherwise is
-    # false in exactly the state it prints in. --browser never moves the current
-    # file, on purpose, so this is the ordinary consequence of previewing in a tab
-    # and then asking to rebuild a pane. What --reset needs is a file to rebuild
-    # onto, so it asks for one rather than adopting the tab's.
+    # false in exactly the state it prints in. A browser tab never moves the
+    # current file, on purpose, and a tab is what a plain `mdpreview <file.md>`
+    # opens. --reset only gets here with a pane preview in this tab, so this is a
+    # server that has lost the pane's file - restarted since, say - while a tab
+    # kept one. What --reset needs is a file to rebuild onto, so it asks for one
+    # rather than adopting the tab's.
+    #
+    # With nothing at all, the advice depends on who is asking: --reset rebuilds
+    # a pane, so pointing it at the default would open a tab it cannot reset.
     if [ "$1" != recent ] && [ -n "$recent" ]; then
       printf '%s\n' "mdpreview: nothing is being previewed in a pane - ${recent} is open in a browser tab, which --reset does not rebuild; name a file: 'mdpreview --reset <file.md>'" >&2
+    elif [ "$1" != recent ]; then
+      echo "mdpreview: nothing is being previewed in a pane - run 'mdpreview --term <file.md>'" >&2
     else
       echo "mdpreview: nothing is being previewed - run 'mdpreview <file.md>'" >&2
     fi
@@ -348,10 +388,10 @@ resume_current_file() {
 # reporting a failure it did not have.
 #
 # `set_file aside` registers without making the file the current one. Only the
-# browser path uses it, and the reason is on the server side, at registerFile: a
-# page reached through a bare / follows the current file and would be dragged
-# onto a file someone asked to see in a tab of its own. Panes are on their own
-# ?file= URL and never see it either way.
+# browser path - the default - uses it, and the reason is on the server side, at
+# registerFile: a page reached through a bare / follows the current file and
+# would be dragged onto a file someone asked to see in a tab of its own. Panes
+# are on their own ?file= URL and never see it either way.
 #
 # curl runs without -f on purpose. The server refuses a path it will not render
 # - a suffix outside the markdown set it recognises, a file it cannot read - and
@@ -466,7 +506,7 @@ before_deadline() {
 
 # Waits up to $1 seconds for this tab's preview to show up in `terminal-browser
 # ls` with a CDP target, and leaves it in `key`, `tabid` and `target`. A run
-# that returned before then would leave the next one - `mdpreview a.md &&
+# that returned before then would leave the next one - `mdpreview --term a.md &&
 # mdpreview -- snapshot` - finding no preview and refusing, or opening another.
 # Listed is not enough: a tab is listed before its page has a target, and
 # `action` refuses it until then, so a preview that only counts as up once it is
@@ -691,15 +731,14 @@ find_opener() {
 # costs nothing, because the page is rendered per request. The opener returns as
 # soon as the browser has been told, so there is nothing to wait for and nothing
 # to report back beyond having asked - and nothing terminal-browser can name,
-# which is the difference the passthrough and --view both have to account for.
+# which is the difference the passthrough has to account for.
 #
 # Focus is taken, and that is the choice rather than an oversight. open_preview
 # splits with --no-focus because a pane is already on screen in a tab being looked
 # at, so taking the keyboard for it would interrupt whoever asked - but asking
-# for a browser tab is asking to be shown one, and a tab that opens behind the
-# terminal is a preview that did not happen. The unscoped fallback inherits the
-# same behaviour without having asked for it; that is the cost of a path whose
-# only remaining place to put a preview is a browser.
+# to see a file is asking to be shown it, and a tab that opens behind the
+# terminal is a preview that did not happen. Being the default does not change
+# that; --term is there for a preview that should stay beside the terminal.
 # A tab already showing this file is left alone rather than joined by a second
 # one. `open` starts a tab; it does not look for an existing one, so without this
 # every run stacked another tab on the same preview - and the file has just been
@@ -732,7 +771,7 @@ preview_in_browser() {
 }
 
 usage() {
-  echo "usage: mdpreview <file.md> | --browser [file.md] | -- <terminal-browser action command> | --view | --pane | --reset [file.md] | --stop" >&2
+  echo "usage: mdpreview <file.md> | --browser [file.md] | --term <file.md> | -- <terminal-browser action command> | --pane | --reset [file.md] | --stop" >&2
   exit 1
 }
 
@@ -777,22 +816,6 @@ if [ "$1" = "--stop" ]; then
   exit "$status"
 fi
 
-if [ "$1" = "--view" ]; then
-  # Names this tab's preview as the selectors `terminal-browser action` takes,
-  # for a command run against it directly - `terminal-browser action $(mdpreview
-  # --view) -- snapshot`. The CLI's own pick is the active tab of this tab's
-  # browser, which need not be the preview.
-  require_tab --view
-  require_tb
-  resolve_preview settle
-  if [ -z "$key" ]; then
-    echo "mdpreview: no preview in this tab - run 'mdpreview <file.md>' first" >&2
-    exit 1
-  fi
-  printf '%s\n' "--browser ${key} --tab ${tabid}"
-  exit 0
-fi
-
 if [ "$1" = "--pane" ]; then
   # Names the herdr panes holding this tab's previews, one id per line, for the
   # `herdr pane` commands - resizing one, say. Not renaming it: the `mdpreview`
@@ -801,10 +824,10 @@ if [ "$1" = "--pane" ]; then
   # tabs of its own is named too, so closing what this prints can take those
   # with it; `--stop` and `--reset` are the ways to close only the preview.
   require_tab --pane
-  require_tb
+  require_tb --pane
   resolve_preview settle
   if [ -z "$found" ]; then
-    echo "mdpreview: no preview in this tab - run 'mdpreview <file.md>' first" >&2
+    echo "mdpreview: no preview in this tab - run 'mdpreview --term <file.md>' first" >&2
     exit 1
   fi
   printf '%s\n' "$found" | cut -f3 | awk '!seen[$0]++'
@@ -817,17 +840,32 @@ if [ "$1" = "--reset" ]; then
   # page that no longer scrolls, a tab that ignores input - is cheaper to throw
   # away than to diagnose, and the page holds no state worth keeping.
   require_tab --reset
-  require_tb
+  require_tb --reset
+  not_an_option "$2"
+  if [ "$#" -gt 2 ]; then
+    no_more_args "$3" "mdpreview --reset <file.md>"
+  fi
 
   if [ -n "$2" ]; then
     require_deps
     resolve_file "$2"
     ensure_server
   else
-    # No file named: reset onto whatever the pane modes last opened, which is
-    # what is on screen in a pane. A file someone opened in a browser tab with
-    # --browser is not that, and pulling this tab's pane onto it would be a
-    # reset onto something the pane was never showing.
+    # No file named, and no pane preview in this tab: refused rather than
+    # rebuilt. The file to come back to would be the server's current one, which
+    # is whatever a pane in any tab last opened, so this would split a pane
+    # nobody here asked for onto a file this tab may never have shown. Nothing
+    # here is stuck either - a desktop tab, the usual preview now, is not one
+    # --reset can replace. Naming a file is asking for a pane, and is honoured.
+    resolve_preview settle
+    if [ -z "$found" ]; then
+      echo "mdpreview: no pane preview in this tab to reset - reload a browser tab yourself; 'mdpreview --term <file.md>' opens a pane" >&2
+      exit 1
+    fi
+    # Reset onto whatever the pane modes last opened, which is what is on screen
+    # in a pane. A file someone opened in a browser tab - the default surface -
+    # is not that, and pulling this tab's pane onto it would be a reset onto
+    # something the pane was never showing.
     resume_current_file current
   fi
 
@@ -846,10 +884,14 @@ if [ "$1" = "--reset" ]; then
 fi
 
 if [ "$1" = "--browser" ]; then
-  # Shows the preview in the desktop browser instead of in a pane. No pane and no
-  # terminal-browser are involved, which is why this is deliberately not
-  # guarded by require_tab: asked for from inside a herdr session it means "not
-  # in a pane this time", and that is a thing to honour rather than to refuse.
+  # What a bare file argument does anyway, kept as a spelling of its own because
+  # it is how this was asked for before a browser tab became the default, and
+  # because with no file it is the one way to reopen the latest preview. No pane
+  # and no terminal-browser are involved, so it needs no herdr tab either.
+  not_an_option "$2"
+  if [ "$#" -gt 2 ]; then
+    no_more_args "$3" "mdpreview --term <file.md>"
+  fi
   if [ -n "$2" ]; then
     require_deps
     resolve_file "$2"
@@ -898,15 +940,15 @@ if [ "$1" = "--" ]; then
     printf '%s\n' "mdpreview: '$1' would be run against a terminal-browser preview, and outside a herdr session there is none - the preview is a plain browser tab." >&2
     exit 1
   fi
-  require_tb
+  require_tb "'mdpreview -- <command>'"
   resolve_preview settle
   if [ -z "$key" ]; then
-    # --browser is named here because it opens a preview this cannot reach: a
-    # desktop tab is not terminal-browser's, so a tab opened moments ago still
-    # leaves this with nothing to drive and reads as no preview at all.
-    # Advising a bare `mdpreview <file.md>` on its own would then be advising a
-    # second preview surface rather than a fix.
-    echo "mdpreview: no preview in this tab - run 'mdpreview <file.md>' to open one; a preview opened with --browser is a desktop tab and cannot be driven from here" >&2
+    # The desktop tab is named here because it is what a plain `mdpreview
+    # <file.md>` opens, and this cannot reach it: it is not terminal-browser's,
+    # so a preview opened moments ago still leaves this with nothing to drive
+    # and reads as no preview at all. Without saying so, rerunning that same
+    # command would look like the fix and only open another tab.
+    echo "mdpreview: no preview in this tab - run 'mdpreview --term <file.md>' to open one; a preview opened without --term is a desktop tab and cannot be driven from here" >&2
     exit 1
   fi
   # A preview still starting has no CDP target, and action refuses it until it
@@ -927,8 +969,33 @@ if [ "$1" = "--" ]; then
   exit "$status"
 fi
 
+# --term asks for a terminal-browser pane in this herdr tab, and is refused up
+# front outside one rather than quietly turned into a browser tab: whoever wrote
+# it wants a page that `mdpreview --` can drive, and a desktop tab is not that.
+# Refused before the server is started, since nothing would be shown on it.
+term=0
+if [ "$1" = "--term" ]; then
+  term=1
+  shift
+  if [ "$scoped" != 1 ]; then
+    echo "mdpreview: --term opens a terminal-browser pane in this herdr tab, and outside a herdr session there is none - drop --term to open a browser tab" >&2
+    exit 1
+  fi
+  # The two ways to get --term wrong that the generic checks below would only
+  # answer with the usage line: leaving the file off, and stacking another flag
+  # on it. Markdown spellings go through first, as in not_an_option.
+  case ${1:-} in
+    '') echo "mdpreview: --term needs a file: 'mdpreview --term <file.md>'" >&2; exit 1 ;;
+    *.md | *.markdown | *.mdown | */*) ;;
+    -*) printf '%s\n' "mdpreview: --term takes a file, not $1" >&2; exit 1 ;;
+  esac
+fi
+
 if [ -z "$1" ]; then
   usage
+fi
+if [ "$#" -gt 1 ]; then
+  no_more_args "$2" "mdpreview --term <file.md>"
 fi
 
 # A markdown path is the only thing taken as a file. That is decided on the
@@ -948,27 +1015,24 @@ case $1 in
     ;;
 esac
 
+if [ "$term" = 1 ]; then
+  require_tb --term
+fi
 require_deps
 resolve_file "$1"
 ensure_server
 
-# Unscoped, the preview goes to the desktop browser rather than into herdr: from
-# a plain terminal there is no tab to look for a preview in and no pane to split
-# from, and a pane split off anywhere else lands where whoever ran the command
-# cannot see it. A browser tab is somewhere they are looking, and it needs none
-# of that machinery.
-if [ "$scoped" != 1 ]; then
+if [ "$term" != 1 ]; then
   preview_in_browser
   exit 0
 fi
 
-require_tb
 resolve_preview settle
 
 # The JSON that terminal-browser prints is of no use to whoever asked for a
 # preview, and an agent reading it pays for every field of it. One line saying
 # what happened covers it; failures still come through on stderr, and the
-# browser and tab are a `mdpreview --view` away for anyone who wants them.
+# pane is a `mdpreview --pane` away for anyone who wants it.
 set_file
 if [ -z "$key" ]; then
   open_preview
