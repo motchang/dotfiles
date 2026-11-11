@@ -62,10 +62,10 @@ browser itself ships with it, so no Chrome is needed.
 	curl -fsSL https://terminal-browser.sh/install -o install.sh
 	bash install.sh
 
-That puts the command in ~/.local/bin, which zshenv already has on PATH. Its
-`setup` links its agent skill into ~/.claude/skills and the other agents' skill
-directories; ~/.claude is a repository of its own (see below), so the link
-shows up there rather than here.
+That puts the command in ~/.local/bin, which zshrc puts on PATH. Its `setup`
+symlinks its agent skill into ~/.claude/skills and ~/.agents/skills; ~/.claude
+is a repository of its own (see below), so the link shows up there rather than
+here.
 
 	terminal-browser setup
 

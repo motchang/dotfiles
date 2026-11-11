@@ -450,8 +450,18 @@ wait_preview() {
 # `exec` so that quitting the browser closes the pane instead of leaving a
 # shell behind in it, and --no-merge so that terminal-browser opens a browser in
 # this pane rather than deciding a neighbour would do and leaving the pane empty.
-# The command goes through the new pane's shell, so it is quoted for one - the
-# URL is percent-encoded and carries no quote of its own.
+#
+# The URL and the command reach that shell through the split's environment, and
+# the line typed into it is the same short one every time. herdr types it into a
+# tty in canonical mode, which refuses a line over 1024 bytes - and a path with
+# Japanese in it percent-encodes to 9 bytes a character, so a deep one passes
+# that on its own. Through the environment nothing needs quoting for the shell
+# either. The leading space keeps the line out of zsh's history, which
+# HIST_IGNORE_SPACE in zshrc honours.
+#
+# A pane that will not take the line is closed again rather than left behind as
+# an empty shell beside the caller, which the next run would not recognise as a
+# preview and would split another one next to.
 open_preview() {
   here=$(browser_here) || die_ls
   if [ -n "$here" ]; then
@@ -459,13 +469,20 @@ open_preview() {
     opened="in a new tab of this tab's browser"
   else
     split=$(herdr pane split --pane "$HERDR_PANE_ID" --direction right \
-        --no-focus --right-click pane) || die_panes
+        --no-focus --right-click pane \
+        --env "MDPREVIEW_TB=${tb}" --env "MDPREVIEW_URL=$(preview_url pane)") \
+      || die_panes
     new=$(printf '%s' "$split" | jq -r '.result.pane.pane_id // empty' 2>/dev/null) || new=''
     if [ -z "$new" ]; then
       die_panes
     fi
-    herdr pane run "$new" \
-      "exec '$tb' open --no-merge '$(preview_url pane)'" >/dev/null || die_panes
+    # shellcheck disable=SC2016 # expanded by the new pane's shell, not this one
+    if ! herdr pane run "$new" \
+        ' exec "$MDPREVIEW_TB" open --no-merge "$MDPREVIEW_URL"' >/dev/null; then
+      herdr pane close "$new" >/dev/null 2>&1 || true
+      printf '%s\n' "mdpreview: could not start terminal-browser in a new herdr pane - is herdr working?" >&2
+      exit 1
+    fi
     opened="in a new pane"
   fi
   # A cold start - the first browser since terminal-browser's shared process

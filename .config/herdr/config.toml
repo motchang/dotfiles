@@ -170,10 +170,14 @@ command = "local.hunk-diff.branch-split"
 #
 # The full path because a shell binding need not see the PATH an interactive
 # zsh builds, and ~/.local/bin is where terminal-browser's installer puts it.
-# `open --split` takes focus, which is what pressing the key asks for.
+# A custom command gets the focused pane as HERDR_ACTIVE_PANE_ID and
+# HERDR_ACTIVE_TAB_ID, not the HERDR_PANE_ID / HERDR_TAB_ID a pane's own shell
+# has, and terminal-browser only recognises herdr by the latter - so they are
+# handed over under those names. `open --split` takes focus, which is what
+# pressing the key asks for.
 key = "prefix+alt+b"
 type = "shell"
-command = '"${HOME}/.local/bin/terminal-browser" open --split right'
+command = 'HERDR_PANE_ID="${HERDR_ACTIVE_PANE_ID}" HERDR_TAB_ID="${HERDR_ACTIVE_TAB_ID}" "${HOME}/.local/bin/terminal-browser" open --split right'
 description = "open terminal-browser in right split"
 
 [[keys.command]]
