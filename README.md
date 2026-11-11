@@ -204,7 +204,9 @@ labelled `mdpreview` when it is split, and the label is what `--reset` and
 `--stop` go by: they close a labelled pane whose terminal-browser holds only
 previews, and otherwise close just the preview tabs - a browser that holds other
 pages too keeps them, and a pane mdpreview did not split stays up whatever runs
-in it, since it may be someone's shell running `terminal-browser open`. Neither
+in it, since it may be someone's shell running `terminal-browser open`; a
+browser there that held only previews exits with its last tab and leaves the
+shell behind. Neither
 uses `terminal-browser shutdown`, which closes every terminal-browser in the
 session.
 

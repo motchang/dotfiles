@@ -601,11 +601,13 @@ navigate_preview() {
 # when there was nothing to close.
 #
 # A browser holding nothing but previews, in a pane open_preview split for it,
-# goes with its pane. Closing its last tab instead would leave the pane up on
-# terminal-browser's start page, which is a pane nobody asked for. Any other
-# pane keeps running, and loses only the previews: a browser with tabs of its
-# own keeps them, and a pane mdpreview did not split is not mdpreview's to
-# close, whatever is running in it.
+# goes with its pane, closed by herdr rather than left to follow its browser
+# out. Any other pane stays, and only the preview tabs are closed: a browser
+# with tabs of its own keeps them, and a pane mdpreview did not split is not
+# mdpreview's to close, whatever is running in it. A browser there that held
+# nothing but previews exits once its last tab is closed - terminal-browser does
+# that by itself - and the pane is left with whatever started it, a shell as
+# like as not.
 #
 # A browser whose pane was closed is also waited out of the list, not just its
 # previews. On its way out it can still be listed with no tabs, and a reopen
@@ -793,7 +795,9 @@ fi
 
 if [ "$1" = "--pane" ]; then
   # Names the herdr panes holding this tab's previews, one id per line, for the
-  # `herdr pane` commands - renaming one, resizing it. A browser that also holds
+  # `herdr pane` commands - resizing one, say. Not renaming it: the `mdpreview`
+  # label is what lets --reset and --stop close the pane, and a pane renamed
+  # away from it keeps running with only its tabs closed. A browser that also holds
   # tabs of its own is named too, so closing what this prints can take those
   # with it; `--stop` and `--reset` are the ways to close only the preview.
   require_tab --pane
