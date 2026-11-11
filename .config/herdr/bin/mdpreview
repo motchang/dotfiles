@@ -4,9 +4,9 @@
 #   mdpreview README.md            # a desktop browser tab
 #   mdpreview --browser [file.md]  # the same; with no file, the latest one
 #   mdpreview --term README.md     # a terminal-browser pane in this herdr tab
-#   mdpreview -- snapshot          # a `terminal-browser action` command,
-#   mdpreview -- console           # aimed at this tab's pane preview - no
-#   mdpreview -- screenshot /tmp/preview.png   # browser key or tab id to pass
+#   mdpreview -- snapshot          # a `terminal-browser action` command, aimed
+#   mdpreview -- console           # at this tab's pane preview - no browser
+#   mdpreview -- screenshot /tmp/preview.png   # key or tab id to pass around
 #   mdpreview --pane
 #   mdpreview --reset [file.md]
 #   mdpreview --stop
@@ -91,7 +91,7 @@ tb=$(command -v terminal-browser 2>/dev/null) || tb=''
 
 require_tb() {
   if [ -z "$tb" ]; then
-    echo "mdpreview: terminal-browser is not on PATH - install it (see the dotfiles README), or drop --term for a browser tab" >&2
+    echo "mdpreview: terminal-browser is not on PATH - install it (see the dotfiles README); 'mdpreview <file.md>' opens a browser tab without it" >&2
     exit 1
   fi
 }
