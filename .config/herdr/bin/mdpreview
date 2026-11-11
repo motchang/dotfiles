@@ -1,14 +1,13 @@
 #!/bin/sh
-# Preview a markdown file (mermaid included) in a herdr-browser pane, or in the
-# desktop browser.
+# Preview a markdown file (mermaid included) in a terminal-browser pane, or in
+# the desktop browser.
 #   mdpreview README.md
 #   mdpreview --browser [file.md]  # a desktop browser tab instead of a pane
-#   mdpreview text                 # any herdr-browser command, aimed at this
-#   mdpreview console              # tab's preview - no view id to pass around
-#   mdpreview screenshot --output /tmp/preview.png
+#   mdpreview -- snapshot          # any `terminal-browser action` command,
+#   mdpreview -- console           # aimed at this tab's preview - no browser
+#   mdpreview -- screenshot /tmp/preview.png   # key or tab id to pass around
 #   mdpreview --view
 #   mdpreview --pane
-#   mdpreview --screen
 #   mdpreview --reset [file.md]
 #   mdpreview --stop
 #
@@ -18,11 +17,11 @@
 # an ordinary browser tab. That is what --browser asks for outright, and what a
 # run from a plain terminal falls back to now that it has no tab for a pane.
 #
-# Which pane and view in this tab hold the preview is decided here, in every
-# mode that has one to decide. Nothing outside needs to read `herdr pane list`
-# or `herdr-browser views` to use a preview, and nothing outside should have to.
-# The browser-tab modes have neither to answer for, which is exactly what lets
-# them run from a plain terminal where those lists have nothing to say.
+# Which terminal-browser tab in this herdr tab holds the preview is decided
+# here, in every mode that has one to decide. Nothing outside needs to read
+# `terminal-browser ls` to use a preview, and nothing outside should have to.
+# The browser-tab modes have nothing to look up, which is exactly what lets them
+# run from a plain terminal where that list has nothing to say.
 set -e
 
 port=${MDPREVIEW_PORT:-43128}
@@ -73,42 +72,37 @@ stop_server() {
   [ -n "$pids" ]
 }
 
-if [ "$1" = "--stop" ]; then
-  # Without lsof there is no way to tell which server belongs to this port, and
-  # killing by directory alone is what this exists to avoid. Saying so beats
-  # reporting a stop that did not happen.
-  if ! command -v lsof >/dev/null 2>&1; then
-    printf '%s\n' "mdpreview: lsof is needed to find the server on ${port}" >&2
-    exit 1
-  fi
-  if stop_server; then
-    printf '%s\n' "mdpreview: stopped the server on ${port}"
-  else
-    printf '%s\n' "mdpreview: no server on ${port}"
-  fi
-  exit 0
-fi
-
-# The preview belongs in the tab it was asked for from, so which pane to reuse is
-# a per-tab question: a view whose pane sits in another tab is a Chrome nobody
-# here can see, and navigating it looks exactly like nothing happening.
-# `herdr-browser views` is daemon-wide and cannot answer that on its own.
+# The preview belongs in the tab it was asked for from, so which browser to reuse
+# is a per-tab question: a terminal-browser in another tab is a page nobody here
+# can see, and navigating it looks exactly like nothing happening.
 #
-# Both ids are required together. Scoping reuse to a tab while opening panes
-# wherever the focus happens to be would find nothing next run and open another,
-# every run.
+# Both ids are required together. Scoping reuse to a tab while splitting panes
+# off wherever the focus happens to be would find nothing next run and open
+# another, every run.
 scoped=0
 if [ -n "${HERDR_TAB_ID:-}" ] && [ -n "${HERDR_PANE_ID:-}" ]; then
   scoped=1
 fi
 
+# An absolute path rather than the bare name, because the split in open_preview
+# runs it from a fresh shell in another pane, whose PATH is whatever that shell's
+# startup files make it and not necessarily this one's.
+tb=$(command -v terminal-browser 2>/dev/null) || tb=''
+
+require_tb() {
+  if [ -z "$tb" ]; then
+    echo "mdpreview: terminal-browser is not on PATH - install it (see the dotfiles README) or use --browser" >&2
+    exit 1
+  fi
+}
+
 die_panes() {
-  echo "mdpreview: could not read the herdr pane list - is herdr working?" >&2
+  echo "mdpreview: could not split a herdr pane - is herdr working?" >&2
   exit 1
 }
 
-die_views() {
-  echo "mdpreview: could not read the herdr-browser view list - is herdr-browser on PATH and working?" >&2
+die_ls() {
+  echo "mdpreview: could not read the terminal-browser list - is terminal-browser working?" >&2
   exit 1
 }
 
@@ -119,97 +113,69 @@ require_tab() {
   fi
 }
 
-# Browser-plugin panes in this tab, one pane id per line; empty when it has none.
+# This tab's preview tabs, one per line as `browser-key TAB tab-id TAB pane-id
+# TAB all`, the active one first; empty when the tab has none. `all` is 1 when
+# every tab in that browser is a preview, which is what decides whether closing
+# the preview may take the pane with it.
 #
-# Existence is decided here rather than from the view list because a view is
-# registered with a null pane id and only learns its pane on the first heartbeat
-# after Chromium starts. Asking the view list would make two runs in a row both
-# conclude "nothing in this tab" and each open a pane. A new pane shows up in the
-# pane list immediately.
+# A preview is a tab on this render server, and nothing else is: a browser in
+# this tab that the user opened for something of their own is not one, and
+# navigating it would throw away whatever they had open. Matching on the URL is
+# also what keeps a server on another MDPREVIEW_PORT out of it - its previews are
+# that server's to manage. `/?` and a bare `/` are the two shapes a preview URL
+# takes, links between previewed files included; /health and the other
+# endpoints are not previews even though they are on the same server.
 #
-# The plugin's panes run with the plugin root as their cwd, which `herdr pane
-# rename` leaves alone; the label is matched too in case a later herdr starts
-# them somewhere else. A shape this does not recognize has to fail rather than
-# read as "no panes": `null | length` is 0, so a quiet mismatch would stack up a
-# fresh pane on every run.
+# `ls` already narrows to this terminal tab, and the pane's tab is matched again
+# anyway: the list's idea of "this tab" is worked out by terminal-browser, and
+# the tab that counts here is the one in HERDR_TAB_ID that the split below goes
+# into.
 #
-# `-s` is what makes that guard cover a silent herdr as well. Given no input at
-# all, jq never runs the program and exits 0 - so a `herdr` that dies without
-# printing would otherwise reach the guard as an empty pane list and read as a
-# tab with no preview in it. Slurped, no input is `[]` and `.[0]` is null, which
-# the guard rejects like any other shape it does not know.
-browser_panes() {
-  herdr pane list | jq -rs --arg tab "$HERDR_TAB_ID" '
-    .[0].result.panes
-    | if type == "array" then . else error("unexpected herdr pane list shape") end
+# A shape this does not recognize has to fail rather than read as "no preview":
+# `null | length` is 0, so a quiet mismatch would split off a fresh pane on every
+# run. `-s` is what makes that guard cover a silent terminal-browser as well.
+# Given no input at all, jq never runs the program and exits 0 - so a CLI that
+# dies without printing would otherwise read as a tab with no preview in it.
+# Slurped, no input is `[]` and `.[0]` is null, which the guard rejects like any
+# other shape it does not know.
+previews() {
+  "$tb" ls --json | jq -rs --arg tab "$HERDR_TAB_ID" --arg base "$base" '
+    def preview: (.url // "") as $u | ($u | startswith($base + "/?")) or $u == $base + "/";
+    .[0].browsers
+    | if type == "array" then . else error("unexpected terminal-browser ls shape") end
+    | [ .[]
+        | select(.pane.tab == $tab and .key != null and .pane.pane != null)
+        | . as $b
+        | ([$b.tabs[]? | select(preview)]) as $here
+        | (($here | length) == ($b.tabs | length)) as $all
+        | $here[]
+        | {key: $b.key, tab: .id, pane: $b.pane.pane, all: $all, active: (.active == true)} ]
+    | sort_by(if .active then 0 else 1 end)
     | .[]
-    | select(.tab_id == $tab and .pane_id != null)
-    | select((.cwd // "" | contains("official.browser")) or .label == "Browser")
-    | .pane_id
+    | [.key, (.tab | tostring), .pane, (if .all then "1" else "0" end)]
+    | @tsv
   '
 }
 
-# The view id belonging to one of those panes, waited for: a pane opened moments
-# ago has no view to name yet, and leaving it unnamed hands the choice back to a
-# CLI that is not tab-aware. Prints nothing if the wait runs out. Any of them is
-# on screen in this tab, so which one comes first does not matter.
-view_for_panes() {
-  attempt=0
-  limit=${2:-50}
-  while [ "$attempt" -lt "$limit" ]; do
-    view=$(herdr-browser views | jq -rs --arg panes "$1" '
-      ($panes | split("\n")) as $here
-      | .[0].views
-      | if type == "array" then . else error("unexpected herdr-browser views shape") end
-      | map(select(.view_id != null and .pane_id != null and (.pane_id | IN($here[]))))
-      | .[0].view_id // empty
-    ')
-    if [ -n "$view" ]; then
-      printf '%s\n' "$view"
-      return 0
-    fi
-    sleep 0.2
-    attempt=$((attempt + 1))
-  done
-}
-
-# Any view at all, for the no-tab case.
-any_view() {
-  herdr-browser views | jq -rs '
-    .[0].views
-    | if type == "array" then . else error("unexpected herdr-browser views shape") end
-    | map(select(.view_id != null))
-    | .[0].view_id // empty
+# Any browser in this tab, preview or not, for a new tab to go into rather than a
+# second pane beside it. Empty when the tab has none.
+browser_here() {
+  "$tb" ls --json | jq -rs --arg tab "$HERDR_TAB_ID" '
+    .[0].browsers
+    | if type == "array" then . else error("unexpected terminal-browser ls shape") end
+    | map(select(.pane.tab == $tab and .key != null))
+    | .[0].key // empty
   '
 }
 
-# Sets `target` to the view id to navigate, or to `open` when this tab needs a
-# preview pane of its own. View ids are UUIDs, so `open` cannot collide with one.
-resolve_target() {
-  if [ "$scoped" = 1 ]; then
-    panes=$(browser_panes) || die_panes
-    if [ -z "$panes" ]; then
-      target=open
-      return 0
-    fi
-    target=$(view_for_panes "$panes") || die_views
-    if [ -z "$target" ]; then
-      echo "mdpreview: the herdr-browser pane in this tab has not registered a view - is Chrome starting or stuck?" >&2
-      exit 1
-    fi
-  else
-    # Only --view arrives here now. Outside herdr there is no tab to scope to and
-    # no pane to split from, so a view found this way is a Chrome in some other
-    # tab and a pane opened this way lands next to whatever pane has focus -
-    # neither of them anywhere the caller can look, which is why previewing and
-    # driving a preview both stop short of this branch and go to the browser or
-    # refuse outright. --view keeps it because a caller asking for a view id by
-    # name has asked for whatever the daemon has, not for a preview.
-    target=$(any_view) || die_views
-    if [ -z "$target" ]; then
-      target=open
-    fi
-  fi
+# Sets `key` and `tabid` to this tab's preview, both empty when it has none. The
+# first line is the active tab when there is one, so a browser holding two
+# previews is driven on the one the user can see.
+resolve_preview() {
+  found=$(previews) || die_ls
+  line=$(printf '%s\n' "$found" | head -n 1)
+  key=$(printf '%s' "$line" | cut -f1)
+  tabid=$(printf '%s' "$line" | cut -f2)
 }
 
 require_deps() {
@@ -446,18 +412,117 @@ tab_viewers() {
   printf '%s\n' "$count"
 }
 
-# --target-pane keeps the split in this tab; without it the pane lands next to
-# whichever pane happens to be focused, which need not be this one.
+# Waits for this tab's preview to show up in `terminal-browser ls`, within the
+# given number of 0.2s attempts, and leaves it in `key` and `tabid`. A
+# run that returned before then would leave the next one - `mdpreview a.md &&
+# mdpreview -- snapshot` - finding no preview and refusing, or opening another.
+wait_preview() {
+  attempt=0
+  while [ "$attempt" -lt "$1" ]; do
+    resolve_preview
+    if [ -n "$key" ]; then
+      return 0
+    fi
+    sleep 0.2
+    attempt=$((attempt + 1))
+  done
+  return 1
+}
+
+# Puts the preview on screen in this tab when it has none. Sets `opened` to say
+# where, for the message.
 #
-# --no-focus because the pane is visible either way: the preview is something to
-# glance at, and taking the keyboard would interrupt whoever asked for it - an
-# agent previewing mid-task would pull the caller out of their own shell.
-open_pane() {
-  herdr plugin pane open \
-    --plugin official.browser --entrypoint browser \
-    --placement split --direction right \
-    ${HERDR_PANE_ID:+--target-pane "$HERDR_PANE_ID"} \
-    --env "HERDR_BROWSER_INITIAL_URL=$(preview_url pane)" --no-focus
+# A browser already in this tab gets the preview as a new tab rather than a
+# second pane beside it, and that browser's own tabs are left where they were -
+# it is somebody's page, not a preview to navigate away.
+#
+# With no browser here, the pane is split off by herdr and terminal-browser is
+# started inside it, rather than left to `terminal-browser open --split`. That
+# command splits with --focus, and herdr's --focus pulls the whole UI over to
+# this tab: an agent previewing in a workspace nobody is looking at would drag
+# the user out of whatever they were doing. --no-focus keeps them there, and
+# the preview is something to glance at, not something to be taken to.
+#
+# The split is off this pane, so the preview lands beside whoever asked for it
+# rather than beside whichever pane happens to be focused. --right-click pane
+# hands right-clicks to the browser, as terminal-browser's own split does.
+#
+# `exec` so that quitting the browser closes the pane instead of leaving a
+# shell behind in it, and --no-merge so that terminal-browser opens a browser in
+# this pane rather than deciding a neighbour would do and leaving the pane empty.
+# The command goes through the new pane's shell, so it is quoted for one - the
+# URL is percent-encoded and carries no quote of its own.
+open_preview() {
+  here=$(browser_here) || die_ls
+  if [ -n "$here" ]; then
+    "$tb" new-tab --browser "$here" "$(preview_url pane)" >/dev/null
+    opened="in a new tab of this tab's browser"
+  else
+    split=$(herdr pane split --pane "$HERDR_PANE_ID" --direction right \
+        --no-focus --right-click pane) || die_panes
+    new=$(printf '%s' "$split" | jq -r '.result.pane.pane_id // empty' 2>/dev/null) || new=''
+    if [ -z "$new" ]; then
+      die_panes
+    fi
+    herdr pane run "$new" \
+      "exec '$tb' open --no-merge '$(preview_url pane)'" >/dev/null || die_panes
+    opened="in a new pane"
+  fi
+  # A cold start - the first browser since terminal-browser's shared process
+  # last exited - takes a few seconds; a warm one is there by the second poll.
+  if ! wait_preview 150; then
+    echo "mdpreview: the preview did not show up in terminal-browser ls - is it starting or stuck?" >&2
+    exit 1
+  fi
+}
+
+# Points this tab's preview at the current file. `action -- open` is not the way:
+# despite its "Navigate to URL" it opens a new tab every time, so a preview
+# driven by it would grow a tab per run. The page is told to go instead.
+#
+# --follow brings the preview to the front of its browser, so a file previewed
+# while the user had switched that browser to another tab is not navigated
+# behind their back. It moves nothing in herdr. `done` afterwards clears the
+# "agent is acting" marker the action puts on the tab, which would otherwise
+# sit on a preview nobody is driving.
+navigate_preview() {
+  url=$(jq -n --arg u "$(preview_url pane)" '$u')
+  if ! "$tb" action --follow --browser "$key" --tab "$tabid" -- \
+      eval "location.replace(${url}); true" >/dev/null 2>&1; then
+    return 1
+  fi
+  "$tb" action --browser "$key" --tab "$tabid" 'done' >/dev/null 2>&1 || true
+}
+
+# Closes every preview in this tab and waits for them to leave the list: a
+# preview still listed would be found again by the reopen that follows, and the
+# tab in the middle of closing would be handed back as the result.
+#
+# A browser holding nothing but previews goes with its pane. Closing its last
+# tab instead would leave the pane up on terminal-browser's start page, which is
+# a pane nobody asked for. A browser with tabs of its own keeps them and its
+# pane, and loses only the previews.
+close_previews() {
+  found=$(previews) || die_ls
+  printf '%s\n' "$found" | while IFS="$(printf '\t')" read -r k t p all; do
+    [ -n "$k" ] || continue
+    if [ "$all" = 1 ]; then
+      herdr pane close "$p" >/dev/null 2>&1 || true
+    else
+      "$tb" action --browser "$k" --tab "$t" -- tab close "$t" >/dev/null 2>&1 || true
+    fi
+  done
+  attempt=0
+  while [ "$attempt" -lt 25 ]; do
+    resolve_preview
+    if [ -z "$key" ]; then
+      return 0
+    fi
+    sleep 0.2
+    attempt=$((attempt + 1))
+  done
+  echo "mdpreview: the preview in this tab did not close" >&2
+  exit 1
 }
 
 # The command that hands a URL to the desktop browser, or nothing when the
@@ -505,11 +570,11 @@ find_opener() {
 # listening on /events - which a tab still starting up is not. Opening second
 # costs nothing, because the page is rendered per request. The opener returns as
 # soon as the browser has been told, so there is nothing to wait for and nothing
-# to report back beyond having asked - and no view id, which is the difference
-# the passthrough and --view both have to account for.
+# to report back beyond having asked - and nothing terminal-browser can name,
+# which is the difference the passthrough and --view both have to account for.
 #
-# Focus is taken, and that is the choice rather than an oversight. open_pane
-# passes --no-focus because a pane is already on screen in a tab being looked
+# Focus is taken, and that is the choice rather than an oversight. open_preview
+# splits with --no-focus because a pane is already on screen in a tab being looked
 # at, so taking the keyboard for it would interrupt whoever asked - but asking
 # for a browser tab is asking to be shown one, and a tab that opens behind the
 # terminal is a preview that did not happen. The unscoped fallback inherits the
@@ -546,122 +611,83 @@ preview_in_browser() {
   printf '%s\n' "mdpreview: previewing ${file} in a browser tab"
 }
 
-# Chrome sometimes stops acknowledging pointer input while the rest of CDP stays
-# healthy: `status` and `text` still answer, the page still reloads, and only
-# Input.dispatchMouseEvent times out - so the wheel does nothing and the viewer
-# writes `mouse move failed: ...` over the page. A reload does not clear it,
-# because the wedge belongs to the Chrome tab rather than to the document.
-#
-# A zero-delta wheel is the cheapest way to ask: it is a real input dispatch,
-# and it scrolls nothing. Only that one timeout counts as wedged - anything else
-# the CLI has to say is some other problem, and escalating on it would restart
-# the daemon for a reason a restart cannot fix.
-input_wedged() {
-  probe=$(HERDR_BROWSER_VIEW_ID=$1 herdr-browser wheel 0 0 0 2>&1) || true
-  case $probe in
-    *"timed out waiting for CDP Input"*) return 0 ;;
-    *) return 1 ;;
-  esac
-}
-
-# Closes every browser pane in this tab and waits for them to leave the pane
-# list: a pane still listed while its viewer exits would be matched as this
-# tab's preview again, and the view it is in the middle of dropping would be
-# handed back as the reset result.
-close_panes() {
-  panes=$(browser_panes) || die_panes
-  for pane in $panes; do
-    herdr pane close "$pane" >/dev/null 2>&1 || true
-  done
-  attempt=0
-  while [ "$attempt" -lt 25 ]; do
-    panes=$(browser_panes) || die_panes
-    if [ -z "$panes" ]; then
-      return 0
-    fi
-    sleep 0.2
-    attempt=$((attempt + 1))
-  done
-  echo "mdpreview: the browser panes in this tab did not close" >&2
+usage() {
+  echo "usage: mdpreview <file.md> | --browser [file.md] | -- <terminal-browser action command> | --view | --pane | --reset [file.md] | --stop" >&2
   exit 1
 }
 
-# The view of the pane just opened, or nothing if it never registered one within
-# the given number of 0.2s attempts.
-wait_view() {
-  panes=$(browser_panes) || die_panes
-  if [ -z "$panes" ]; then
-    return 0
-  fi
-  view_for_panes "$panes" "${1:-50}"
-}
-
-if [ "$1" = "--view" ]; then
-  # Names this tab's preview for follow-up herdr-browser commands: the CLI's own
-  # pick is not tab-aware, and it refuses to choose at all once a second view is
-  # open anywhere.
-  resolve_target
-  if [ "$target" = open ]; then
-    # Two unrelated failures land here and they want different advice. Scoped,
-    # the tab simply has no preview yet and running one is the fix. Unscoped
-    # there is no tab for a message to be about, and previewing a file cannot be
-    # the fix any more: that opens a browser tab, which has no view id and never
-    # acquires one, so the old advice would send the caller round the same
-    # failure for as long as they were willing to follow it.
-    #
-    # The unscoped message reports the state and stops there. It must not say
-    # --view needs a herdr pane, because unscoped it does not: resolve_target
-    # hands back any view the daemon happens to have and this prints it, which
-    # is the behaviour that branch defends on purpose. What is true here is only
-    # that the daemon has none.
-    if [ "$scoped" = 1 ]; then
-      echo "mdpreview: no herdr-browser pane in this tab - run 'mdpreview <file.md>' first" >&2
-    else
-      echo "mdpreview: no herdr-browser view anywhere to name - outside a herdr session a preview is a plain browser tab, which has no view id; open a herdr-browser pane if a view is what you need" >&2
-    fi
+if [ "$1" = "--stop" ]; then
+  # Without lsof there is no way to tell which server belongs to this port, and
+  # killing by directory alone is what this exists to avoid. Saying so beats
+  # reporting a stop that did not happen.
+  if ! command -v lsof >/dev/null 2>&1; then
+    printf '%s\n' "mdpreview: lsof is needed to find the server on ${port}" >&2
     exit 1
   fi
-  printf '%s\n' "$target"
+  # This tab's preview goes too: with the server gone it is a page that will
+  # never reload again, and leaving it up reads as a preview that still works.
+  # Only this tab's, and only previews - a browser with tabs of its own keeps
+  # them. `terminal-browser shutdown` is not used for this because it takes
+  # every terminal-browser in the session with it, previews or not.
+  #
+  # Outside herdr, or without terminal-browser, there is no preview here to
+  # close and the server is the whole of it.
+  # A terminal-browser that cannot be read is not a reason to leave the server
+  # running, which is the part of this that was asked for, so the lookup is
+  # allowed to fail quietly here.
+  closed=''
+  if [ "$scoped" = 1 ] && [ -n "$tb" ] &&
+      found=$(previews 2>/dev/null) && [ -n "$found" ]; then
+    close_previews
+    closed=" and closed this tab's preview"
+  fi
+  if stop_server; then
+    printf '%s\n' "mdpreview: stopped the server on ${port}${closed}"
+  else
+    printf '%s\n' "mdpreview: no server on ${port}${closed}"
+  fi
+  exit 0
+fi
+
+if [ "$1" = "--view" ]; then
+  # Names this tab's preview as the selectors `terminal-browser action` takes,
+  # for a command run against it directly - `terminal-browser action $(mdpreview
+  # --view) -- snapshot`. The CLI's own pick is the active tab of this tab's
+  # browser, which need not be the preview.
+  require_tab --view
+  require_tb
+  resolve_preview
+  if [ -z "$key" ]; then
+    echo "mdpreview: no preview in this tab - run 'mdpreview <file.md>' first" >&2
+    exit 1
+  fi
+  printf '%s\n' "--browser ${key} --tab ${tabid}"
   exit 0
 fi
 
 if [ "$1" = "--pane" ]; then
-  # Names this tab's preview pane, one id per line, for the `herdr pane`
-  # commands - closing it, renaming it, resizing it. Reading what it is showing
-  # is `--screen`, which does not make the caller hold an id to do it.
+  # Names the herdr panes holding this tab's previews, one id per line, for the
+  # `herdr pane` commands - renaming one, resizing it. A browser that also holds
+  # tabs of its own is named too, so closing what this prints can take those
+  # with it; `--stop` and `--reset` are the ways to close only the preview.
   require_tab --pane
-  panes=$(browser_panes) || die_panes
-  if [ -z "$panes" ]; then
-    echo "mdpreview: no herdr-browser pane in this tab - run 'mdpreview <file.md>' first" >&2
+  require_tb
+  found=$(previews) || die_ls
+  if [ -z "$found" ]; then
+    echo "mdpreview: no preview in this tab - run 'mdpreview <file.md>' first" >&2
     exit 1
   fi
-  printf '%s\n' "$panes"
-  exit 0
-fi
-
-if [ "$1" = "--screen" ]; then
-  # The pane's visible screen text, which is where the viewer reports its errors:
-  # it writes them onto the page and nowhere else, so this is the only way to read
-  # them back. `--source visible` is the one that answers for a pane drawing
-  # graphics - `recent` comes back empty.
-  require_tab --screen
-  panes=$(browser_panes) || die_panes
-  if [ -z "$panes" ]; then
-    echo "mdpreview: no herdr-browser pane in this tab - run 'mdpreview <file.md>' first" >&2
-    exit 1
-  fi
-  for pane in $panes; do
-    herdr pane read "$pane" --source visible
-  done
+  printf '%s\n' "$found" | cut -f3 | awk '!seen[$0]++'
   exit 0
 fi
 
 if [ "$1" = "--reset" ]; then
-  # Replaces this tab's wedged preview instead of trying to revive it. The viewer
-  # cannot recover a session it has declared over (viewer.ts handleDaemonGone
-  # tears down its input and polling for good), and a wedged Chrome tab does not
-  # come back from a reload, so both stages here end in a pane that is new.
+  # Replaces this tab's preview instead of trying to revive it: closes it and
+  # opens a new one on the same file. A preview that has stopped answering - a
+  # page that no longer scrolls, a tab that ignores input - is cheaper to throw
+  # away than to diagnose, and the page holds no state worth keeping.
   require_tab --reset
+  require_tb
 
   if [ -n "$2" ]; then
     require_deps
@@ -675,57 +701,23 @@ if [ "$1" = "--reset" ]; then
     resume_current_file current
   fi
 
-  # Handed over before the loop, because close_panes below is destructive and
+  # Handed over before anything is closed, because closing is destructive and
   # this is the last step that can still refuse. `--reset FILE` never passes
   # through the spelling rule further down, so resolve_file admits any existing
-  # path and the server is the first thing to reject it - which, done from inside
-  # the loop, happened after the tab's working preview had already been closed
-  # for a replacement that was never going to open. Same ordering the browser
-  # path gets, for the same reason.
-  #
-  # The in-loop calls stay: each stage is meant to be a complete attempt at
-  # getting the file on screen rather than something that leans on state set
-  # before a daemon restart it does not control. The repeated POST costs one
-  # reload broadcast, to panes that are being replaced anyway.
+  # path and the server is the first thing to reject it - which, done after the
+  # close, would leave the tab with no preview for a replacement that was never
+  # going to open. Same ordering the browser path gets, for the same reason.
   set_file
 
-  for stage in pane daemon; do
-    close_panes
-    budget=50
-    if [ "$stage" = daemon ]; then
-      # Session-wide: this takes the daemon and with it the Chrome behind every
-      # other browser pane, which drops them all to "session ended" until they
-      # are reopened. Only reached when a new pane was not enough, which means
-      # the daemon rather than the tab is what is stuck.
-      echo "mdpreview: a new pane did not clear it - restarting the browser daemon" >&2
-      herdr-browser stop >/dev/null 2>&1 || true
-      # The replacement pane now pays for a cold Chrome start rather than joining
-      # a daemon that already has one up, and the wait a warm pane needs is not
-      # enough for that. Running out of it here would report a reset that worked
-      # as a reset that failed.
-      budget=150
-    fi
-    set_file
-    open_pane >/dev/null
-    view=$(wait_view "$budget") || die_views
-    if [ -n "$view" ] && ! input_wedged "$view"; then
-      if [ "$stage" = daemon ]; then
-        printf '%s\n' "mdpreview: reset ok - browser daemon restarted, previewing ${file}"
-      else
-        printf '%s\n' "mdpreview: reset ok - new preview pane, previewing ${file}"
-      fi
-      exit 0
-    fi
-  done
-
-  echo "mdpreview: reset failed - pointer input still times out with a new pane and a new daemon." >&2
-  echo "mdpreview: the pane is open and the page renders; check 'mdpreview status' and 'mdpreview --screen'." >&2
-  exit 1
+  close_previews
+  open_preview
+  printf '%s\n' "mdpreview: reset ok - previewing ${file} ${opened}"
+  exit 0
 fi
 
 if [ "$1" = "--browser" ]; then
-  # Shows the preview in the desktop browser instead of in a pane. No pane, no
-  # view and no daemon are involved, which is why this is deliberately not
+  # Shows the preview in the desktop browser instead of in a pane. No pane and no
+  # terminal-browser are involved, which is why this is deliberately not
   # guarded by require_tab: asked for from inside a herdr session it means "not
   # in a pane this time", and that is a thing to honour rather than to refuse.
   if [ -n "$2" ]; then
@@ -745,61 +737,73 @@ if [ "$1" = "--browser" ]; then
   exit 0
 fi
 
-if [ -z "$1" ]; then
-  echo "usage: mdpreview <file.md> | <herdr-browser command> | --browser [file.md] | --view | --pane | --screen | --reset [file.md] | --stop" >&2
-  exit 1
+if [ "$1" = "--" ]; then
+  shift
+  if [ "$#" = 0 ]; then
+    usage
+  fi
+  # Everything after -- is handed to `terminal-browser action` against this
+  # tab's preview. Naming the browser and tab belongs here and not to the
+  # caller: left to itself, action drives the active tab of this tab's browser,
+  # which is not the preview whenever the preview shares a browser with tabs of
+  # someone's own. terminal-browser rejects a command it does not have, which
+  # is why this needs no list of them to keep in step with.
+  #
+  # Whatever the command turns out to be, it reaches the page over CDP, and the
+  # only pages reachable that way are terminal-browser's. A tab handed to the
+  # desktop browser is not one: nothing is attached to it, so unscoped there is
+  # nothing here to drive at all. Saying so is the whole answer - reaching for
+  # a preview in some other herdr tab would report on a page nobody here is
+  # looking at, which reads as the preview and is not.
+  #
+  # printf and not echo, here and everywhere a message interpolates something:
+  # /bin/sh on this platform and dash both expand backslash escapes in echo
+  # without being asked, so a filename with a \t in it would be reported as a
+  # different name than the one that was typed.
+  if [ "$scoped" != 1 ]; then
+    printf '%s\n' "mdpreview: '$1' would be run against a terminal-browser preview, and outside a herdr session there is none - the preview is a plain browser tab." >&2
+    exit 1
+  fi
+  require_tb
+  resolve_preview
+  if [ -z "$key" ]; then
+    # --browser is named here because it opens a preview this cannot reach: a
+    # desktop tab is not terminal-browser's, so a tab opened moments ago still
+    # leaves this with nothing to drive and reads as no preview at all.
+    # Advising a bare `mdpreview <file.md>` on its own would then be advising a
+    # second preview surface rather than a fix.
+    echo "mdpreview: no preview in this tab - run 'mdpreview <file.md>' to open one; a preview opened with --browser is a desktop tab and cannot be driven from here" >&2
+    exit 1
+  fi
+  # `done` clears the "agent is acting" marker the action leaves on the tab. Refs
+  # from a snapshot survive it, so a later `mdpreview -- click @e3` still works,
+  # and running it after every command keeps the marker from sitting on a
+  # preview nobody is driving any more. The command's own status is the one
+  # that counts.
+  status=0
+  "$tb" action --browser "$key" --tab "$tabid" -- "$@" || status=$?
+  "$tb" action --browser "$key" --tab "$tabid" 'done' >/dev/null 2>&1 || true
+  exit "$status"
 fi
 
-# A markdown path is the only thing taken as a file; anything else is a command
-# for the preview. That is decided on the spelling rather than on whether the
-# path happens to exist, so `mdpreview text` cannot turn into a preview of a file
-# called `text` that someone left in the cwd - write `./text` to mean the file.
+if [ -z "$1" ]; then
+  usage
+fi
+
+# A markdown path is the only thing taken as a file. That is decided on the
+# spelling rather than on whether the path happens to exist, so `mdpreview
+# snapshot` - the old way of driving the preview - cannot turn into a preview of
+# a file called `snapshot` that someone left in the cwd. Write `./snapshot` to
+# mean the file, and `mdpreview -- snapshot` to mean the command.
 case $1 in
   *.md | *.markdown | *.mdown | */*) ;;
+  -*)
+    printf '%s\n' "mdpreview: unknown option: $1" >&2
+    usage
+    ;;
   *)
-    # Everything else is handed to herdr-browser against this tab's preview.
-    # Naming the view belongs here and not to the caller: the CLI's own pick
-    # ignores which tab it is in, and refuses to pick at all once a second
-    # browser pane is open anywhere - so a caller left to do this itself has to
-    # read the pane and view lists to answer a question this script has already
-    # answered. herdr-browser rejects a word that is not one of its commands,
-    # which is why this needs no list of them to keep in step with.
-    #
-    # Whatever the word turns out to be, it is going to a view to be run
-    # against, over CDP, and the only page reachable that way is one the browser
-    # plugin owns. A tab handed to the desktop browser is not: nothing is
-    # attached to it and no view id names it, so unscoped there is nothing here
-    # to drive at all. Saying so is the whole answer - falling through to
-    # any_view would report on a Chrome in another tab, and `text` returning a
-    # document nobody here is looking at is worse than no answer, because it
-    # reads as the preview and is not.
-    #
-    # The message stops short of calling the word a command, because the case
-    # above sends everything it does not recognise as a path down here and a
-    # mistyped filename is at least as likely as a real one. Naming the spelling
-    # rule is what turns the refusal into something the caller can act on.
-    #
-    # printf and not echo, here and everywhere a message interpolates something:
-    # /bin/sh on this platform and dash both expand backslash escapes in echo
-    # without being asked, so a filename with a \t in it would be reported as a
-    # different name than the one that was typed.
-    if [ "$scoped" != 1 ]; then
-      printf '%s\n' "mdpreview: '$1' would be run against a herdr-browser view, and outside a herdr session there is none - the preview is a plain browser tab." >&2
-      printf '%s\n' "mdpreview: run it from a herdr pane; if '$1' was meant as a file to preview, name it with a .md suffix or a ./ prefix." >&2
-      exit 1
-    fi
-    resolve_target
-    if [ "$target" = open ]; then
-      # --browser is named here because it opens a preview this cannot reach: a
-      # desktop tab has no view, so a tab opened moments ago still leaves this
-      # with nothing to drive and reads as no preview at all. Advising a bare
-      # `mdpreview <file.md>` on its own would then be advising a second preview
-      # surface rather than a fix.
-      echo "mdpreview: no herdr-browser pane in this tab - run 'mdpreview <file.md>' to open one; a preview opened with --browser is a desktop tab and cannot be driven from here" >&2
-      exit 1
-    fi
-    export HERDR_BROWSER_VIEW_ID=$target
-    exec herdr-browser "$@"
+    printf '%s\n' "mdpreview: '$1' is not a markdown path - name a file with a .md suffix or a ./ prefix, or put a command for the preview after --: 'mdpreview -- $*'" >&2
+    exit 1
     ;;
 esac
 
@@ -807,39 +811,36 @@ require_deps
 resolve_file "$1"
 ensure_server
 
-# Unscoped, the preview goes to the desktop browser rather than into herdr. This
-# used to reach for any view at all and split a pane if it found none, and both
-# halves of that put the preview where whoever ran the command cannot see it -
-# in another tab's Chrome, or beside whichever pane happens to have focus. From
-# a plain terminal it never even got that far: with no herdr-browser daemon up,
-# reading the view list fails and the run dies at die_views. A browser tab is
-# somewhere they are looking, and it needs none of that machinery.
+# Unscoped, the preview goes to the desktop browser rather than into herdr: from
+# a plain terminal there is no tab to look for a preview in and no pane to split
+# from, and a pane split off anywhere else lands where whoever ran the command
+# cannot see it. A browser tab is somewhere they are looking, and it needs none
+# of that machinery.
 if [ "$scoped" != 1 ]; then
   preview_in_browser
   exit 0
 fi
 
-resolve_target
+require_tb
+resolve_preview
 
-# The JSON that opening a pane and navigating a view print is of no use to
-# whoever asked for a preview, and an agent reading it pays for every field of
-# it. One line saying what happened covers both; failures still come through on
-# stderr, and the view id is a `mdpreview --view` away for anyone who wants it.
-if [ "$target" = open ]; then
-  set_file
-  open_pane >/dev/null
-  printf '%s\n' "mdpreview: previewing ${file} in a new pane"
+# The JSON that terminal-browser prints is of no use to whoever asked for a
+# preview, and an agent reading it pays for every field of it. One line saying
+# what happened covers it; failures still come through on stderr, and the
+# browser and tab are a `mdpreview --view` away for anyone who wants them.
+set_file
+if [ -z "$key" ]; then
+  open_preview
+  printf '%s\n' "mdpreview: previewing ${file} ${opened}"
   exit 0
 fi
 
-set_file
-# Names the view to navigate. Left to itself the CLI picks one without regard to
-# which tab it is in, and silently makes a pane-less view when it finds none.
-#
-# Naming it is a request, not a guarantee: the CLI drops the name if that view's
-# heartbeat fails (daemonClient.ts ensureView) and falls back to its own pick,
-# still exiting 0. Closing the pane in the moment between the check above and
-# this line is enough to hit it, and it is silent when it happens.
-export HERDR_BROWSER_VIEW_ID=$target
-herdr-browser open "$(preview_url pane)" >/dev/null
+# A preview that will not take the navigation - a tab that has stopped
+# answering CDP - is replaced rather than reported: the caller asked to see a
+# file, and a new preview shows it.
+if ! navigate_preview; then
+  printf '%s\n' "mdpreview: the preview in this tab did not answer - replacing it" >&2
+  close_previews
+  open_preview
+fi
 printf '%s\n' "mdpreview: previewing ${file}"

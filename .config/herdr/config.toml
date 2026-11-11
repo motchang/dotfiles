@@ -167,10 +167,14 @@ command = "local.hunk-diff.branch-split"
 [[keys.command]]
 # prefix+b is already goto (see the goto binding above), so the browser pane
 # takes prefix+alt+b, matching the other prefix+alt+* plugin bindings here.
+#
+# The full path because a shell binding need not see the PATH an interactive
+# zsh builds, and ~/.local/bin is where terminal-browser's installer puts it.
+# `open --split` takes focus, which is what pressing the key asks for.
 key = "prefix+alt+b"
 type = "shell"
-command = '"${HERDR_BIN_PATH}" plugin pane open --plugin official.browser --entrypoint browser --placement split --direction right --focus'
-description = "open herdr-browser in right split"
+command = '"${HOME}/.local/bin/terminal-browser" open --split right'
+description = "open terminal-browser in right split"
 
 [[keys.command]]
 key = "prefix+ctrl+right"

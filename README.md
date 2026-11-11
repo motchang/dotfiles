@@ -52,39 +52,59 @@ Delete it.
 	herdr plugin link ~/src/github.com/motchang/dotfiles/.config/herdr/plugins/hunk-diff
 	herdr plugin link ~/src/github.com/motchang/dotfiles/.config/herdr/plugins/hunk-gh-diff
 
-# herdr-browser
+# terminal-browser
 
-A plugin that embeds Chromium in a pane. Needs a terminal with Kitty graphics
-support (Ghostty and the like), Chrome/Chromium, and bun. The
-`[experimental] kitty_graphics = true` setting and the `prefix+alt+b` keybinding
-are already tracked in config.toml.
+A browser that runs inside a terminal pane (zenbu-labs/terminal-browser). It
+replaces herdr-browser, which is deprecated in its favour. It draws with Kitty
+graphics, so it needs a terminal that supports them (Ghostty and the like); the
+browser itself ships with it, so no Chrome is needed.
 
-	herdr plugin install ogulcancelik/herdr-browser --yes
+	curl -fsSL https://terminal-browser.sh/install -o install.sh
+	bash install.sh
 
-bun comes from mise, installed at the very top - it is not in the Brewfile.
+That puts the command in ~/.local/bin, which zshenv already has on PATH. Its
+`setup` links its agent skill into ~/.claude/skills and the other agents' skill
+directories; ~/.claude is a repository of its own (see below), so the link
+shows up there rather than here.
 
-	mise use -g bun@latest
+	terminal-browser setup
 
-`mise activate` only puts bun on PATH in an interactive zsh. Put the shim in
-~/bin - which zshenv adds to PATH - so the herdr server can find it when it
-spawns a plugin pane.
+Under herdr, terminal-browser switches `[experimental] kitty_graphics` on in
+herdr's config.toml the first time it opens if it finds it off. That file is
+the tracked one here, through the symlink above, and it already has the setting
+on, so nothing gets rewritten. The `prefix+alt+b` keybinding, which opens one in
+a split to the right, is tracked in config.toml as well.
 
-	ln -sfn ~/.local/share/mise/shims/bun ~/bin/bun
+`terminal-browser action -- <command>` drives an open tab from Bash in Claude
+Code (snapshot, click, eval and so on). For a markdown preview, `mdpreview --
+<command>` does the same with the preview's tab already named.
 
-The CLI wrapper (`herdr-browser open <url>`, `text`, `selector-click`, `console`
-and so on, for driving from Bash in Claude Code):
+A machine that had herdr-browser has a stale ~/bin/herdr-browser symlink into
+this repository, which no longer has the wrapper. Remove it, and the plugin with
+it.
 
-	ln -sf ~/src/github.com/motchang/dotfiles/.config/herdr/bin/herdr-browser ~/bin/herdr-browser
+	command rm -f ~/bin/herdr-browser
+	herdr plugin uninstall official.browser
 
 # mdpreview
 
-Previews markdown in a herdr-browser pane, or in an ordinary desktop browser
+Previews markdown in a terminal-browser pane, or in an ordinary desktop browser
 tab. Embedded mermaid renders too, and saving the file reloads the page. Nothing
 goes out to the network - mermaid.js and highlight.js are both served locally.
 
 Markdown, syntax highlighting, GitHub alerts and the table of contents are
 rendered on the Bun side; only mermaid, which needs a DOM, is drawn in the
 browser. `.md`, `.markdown` and `.mdown` all count as markdown.
+
+bun comes from mise, installed at the very top - it is not in the Brewfile.
+
+	mise use -g bun@latest
+
+`mise activate` only puts bun on PATH in an interactive zsh. Put the shim in
+~/bin - which zshenv adds to PATH - so that mdpreview finds it when it starts
+the render server from a non-interactive shell, an agent's Bash for one.
+
+	ln -sfn ~/.local/share/mise/shims/bun ~/bin/bun
 
 	cd ~/src/github.com/motchang/dotfiles/.config/herdr/mdpreview-server && bun install
 
@@ -95,15 +115,20 @@ Usage (the port is 43128 by default; `MDPREVIEW_PORT` overrides it):
 	mdpreview README.md
 	mdpreview --browser README.md
 	mdpreview --browser     # the same, for the file most recently previewed
-	mdpreview text          # any herdr-browser command, aimed at this tab's preview
-	mdpreview console
-	mdpreview --screen      # the viewer's own errors, as written onto the pane
-	mdpreview --reset       # rebuild a pane that has stopped scrolling
-	mdpreview --stop        # stop the render server; the pane stays
+	mdpreview -- snapshot   # any `terminal-browser action` command, aimed at this tab's preview
+	mdpreview -- console
+	mdpreview --view        # the preview as action selectors: --browser <key> --tab <id>
+	mdpreview --pane        # the herdr pane the preview is in
+	mdpreview --reset       # close this tab's preview and open a new one on the same file
+	mdpreview --stop        # stop the render server and close this tab's preview
 
-A herdr-browser pane in the same tab is reused; a tab without one gets a fresh
-pane split off to the right, without taking focus. A view in another tab is not a
-candidate for reuse - nobody in this tab can see it. Outside herdr (no
+A preview already in this tab - a terminal-browser tab showing a page from this
+render server - is navigated to the new file. A tab without one gets it as a new
+tab in whatever terminal-browser the tab already has, or, with none, a fresh pane
+split off to the right without taking focus. A browser in this tab that is not
+showing a preview keeps its own pages; the preview goes in beside them. A
+preview in another tab is not a candidate for reuse - nobody in this tab can see
+it. Outside herdr (no
 HERDR_TAB_ID / HERDR_PANE_ID) there is no tab to scope to and no pane to split
 from, so a file argument goes to the desktop browser instead, taking focus with
 it - the same tab `--browser` would open, on a path that never asked for one. The
@@ -146,26 +171,35 @@ apart from a tab that never opened. A spare tab is the better failure than
 refusing to show a preview that is not on screen. Panes are not counted either;
 a pane on the file is no reason to withhold a tab from someone who asked for one.
 
-What a tab still cannot do is be driven. `mdpreview text` and the rest of the
-passthrough need a view, so inside a herdr session they report having no preview
+What a tab still cannot do is be driven. `mdpreview -- <command>` needs a
+terminal-browser preview, so inside a herdr session it reports having no preview
 in this tab even while a `--browser` tab is open on one.
 
 `?file=` only serves paths that were registered by previewing them. A markdown
 file sitting on disk that mdpreview was never pointed at comes back 404, and so
 does anything else - the query is not a way to ask this server to read a file.
 
-With two or more browser panes open, herdr-browser cannot pick a target for
-itself (409), so which view to aim at has to be named. Working that out is
-mdpreview's job: `mdpreview <herdr-browser command>` names this tab's view and
-then calls herdr-browser. Nothing on the calling side has to read the pane or
-view list. Those commands reach the page over CDP, which gets to a herdr-browser
-pane and to nothing else - a desktop tab has no view to attach to - so outside
-herdr they say so rather than answering about a Chrome in some other tab.
-`--view` (view id) and `--pane` (pane id) are still there for a command that
-wants an id in the environment. Outside herdr `--view` still answers with
-whatever view the daemon has, since asking for an id by name is asking for that;
-what it cannot do is produce one for a `--browser` tab, which has no view id, so
-with no pane open anywhere it refuses instead.
+Left to itself, `terminal-browser action` drives the active tab of this tab's
+browser, which is not the preview once the preview shares a browser with other
+pages. Naming the preview is mdpreview's job: `mdpreview -- <command>` finds this
+tab's preview in `terminal-browser ls` and runs `terminal-browser action
+--browser <key> --tab <id> -- <command>`, then `action done` to clear the
+"agent is acting" marker it leaves on the tab. Nothing on the calling side has
+to read the list. Those commands reach the page over CDP, which gets to a
+terminal-browser tab and to nothing else, so outside herdr they say so rather
+than answering about a browser in some other tab. A bare word that is not a
+markdown path - `mdpreview snapshot`, the old way of writing this - is refused
+with a pointer to `--`. `--view` prints the selectors for a command run against
+the preview directly; it and `--pane` both need a herdr tab to look in.
+
+The pane is split by herdr with `--no-focus` and terminal-browser is started in
+it, instead of `terminal-browser open --split`: that command splits with
+`--focus`, and herdr's focus pulls the whole UI over to the tab, so an agent
+previewing in a background workspace would drag the user there. `--reset` and
+`--stop` close a terminal-browser that holds only previews together with its
+pane, and close just the preview tabs of one that holds other pages too. Neither
+uses `terminal-browser shutdown`, which closes every terminal-browser in the
+session.
 
 The render server lives in `.config/herdr/mdpreview-server` (bun) and logs to
 `${TMPDIR}/mdpreview-server.log`. It sits at a different layer from the command
