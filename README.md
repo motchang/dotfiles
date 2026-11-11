@@ -88,8 +88,8 @@ it.
 
 # mdpreview
 
-Previews markdown in a terminal-browser pane, or in an ordinary desktop browser
-tab. Embedded mermaid renders too, and saving the file reloads the page. Nothing
+Previews markdown in an ordinary desktop browser tab, or with `--term` in a
+terminal-browser pane. Embedded mermaid renders too, and saving the file reloads the page. Nothing
 goes out to the network - mermaid.js and highlight.js are both served locally.
 
 Markdown, syntax highlighting, GitHub alerts and the table of contents are
@@ -112,55 +112,57 @@ the render server from a non-interactive shell, an agent's Bash for one.
 
 Usage (the port is 43128 by default; `MDPREVIEW_PORT` overrides it):
 
-	mdpreview README.md
-	mdpreview --browser README.md
-	mdpreview --browser     # the same, for the file most recently previewed
-	mdpreview -- snapshot   # a `terminal-browser action` page command, aimed at this tab's preview
+	mdpreview README.md            # a desktop browser tab
+	mdpreview --browser README.md  # the same; kept from when a pane was the default
+	mdpreview --browser            # a tab on the file most recently previewed
+	mdpreview --term README.md     # a terminal-browser pane in this herdr tab
+	mdpreview -- snapshot          # a `terminal-browser action` page command, aimed at this tab's pane preview
 	mdpreview -- console
-	mdpreview --view        # the preview as action selectors: --browser <key> --tab <id>
-	mdpreview --pane        # the herdr pane the preview is in
-	mdpreview --reset       # close this tab's preview and open a new one on the same file
-	mdpreview --stop        # stop the render server and close this tab's preview
+	mdpreview --pane               # the herdr pane the preview is in
+	mdpreview --reset              # close this tab's pane preview and open a new one on the same file
+	mdpreview --stop               # stop the render server and close this tab's pane preview
 
-A preview already in this tab - a terminal-browser tab showing a page from this
-render server - is navigated to the new file. A tab without one gets it as a new
-tab in whatever terminal-browser the tab already has, or, with none, a fresh pane
-split off to the right without taking focus. A browser in this tab that is not
-showing a preview keeps its own pages; the preview goes in beside them. A
-preview in another tab is not a candidate for reuse - nobody in this tab can see
-it. Outside herdr (no
+A file argument opens a desktop browser tab, from inside a herdr session and from
+a plain terminal alike. The render server has no herdr in it - it is plain HTTP
+on the loopback port - so the page is the same one wherever it is shown. Opening
+the tab needs `open` (macOS) or `xdg-open` (Linux), and mdpreview refuses
+outright with neither; an opener that is installed but cannot reach a display
+(`xdg-open` with no `DISPLAY`, say) fails later, and reports whatever it has to
+say for itself. The tab takes focus, unlike a pane: a pane is already on screen
+in the tab being looked at, whereas asking to see a file is asking to be shown
+it.
+
+`--term` puts the preview in a terminal-browser pane instead, which is the one
+surface `mdpreview --` can drive. A preview already in this tab - a
+terminal-browser tab showing a page from this render server - is navigated to the
+new file. A tab without one gets it as a new tab in whatever terminal-browser the
+tab already has, or, with none, a fresh pane split off to the right without
+taking focus. A browser in this tab that is not showing a preview keeps its own
+pages; the preview goes in beside them. A preview in another tab is not a
+candidate for reuse - nobody in this tab can see it. Outside herdr (no
 HERDR_TAB_ID / HERDR_PANE_ID) there is no tab to scope to and no pane to split
-from, so a file argument goes to the desktop browser instead, taking focus with
-it - the same tab `--browser` would open, on a path that never asked for one. The
-render server has no herdr in it - it is plain HTTP on the loopback port - so the
-page is the same one either way.
+from, so `--term` refuses rather than opening a browser tab that nothing could
+drive.
 
-`--browser` asks for that tab outright, and works inside a herdr session too:
-it is how a preview goes to the browser that is already open rather than into a
-pane. It needs `open` (macOS) or `xdg-open` (Linux) and refuses outright with
-neither - the plainest way this can fail that the pane path has no equivalent
-for; an opener that is installed but cannot reach a display (`xdg-open` with no
-`DISPLAY`, say) fails later, and reports whatever it has to say for itself. It
-also takes focus, unlike a pane: a pane is already on screen in the tab being
-looked at, whereas asking for a browser tab is asking to be shown one.
-
-With no file argument it reuses the most recent file any surface was pointed at,
-and says so if there is none. `--reset` with no argument comes back to the file
-the pane modes last opened instead, which is the one a pane is actually showing.
+`--browser` with no file reopens a tab on the most recent file any surface was
+pointed at, and says so if there is none. `--reset` with no argument comes back
+to the file the pane modes last opened instead, which is the one a pane is
+actually showing; a file that is only open in a browser tab is not one it
+rebuilds, and it asks for a file name.
 Either way, handing the file back over broadcasts a reload, so a page already
 open on a long document scrolls back to the top.
 
 Previews are independent of each other. Each page carries its own file in its
 URL - `/?file=<path>` - so a pane in this tab, a pane in another and any number
 of browser tabs each hold a different file, and saving one reloads only the pages
-showing that one. `--browser B.md` while a pane shows `A.md` leaves that pane on
+showing that one. `mdpreview B.md` while a pane shows `A.md` leaves that pane on
 `A.md`. Only a bare `/`, which is what a hand-typed URL and a page from before
 this gets, follows a file it was not told about - and it follows the one the pane
-modes last opened, not the most recent of all: `--browser B.md` leaves a bare-`/`
+modes last opened, not the most recent of all: `mdpreview B.md` leaves a bare-`/`
 page on `A.md` too, which is the same distinction `--reset` and `--browser` draw
 between them above.
 
-Running `--browser` twice does not stack tabs: the server knows whether a live
+Previewing the same file in a browser tab twice does not stack tabs: the server knows whether a live
 page is already showing the file and the second run reloads that instead of
 opening another. It knows by counting connected reload streams, which leaves two
 windows where a spare tab still appears. One is a tab Chrome has discarded or
@@ -173,7 +175,7 @@ a pane on the file is no reason to withhold a tab from someone who asked for one
 
 What a tab still cannot do is be driven. `mdpreview -- <command>` needs a
 terminal-browser preview, so inside a herdr session it reports having no preview
-in this tab even while a `--browser` tab is open on one.
+in this tab even while a browser tab is open on one, and points at `--term`.
 
 `?file=` only serves paths that were registered by previewing them. A markdown
 file sitting on disk that mdpreview was never pointed at comes back 404, and so
@@ -193,8 +195,8 @@ closing a tab, and refuses `launch`, `install`, `connect`, `disconnect` and the
 terminal-browser tab and to nothing else, so outside herdr they say so rather
 than answering about a browser in some other tab. A bare word that is not a
 markdown path - `mdpreview snapshot`, the old way of writing this - is refused
-with a pointer to `--`. `--view` prints the selectors for a command run against
-the preview directly; it and `--pane` both need a herdr tab to look in.
+with a pointer to `--`. `--pane`, `--reset` and `--term` need a herdr tab to
+look in as well.
 
 The pane is split by herdr with `--no-focus` and terminal-browser is started in
 it, instead of `terminal-browser open --split`: that command splits with

@@ -161,11 +161,13 @@ const images = new Map<string, string>();
 
 // The file a bare / renders, and the file the empty-keyed reload channel
 // follows. Only /open with current !== false moves it - see registerFile for why
-// --browser deliberately does not.
+// a browser-tab preview deliberately does not. That makes it the file a pane
+// (`mdpreview --term`) last opened, and null on a server that has only ever
+// opened browser tabs, which is now the ordinary case.
 let lastOpened: string | null = null;
 // The most recent /open of any kind, current or not. bin/mdpreview's --browser
-// resumes from this: it never sets lastOpened, so without a second field a
-// server that had only ever served --browser would report nothing being
+// resumes from this: a browser tab never sets lastOpened, so without a second
+// field a server that had only ever served tabs would report nothing being
 // previewed while holding a tab's worth of it.
 let lastRegistered: string | null = null;
 
@@ -321,7 +323,7 @@ function startWatching(key: string): void {
     // stream behind it. Nothing reaps it later either: enqueue on a controller
     // whose start() threw does not throw, so broadcastReload's catch never sees
     // it. The channel would then report a phantom tab to /viewers and suppress
-    // --browser on that path for as long as the server lived.
+    // every new browser tab on that path for as long as the server lived.
     //
     // Giving up on the directory instead leaves the channel with no watchers,
     // which is an inert state that already exists: it is what the empty key
@@ -406,8 +408,8 @@ function unsubscribe(key: string, client: ReadableStreamDefaultController<Uint8A
 }
 
 // Browser tabs currently showing a path, as distinct from herdr panes.
-// bin/mdpreview asks before opening a tab, so that running --browser twice does
-// not stack two tabs on the same preview.
+// bin/mdpreview asks before opening a tab, so that previewing the same file twice
+// does not stack two tabs on the same preview.
 //
 // Panes are excluded on purpose. A pane already showing the file is not a reason
 // to refuse someone who asked for a browser tab, and counting it would make the
@@ -446,12 +448,13 @@ function retargetCurrent(): void {
 
 // Registers a path and, unless told otherwise, makes it the current one.
 //
-// The split exists for --browser, and it is not visible from either side alone.
+// The split exists for browser-tab previews - what bin/mdpreview opens unless
+// told --term - and it is not visible from either side alone.
 // A browser preview has to be able to open B without disturbing a herdr pane
 // showing A. Panes navigate to their own ?file= URL, so lastOpened does not
 // reach them - but a page on a bare /, which is any page from before this change
 // and any URL a person typed, follows lastOpened and would be dragged onto B.
-// Registering without making it current gives --browser exactly what it needs, a
+// Registering without making it current gives a tab exactly what it needs, a
 // path that ?file= will serve and a channel to reload, and none of what it does
 // not.
 async function registerFile(rawPath: string, makeCurrent: boolean): Promise<string> {
@@ -1006,7 +1009,7 @@ const server = Bun.serve({
       // The registry check covers what that would otherwise be worth - having
       // the server watch a path of the caller's choosing and report when it
       // changed. It does not cover the counting: surfaceFor reads such a client
-      // as a tab, so the trick can cost one suppressed --browser tab on a path
+      // as a tab, so the trick can cost one suppressed browser tab on a path
       // the caller already knew the name of. That is the whole of it, and it
       // does not earn any machinery.
       const target = targetFor(url);
