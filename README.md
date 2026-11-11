@@ -115,7 +115,7 @@ Usage (the port is 43128 by default; `MDPREVIEW_PORT` overrides it):
 	mdpreview README.md
 	mdpreview --browser README.md
 	mdpreview --browser     # the same, for the file most recently previewed
-	mdpreview -- snapshot   # any `terminal-browser action` command, aimed at this tab's preview
+	mdpreview -- snapshot   # a `terminal-browser action` page command, aimed at this tab's preview
 	mdpreview -- console
 	mdpreview --view        # the preview as action selectors: --browser <key> --tab <id>
 	mdpreview --pane        # the herdr pane the preview is in
@@ -185,7 +185,11 @@ pages. Naming the preview is mdpreview's job: `mdpreview -- <command>` finds thi
 tab's preview in `terminal-browser ls` and runs `terminal-browser action
 --browser <key> --tab <id> -- <command>`, then `action done` to clear the
 "agent is acting" marker it leaves on the tab. Nothing on the calling side has
-to read the list. Those commands reach the page over CDP, which gets to a
+to read the list. Not every agent-browser command is passed on to the page:
+terminal-browser turns `open <url>` and `tab new` into a new tab of the
+preview's browser - `open` does not navigate the preview - and `tab close` into
+closing a tab, and refuses `launch`, `install`, `connect`, `disconnect` and the
+`--cdp`, `--session` and similar flags outright. Those commands reach the page over CDP, which gets to a
 terminal-browser tab and to nothing else, so outside herdr they say so rather
 than answering about a browser in some other tab. A bare word that is not a
 markdown path - `mdpreview snapshot`, the old way of writing this - is refused
@@ -195,9 +199,12 @@ the preview directly; it and `--pane` both need a herdr tab to look in.
 The pane is split by herdr with `--no-focus` and terminal-browser is started in
 it, instead of `terminal-browser open --split`: that command splits with
 `--focus`, and herdr's focus pulls the whole UI over to the tab, so an agent
-previewing in a background workspace would drag the user there. `--reset` and
-`--stop` close a terminal-browser that holds only previews together with its
-pane, and close just the preview tabs of one that holds other pages too. Neither
+previewing in a background workspace would drag the user there. The pane is
+labelled `mdpreview` when it is split, and the label is what `--reset` and
+`--stop` go by: they close a labelled pane whose terminal-browser holds only
+previews, and otherwise close just the preview tabs - a browser that holds other
+pages too keeps them, and a pane mdpreview did not split stays up whatever runs
+in it, since it may be someone's shell running `terminal-browser open`. Neither
 uses `terminal-browser shutdown`, which closes every terminal-browser in the
 session.
 

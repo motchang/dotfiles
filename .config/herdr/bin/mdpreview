@@ -3,7 +3,7 @@
 # the desktop browser.
 #   mdpreview README.md
 #   mdpreview --browser [file.md]  # a desktop browser tab instead of a pane
-#   mdpreview -- snapshot          # any `terminal-browser action` command,
+#   mdpreview -- snapshot          # a `terminal-browser action` command,
 #   mdpreview -- console           # aimed at this tab's preview - no browser
 #   mdpreview -- screenshot /tmp/preview.png   # key or tab id to pass around
 #   mdpreview --view
@@ -64,10 +64,9 @@ stop_server() {
     kill $pids 2>/dev/null || true
   fi
   # The port has to come free before a replacement can bind it.
-  attempt=0
-  while [ -n "$(server_pids)" ] && [ "$attempt" -lt 25 ]; do
+  deadline_in 5
+  while [ -n "$(server_pids)" ] && before_deadline; do
     sleep 0.2
-    attempt=$((attempt + 1))
   done
   [ -n "$pids" ]
 }
@@ -113,10 +112,22 @@ require_tab() {
   fi
 }
 
-# This tab's preview tabs, one per line as `browser-key TAB tab-id TAB pane-id
-# TAB all`, the active one first; empty when the tab has none. `all` is 1 when
-# every tab in that browser is a preview, which is what decides whether closing
-# the preview may take the pane with it.
+# The whole terminal-browser list, every browser in the session. `--all` rather
+# than this tab's narrowing because of how that narrowing is done: each browser
+# is asked where it is, with 300ms to answer, and one too busy to answer in time
+# is not left in this tab with its pane unknown - it is left out. With --all it
+# stays in, pane and all null, and the absence is something to see rather than a
+# preview that silently is not there. The tab is matched below either way.
+read_listing() {
+  listing=$("$tb" ls --all --json) || die_ls
+}
+
+# This tab's preview tabs from `listing`, one per line as `browser-key TAB
+# tab-id TAB pane-id TAB all TAB target`, the active one first; empty when the
+# tab has none. `all` is 1 when every tab in that browser is a preview, which is
+# what decides whether closing the preview may take the pane with it. `target`
+# is the tab's CDP target, empty while the page is still starting: `ls` lists a
+# tab before it has one, and every `action` against it fails until it does.
 #
 # A preview is a tab on this render server, and nothing else is: a browser in
 # this tab that the user opened for something of their own is not one, and
@@ -126,10 +137,8 @@ require_tab() {
 # takes, links between previewed files included; /health and the other
 # endpoints are not previews even though they are on the same server.
 #
-# `ls` already narrows to this terminal tab, and the pane's tab is matched again
-# anyway: the list's idea of "this tab" is worked out by terminal-browser, and
-# the tab that counts here is the one in HERDR_TAB_ID that the split below goes
-# into.
+# The tab that counts is the one in HERDR_TAB_ID that the split below goes into,
+# not terminal-browser's own idea of "this tab".
 #
 # A shape this does not recognize has to fail rather than read as "no preview":
 # `null | length` is 0, so a quiet mismatch would split off a fresh pane on every
@@ -139,7 +148,7 @@ require_tab() {
 # Slurped, no input is `[]` and `.[0]` is null, which the guard rejects like any
 # other shape it does not know.
 previews() {
-  "$tb" ls --json | jq -rs --arg tab "$HERDR_TAB_ID" --arg base "$base" '
+  printf '%s' "$listing" | jq -rs --arg tab "$HERDR_TAB_ID" --arg base "$base" '
     def preview: (.url // "") as $u | ($u | startswith($base + "/?")) or $u == $base + "/";
     .[0].browsers
     | if type == "array" then . else error("unexpected terminal-browser ls shape") end
@@ -149,33 +158,64 @@ previews() {
         | ([$b.tabs[]? | select(preview)]) as $here
         | (($here | length) == ($b.tabs | length)) as $all
         | $here[]
-        | {key: $b.key, tab: .id, pane: $b.pane.pane, all: $all, active: (.active == true)} ]
+        | {key: $b.key, tab: .id, pane: $b.pane.pane, all: $all,
+           active: (.active == true), target: (.targetId // "")} ]
     | sort_by(if .active then 0 else 1 end)
     | .[]
-    | [.key, (.tab | tostring), .pane, (if .all then "1" else "0" end)]
+    | [.key, (.tab | tostring), .pane, (if .all then "1" else "0" end), .target]
     | @tsv
   '
 }
 
-# Any browser in this tab, preview or not, for a new tab to go into rather than a
-# second pane beside it. Empty when the tab has none.
-browser_here() {
-  "$tb" ls --json | jq -rs --arg tab "$HERDR_TAB_ID" '
+# Whether `listing` might be missing a browser in this tab: one that did not say
+# where it is in time, or one in this tab whose tabs could not be read - ls
+# reports those as no tabs at all rather than failing. Either can be a preview
+# that is there and busy, and taking its absence at face value splits a second
+# pane beside it.
+listing_unsure() {
+  printf '%s' "$listing" | jq -es --arg tab "$HERDR_TAB_ID" '
     .[0].browsers
     | if type == "array" then . else error("unexpected terminal-browser ls shape") end
-    | map(select(.pane.tab == $tab and .key != null))
+    | any(.[]; .pane.pane == null or (.pane.tab == $tab and (.tabs // [] | length) == 0))
+  ' >/dev/null
+}
+
+# Any browser in this tab, preview or not, for a new tab to go into rather than a
+# second pane beside it. Empty when the tab has none.
+#
+# A browser with no tabs is passed over. That is what one whose pane has just
+# been closed looks like while it is still on its way out, and a tab handed to
+# it goes down with it.
+browser_here() {
+  printf '%s' "$listing" | jq -rs --arg tab "$HERDR_TAB_ID" '
+    .[0].browsers
+    | if type == "array" then . else error("unexpected terminal-browser ls shape") end
+    | map(select(.pane.tab == $tab and .key != null and (.tabs // [] | length) > 0))
     | .[0].key // empty
   '
 }
 
-# Sets `key` and `tabid` to this tab's preview, both empty when it has none. The
-# first line is the active tab when there is one, so a browser holding two
-# previews is driven on the one the user can see.
+# Sets `found` to this tab's previews and `key`, `tabid` and `target` to the
+# first of them, all empty when it has none. The first line is the active tab
+# when there is one, so a browser holding two previews is driven on the one the
+# user can see.
+#
+# `resolve_preview settle` is for a lookup whose "none" is acted on - by opening
+# a preview, or by refusing. When the list might be missing a browser it is read
+# once more before none is believed. The polling loops leave it off: they ask
+# again anyway.
 resolve_preview() {
+  read_listing
   found=$(previews) || die_ls
+  if [ -z "$found" ] && [ "${1:-}" = settle ] && listing_unsure; then
+    sleep 0.5
+    read_listing
+    found=$(previews) || die_ls
+  fi
   line=$(printf '%s\n' "$found" | head -n 1)
   key=$(printf '%s' "$line" | cut -f1)
   tabid=$(printf '%s' "$line" | cut -f2)
+  target=$(printf '%s' "$line" | cut -f5)
 }
 
 require_deps() {
@@ -412,22 +452,42 @@ tab_viewers() {
   printf '%s\n' "$count"
 }
 
-# Waits for this tab's preview to show up in `terminal-browser ls`, within the
-# given number of 0.2s attempts, and leaves it in `key` and `tabid`. A
-# run that returned before then would leave the next one - `mdpreview a.md &&
+# Polls run against the clock rather than a count of attempts. Each attempt is
+# a `terminal-browser ls`, which takes as long as the slowest browser takes to
+# say where it is, so a count of 0.2s sleeps says nothing about how long the
+# wait was. `date +%s` is whole seconds, so a wait can run up to one short.
+deadline_in() {
+  deadline=$(($(date +%s) + $1))
+}
+
+before_deadline() {
+  [ "$(date +%s)" -lt "$deadline" ]
+}
+
+# Waits up to $1 seconds for this tab's preview to show up in `terminal-browser
+# ls` with a CDP target, and leaves it in `key`, `tabid` and `target`. A run
+# that returned before then would leave the next one - `mdpreview a.md &&
 # mdpreview -- snapshot` - finding no preview and refusing, or opening another.
+# Listed is not enough: a tab is listed before its page has a target, and
+# `action` refuses it until then, so a preview that only counts as up once it is
+# listed hands that refusal to whatever runs next.
 wait_preview() {
-  attempt=0
-  while [ "$attempt" -lt "$1" ]; do
+  deadline_in "$1"
+  while :; do
     resolve_preview
-    if [ -n "$key" ]; then
+    if [ -n "$key" ] && [ -n "$target" ]; then
       return 0
     fi
+    before_deadline || return 1
     sleep 0.2
-    attempt=$((attempt + 1))
   done
-  return 1
 }
+
+# The label open_preview puts on a pane it splits, and the only thing that
+# lets close_previews take a pane down. A pane that merely runs a browser full
+# of previews may be the user's own shell, running `terminal-browser open` in
+# the foreground; closing it would take the shell and anything else in it.
+pane_label=mdpreview
 
 # Puts the preview on screen in this tab when it has none. Sets `opened` to say
 # where, for the message.
@@ -459,11 +519,19 @@ wait_preview() {
 # either. The leading space keeps the line out of zsh's history, which
 # HIST_IGNORE_SPACE in zshrc honours.
 #
-# A pane that will not take the line is closed again rather than left behind as
-# an empty shell beside the caller, which the next run would not recognise as a
-# preview and would split another one next to.
+# A pane this run split is closed again when the preview does not come up in
+# it - whether the line was refused or the browser never registered - rather
+# than left behind as an empty shell beside the caller, which the next run would
+# not recognise as a preview and would split another one next to.
 open_preview() {
+  read_listing
   here=$(browser_here) || die_ls
+  if [ -z "$here" ] && listing_unsure; then
+    sleep 0.5
+    read_listing
+    here=$(browser_here) || die_ls
+  fi
+  new=''
   if [ -n "$here" ]; then
     "$tb" new-tab --browser "$here" "$(preview_url pane)" >/dev/null
     opened="in a new tab of this tab's browser"
@@ -476,6 +544,7 @@ open_preview() {
     if [ -z "$new" ]; then
       die_panes
     fi
+    herdr pane rename "$new" "$pane_label" >/dev/null 2>&1 || true
     # shellcheck disable=SC2016 # expanded by the new pane's shell, not this one
     if ! herdr pane run "$new" \
         ' exec "$MDPREVIEW_TB" open --no-merge "$MDPREVIEW_URL"' >/dev/null; then
@@ -486,9 +555,12 @@ open_preview() {
     opened="in a new pane"
   fi
   # A cold start - the first browser since terminal-browser's shared process
-  # last exited - takes a few seconds; a warm one is there by the second poll.
-  if ! wait_preview 150; then
-    echo "mdpreview: the preview did not show up in terminal-browser ls - is it starting or stuck?" >&2
+  # last exited - takes a few seconds; a warm one is there within a second.
+  if ! wait_preview 30; then
+    if [ -n "$new" ]; then
+      herdr pane close "$new" >/dev/null 2>&1 || true
+    fi
+    echo "mdpreview: the preview did not come up in terminal-browser within 30s - is it starting or stuck?" >&2
     exit 1
   fi
 }
@@ -497,15 +569,27 @@ open_preview() {
 # despite its "Navigate to URL" it opens a new tab every time, so a preview
 # driven by it would grow a tab per run. The page is told to go instead.
 #
+# A preview with no CDP target yet is a page still starting, not a dead one, and
+# is waited for rather than given up on - giving up replaces it, which closes
+# the pane that a run moments ago opened and opens another. Only a preview that
+# still has no target after the wait, or that has one and refuses the eval, is
+# reported as not answering.
+#
+# The navigation is deferred to a task of its own, so the eval's own reply is
+# sent before the page starts unloading and cannot be lost to it.
+#
 # --follow brings the preview to the front of its browser, so a file previewed
 # while the user had switched that browser to another tab is not navigated
 # behind their back. It moves nothing in herdr. `done` afterwards clears the
 # "agent is acting" marker the action puts on the tab, which would otherwise
 # sit on a preview nobody is driving.
 navigate_preview() {
+  if [ -z "$target" ] && ! wait_preview 10; then
+    return 1
+  fi
   url=$(jq -n --arg u "$(preview_url pane)" '$u')
   if ! "$tb" action --follow --browser "$key" --tab "$tabid" -- \
-      eval "location.replace(${url}); true" >/dev/null 2>&1; then
+      eval "setTimeout(() => location.replace(${url}), 0); true" >/dev/null 2>&1; then
     return 1
   fi
   "$tb" action --browser "$key" --tab "$tabid" 'done' >/dev/null 2>&1 || true
@@ -513,30 +597,47 @@ navigate_preview() {
 
 # Closes every preview in this tab and waits for them to leave the list: a
 # preview still listed would be found again by the reopen that follows, and the
-# tab in the middle of closing would be handed back as the result.
+# tab in the middle of closing would be handed back as the result. Returns 2
+# when there was nothing to close.
 #
-# A browser holding nothing but previews goes with its pane. Closing its last
-# tab instead would leave the pane up on terminal-browser's start page, which is
-# a pane nobody asked for. A browser with tabs of its own keeps them and its
-# pane, and loses only the previews.
+# A browser holding nothing but previews, in a pane open_preview split for it,
+# goes with its pane. Closing its last tab instead would leave the pane up on
+# terminal-browser's start page, which is a pane nobody asked for. Any other
+# pane keeps running, and loses only the previews: a browser with tabs of its
+# own keeps them, and a pane mdpreview did not split is not mdpreview's to
+# close, whatever is running in it.
+#
+# A browser whose pane was closed is also waited out of the list, not just its
+# previews. On its way out it can still be listed with no tabs, and a reopen
+# that found it there would hand the new preview to a browser about to exit.
 close_previews() {
-  found=$(previews) || die_ls
-  printf '%s\n' "$found" | while IFS="$(printf '\t')" read -r k t p all; do
+  resolve_preview settle
+  if [ -z "$found" ]; then
+    return 2
+  fi
+  gone=$(printf '%s\n' "$found" | while IFS="$(printf '\t')" read -r k t p all _; do
     [ -n "$k" ] || continue
-    if [ "$all" = 1 ]; then
+    label=$(herdr pane get "$p" 2>/dev/null | jq -r '.result.pane.label // empty' 2>/dev/null) \
+      || label=''
+    if [ "$all" = 1 ] && [ "$label" = "$pane_label" ]; then
       herdr pane close "$p" >/dev/null 2>&1 || true
+      printf '%s\n' "$k"
     else
       "$tb" action --browser "$k" --tab "$t" -- tab close "$t" >/dev/null 2>&1 || true
     fi
-  done
-  attempt=0
-  while [ "$attempt" -lt 25 ]; do
+  done)
+  deadline_in 5
+  while :; do
     resolve_preview
-    if [ -z "$key" ]; then
+    lingering=$(printf '%s' "$listing" | jq -rs --arg gone "$gone" '
+      ($gone | split("\n") | map(select(. != ""))) as $g
+      | [.[0].browsers[]? | select(.key as $k | $g | index([$k]))] | length
+    ') || die_ls
+    if [ -z "$key" ] && [ "$lingering" = 0 ]; then
       return 0
     fi
+    before_deadline || break
     sleep 0.2
-    attempt=$((attempt + 1))
   done
   echo "mdpreview: the preview in this tab did not close" >&2
   exit 1
@@ -649,21 +750,29 @@ if [ "$1" = "--stop" ]; then
   #
   # Outside herdr, or without terminal-browser, there is no preview here to
   # close and the server is the whole of it.
-  # A terminal-browser that cannot be read is not a reason to leave the server
-  # running, which is the part of this that was asked for, so the lookup is
-  # allowed to fail quietly here.
+  #
+  # The preview is closed in a subshell, because every way closing can fail
+  # ends the run, and a terminal-browser that cannot be read or a preview that
+  # will not close is not a reason to leave the server running - the part of
+  # this that was asked for. Whatever went wrong has been said on stderr by
+  # then, and the exit status still reports it once the server is down.
   closed=''
-  if [ "$scoped" = 1 ] && [ -n "$tb" ] &&
-      found=$(previews 2>/dev/null) && [ -n "$found" ]; then
-    close_previews
-    closed=" and closed this tab's preview"
+  status=0
+  if [ "$scoped" = 1 ] && [ -n "$tb" ]; then
+    outcome=0
+    (close_previews) || outcome=$?
+    case $outcome in
+      0) closed=" and closed this tab's preview" ;;
+      2) ;;
+      *) closed=" but could not close this tab's preview"; status=1 ;;
+    esac
   fi
   if stop_server; then
     printf '%s\n' "mdpreview: stopped the server on ${port}${closed}"
   else
     printf '%s\n' "mdpreview: no server on ${port}${closed}"
   fi
-  exit 0
+  exit "$status"
 fi
 
 if [ "$1" = "--view" ]; then
@@ -673,7 +782,7 @@ if [ "$1" = "--view" ]; then
   # browser, which need not be the preview.
   require_tab --view
   require_tb
-  resolve_preview
+  resolve_preview settle
   if [ -z "$key" ]; then
     echo "mdpreview: no preview in this tab - run 'mdpreview <file.md>' first" >&2
     exit 1
@@ -689,7 +798,7 @@ if [ "$1" = "--pane" ]; then
   # with it; `--stop` and `--reset` are the ways to close only the preview.
   require_tab --pane
   require_tb
-  found=$(previews) || die_ls
+  resolve_preview settle
   if [ -z "$found" ]; then
     echo "mdpreview: no preview in this tab - run 'mdpreview <file.md>' first" >&2
     exit 1
@@ -726,7 +835,7 @@ if [ "$1" = "--reset" ]; then
   # going to open. Same ordering the browser path gets, for the same reason.
   set_file
 
-  close_previews
+  close_previews || [ "$?" = 2 ]
   open_preview
   printf '%s\n' "mdpreview: reset ok - previewing ${file} ${opened}"
   exit 0
@@ -764,7 +873,11 @@ if [ "$1" = "--" ]; then
   # caller: left to itself, action drives the active tab of this tab's browser,
   # which is not the preview whenever the preview shares a browser with tabs of
   # someone's own. terminal-browser rejects a command it does not have, which
-  # is why this needs no list of them to keep in step with.
+  # is why this needs no list of them to keep in step with. Nor does it keep one
+  # of the commands terminal-browser handles itself rather than passing to the
+  # page - `open` and `tab new` open a new tab, `tab close` closes one, and
+  # `launch`, `connect` and the like are refused - since those answers come
+  # from terminal-browser either way.
   #
   # Whatever the command turns out to be, it reaches the page over CDP, and the
   # only pages reachable that way are terminal-browser's. A tab handed to the
@@ -782,7 +895,7 @@ if [ "$1" = "--" ]; then
     exit 1
   fi
   require_tb
-  resolve_preview
+  resolve_preview settle
   if [ -z "$key" ]; then
     # --browser is named here because it opens a preview this cannot reach: a
     # desktop tab is not terminal-browser's, so a tab opened moments ago still
@@ -790,6 +903,13 @@ if [ "$1" = "--" ]; then
     # Advising a bare `mdpreview <file.md>` on its own would then be advising a
     # second preview surface rather than a fix.
     echo "mdpreview: no preview in this tab - run 'mdpreview <file.md>' to open one; a preview opened with --browser is a desktop tab and cannot be driven from here" >&2
+    exit 1
+  fi
+  # A preview still starting has no CDP target, and action refuses it until it
+  # has one - waited for here so that a command run right after the preview
+  # was opened elsewhere does not fail on a page about to be there.
+  if [ -z "$target" ] && ! wait_preview 10; then
+    echo "mdpreview: the preview in this tab has no CDP target after 10s - is it stuck? 'mdpreview --reset' replaces it" >&2
     exit 1
   fi
   # `done` clears the "agent is acting" marker the action leaves on the tab. Refs
@@ -839,7 +959,7 @@ if [ "$scoped" != 1 ]; then
 fi
 
 require_tb
-resolve_preview
+resolve_preview settle
 
 # The JSON that terminal-browser prints is of no use to whoever asked for a
 # preview, and an agent reading it pays for every field of it. One line saying
@@ -857,7 +977,7 @@ fi
 # file, and a new preview shows it.
 if ! navigate_preview; then
   printf '%s\n' "mdpreview: the preview in this tab did not answer - replacing it" >&2
-  close_previews
+  close_previews || [ "$?" = 2 ]
   open_preview
 fi
 printf '%s\n' "mdpreview: previewing ${file}"
