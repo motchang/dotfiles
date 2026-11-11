@@ -89,8 +89,9 @@ it.
 # mdpreview
 
 Previews markdown in an ordinary desktop browser tab, or with `--term` in a
-terminal-browser pane. Embedded mermaid renders too, and saving the file reloads the page. Nothing
-goes out to the network - mermaid.js and highlight.js are both served locally.
+terminal-browser pane. Embedded mermaid renders too, and saving the file reloads
+the page. Nothing goes out to the network - mermaid.js and highlight.js are both
+served locally.
 
 Markdown, syntax highlighting, GitHub alerts and the table of contents are
 rendered on the Bun side; only mermaid, which needs a DOM, is drawn in the
@@ -147,8 +148,13 @@ drive.
 `--browser` with no file reopens a tab on the most recent file any surface was
 pointed at, and says so if there is none. `--reset` with no argument comes back
 to the file the pane modes last opened instead, which is the one a pane is
-actually showing; a file that is only open in a browser tab is not one it
-rebuilds, and it asks for a file name.
+actually showing - and only when this tab has a pane preview to replace. With
+none it refuses instead of splitting a pane nobody asked for: a browser tab is
+not something it can reset, and the file a pane last opened may be another
+tab's. `--reset <file.md>` names the file, and always builds the pane.
+
+Flags go before the file. Anything after it is refused rather than dropped, so
+`mdpreview README.md --term` says so instead of quietly opening a browser tab.
 Either way, handing the file back over broadcasts a reload, so a page already
 open on a long document scrolls back to the top.
 
