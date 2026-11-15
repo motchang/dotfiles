@@ -2,6 +2,7 @@ tap "fujiwara/tap"
 tap "git-duet/tap"
 tap "homebrew/services"
 tap "modem-dev/tap"
+tap "motchang/tap"
 tap "yukihirop/tap", trusted: { formulae: ["ultramana"] }
 # Run your GitHub Actions locally
 brew "act"
@@ -173,6 +174,8 @@ brew "fujiwara/tap/lambroll", trusted: true
 brew "git-duet/tap/git-duet", trusted: true
 # Desktop-inspired terminal diff viewer for agent-authored changesets
 brew "modem-dev/tap/hunk", trusted: true
+# Preview markdown, mermaid included, in a browser tab that reloads on save
+brew "motchang/tap/blueline", trusted: true
 # Automated testing of webapps for Google Chrome
 cask "chromedriver"
 # GNU Emacs text editor

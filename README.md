@@ -92,22 +92,22 @@ Markdown previews come from `blueline`, which lives in its own repository now -
 motchang/bluelines. It is a single binary: a file opens in a desktop browser tab,
 `--term` puts it in a terminal-browser pane in this herdr tab, and `blueline --
 <command>` drives that pane's page. Its README has the install options and the
-full usage; nothing for it is tracked here.
+full usage.
 
-The quickest install needs only Rust, from mise or rustup; `cargo install` puts
-the binary in ~/.cargo/bin, which zshenv puts on PATH for every shell, agent
-Bash included.
+It comes in with the Brewfile, as `motchang/tap/blueline`, a prebuilt binary
+that needs no Rust toolchain.
 
-	cargo install --locked --git https://github.com/motchang/bluelines
+Its Claude Code plugin carries the skill that tells an agent when and how to
+preview with it. The plugin follows the command's version, so update the two
+together.
 
-The GitHub Releases of motchang/bluelines have prebuilt binaries too, for a
-machine without Rust: put `blueline` from the archive somewhere on PATH, ~/bin
-for one.
+	claude plugin marketplace add motchang/bluelines
+	claude plugin install blueline@bluelines
 
 A machine that had mdpreview from this repository has a ~/bin/mdpreview symlink
 into this checkout, and may still have its bun render server running on 43128,
-the port blueline uses too - blueline does not recognise that server and would
-leave stale pages on it. Before pulling the removal, stop the server and drop the
+the port blueline uses too - blueline does not recognise that server and refuses
+to preview through it. Before pulling the removal, stop the server and drop the
 link:
 
 	mdpreview --stop
