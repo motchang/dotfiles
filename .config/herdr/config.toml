@@ -319,6 +319,26 @@ mouse_capture = true
 
 # Background notification popup delivery
 agent_panel_sort = "spaces"
+# Wide enough that a session's topic title mostly fits on its row.
+sidebar_width = 48
+# The default cap is 36, which would clamp the width above.
+sidebar_max_width = 48
+
+# The default second row is the agent name - "claude" or cw's
+# "cw-<preset>-<pid>-<random>" - which tells sessions apart by nothing. Claude
+# Code writes the session's topic into the terminal title, so show that instead.
+[ui.sidebar.agents]
+# The second row's default style is dracula's dim comment blue, too dark to read
+# a title in. A light grey keeps it readable but still under the bold first row.
+rows = [
+  # Dracula purple sets the workspace name apart from the title row under it.
+  # $pr is the PR a Claude session is working on, reported by a Claude Code hook
+  # (~/.claude/hooks/herdr-report-pr.sh). The tab name is left out: cw's
+  # "cw:infra" and herdr's numbered tabs say nothing the title row doesn't.
+  ["state_icon", { token = "workspace", fg = "#bd93f9", bold = true }, { token = "$pr", fg = "#50fa7b" }],
+  [{ token = "terminal_title_stripped", fg = "#c0c4d6", dim = false }],
+]
+
 [ui.toast]
 # off = disable pop-up notifications
 # herdr = show in-app toasts
