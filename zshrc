@@ -196,9 +196,6 @@ function peco-select-history() {
 zle -N peco-select-history
 bindkey '^r' peco-select-history
 
-# https://github.com/rhysd/zsh-bundle-exec
-#. ~/src/dotfiles/zsh-bundle-exec/zsh-bundle-exec.zsh
-
 function peco-git-branch () {
     local selected_branch=$(git branch -a | sed 's/^\*\s*//' | sort | uniq | \
                           peco --prompt="Switch branch > " | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')

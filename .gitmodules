@@ -1,3 +1,0 @@
-[submodule "zsh-bundle-exec"]
-	path = zsh-bundle-exec
-	url = git@github.com:rhysd/zsh-bundle-exec.git
