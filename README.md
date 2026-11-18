@@ -49,8 +49,6 @@ Delete it.
 
 	herdr plugin link ~/src/github.com/motchang/dotfiles/.config/herdr/plugins/claude-fork
 	herdr plugin link ~/src/github.com/motchang/dotfiles/.config/herdr/plugins/claude-fresh
-	herdr plugin link ~/src/github.com/motchang/dotfiles/.config/herdr/plugins/hunk-diff
-	herdr plugin link ~/src/github.com/motchang/dotfiles/.config/herdr/plugins/hunk-gh-diff
 
 # terminal-browser
 
